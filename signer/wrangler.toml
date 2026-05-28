@@ -1,0 +1,8 @@
+name = "vibecoder-signer"
+main = "src/index.ts"
+compatibility_date = "2024-02-22"
+compatibility_flags = [ "nodejs_compat" ]
+workers_dev = false
+
+[vars]
+TON_NETWORK = "testnet"

@@ -1,0 +1,6 @@
+{
+  "name": "VibeCoder",
+  "description": "VibeCoder — AI 共建平台。全球极客共同孵化 AI 智能体，用代码改变世界。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

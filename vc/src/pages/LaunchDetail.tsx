@@ -1,0 +1,2105 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend, PieChart, Pie, Cell } from 'recharts';
+import {
+  ArrowLeft, Bot, MessageSquare, ArrowUp, ShieldCheck,
+  Award, Calendar, Users, HelpCircle, HardDrive,
+  Send, Sparkles, AlertCircle, Heart, Coins, ExternalLink, ShieldAlert, Crown,
+  Activity, ClipboardList, CheckCircle, Globe
+} from 'lucide-react';
+import { useSparkStore } from '../store/sparkStore';
+import { useUserStore } from '../store/userStore';
+import { useGovernanceStore } from '../store/governanceStore';
+import { useVestingStore } from '../store/vestingStore';
+import { TONService } from '../services/ton';
+import { getWalletJwt, shareToTelegram } from '../services/telegramAuth';
+import LifecycleEmissionCard from '../components/LifecycleEmissionCard';
+import CelebrationOverlay from '../components/CelebrationOverlay';
+import ShareModal from '../components/ShareModal';
+import { useTranslation } from '../hooks/useTranslation';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
+
+export default function SparkDetail() {
+  const { t, language } = useTranslation();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { walletAddress, isConnected, profile, connectWallet, addFunds, updateProfile } = useUserStore();
+  const { projects, upvoteProject, addComment, advanceProjectMilestone, investInProject, teams, squads, createSquad, joinSquad, updateProjectDetails } = useSparkStore();
+  const { proposals, votes, exitRequests, voteOnProposal, createProposal, createExitRequest } = useGovernanceStore();
+  const { rounds, loadRounds } = useVestingStore();
+
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case '数据分析': return t('detail.categoryDataAnalysis');
+      case '交易工具': return t('detail.categoryTradingTools');
+      case '社交': return t('detail.categorySocial');
+      case '监控': return t('detail.categoryMonitoring');
+      case '基础设施': return t('detail.categoryInfrastructure');
+      case '创作工具': return t('detail.categoryCreativeTools');
+      case 'DeFi': return t('detail.categoryDeFi');
+      default: return cat;
+    }
+  };
+
+  const [activeTab, setActiveTab] = useState<'overview' | 'spark' | 'health' | 'vesting' | 'operations' | 'governance' | 'proof' | 'discussion'>('overview');
+
+  // URL parameters parsing
+  const queryParams = new URLSearchParams(location.search);
+  const refParam = queryParams.get('ref');
+  const teamIdParam = queryParams.get('teamId');
+
+  // Team Spark selection and Overlay states
+  const [selectedTeamId, setSelectedTeamId] = useState<string | undefined>(teamIdParam || undefined);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [backedAmount, setBackedAmount] = useState(0);
+  const [backedTeamId, setBackedTeamId] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (teamIdParam) {
+      setSelectedTeamId(teamIdParam);
+    }
+  }, [teamIdParam]);
+
+  const invitedTeam = selectedTeamId ? teams.find(t => t.id === selectedTeamId) : undefined;
+  const projectActiveTeams = teams.filter(t => t.projectId === id && t.status === 'active');
+
+  const handleSparkSuccess = (amount: number, teamId?: string) => {
+    setBackedAmount(amount);
+    setBackedTeamId(teamId);
+    setShowCelebration(true);
+  };
+
+  const handleCelebrationComplete = () => {
+    setShowCelebration(false);
+    setShowShareModal(true);
+  };
+
+  // Synchronize tab from url query parameters or routers State
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const tabParam = queryParams.get('tab');
+    if (tabParam === 'proof' || tabParam === 'spark' || tabParam === 'overview' || tabParam === 'discussion' || tabParam === 'health' || tabParam === 'governance') {
+      setActiveTab(tabParam as any);
+    } else if (location.state && (location.state as any).activeTab) {
+      setActiveTab((location.state as any).activeTab);
+    }
+  }, [location]);
+  const [newCommentText, setNewCommentText] = useState('');
+  const [commentSuccess, setCommentSuccess] = useState(false);
+
+  // Investment states
+  const [investAmount, setInvestAmount] = useState<string>('20');
+  const [success, setSuccess] = useState(false);
+  const [errorText, setErrorText] = useState('');
+  const [investmentMode, setInvestmentMode] = useState<'solo' | 'team'>('solo');
+  const [trialClaimedNotice, setTrialClaimedNotice] = useState<string>('');
+
+  // Governance / Voting local states
+  const [voteSubmitting, setVoteSubmitting] = useState<string | null>(null);
+  const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+  const [withdrawPurpose, setWithdrawPurpose] = useState<string>('');
+  const [withdrawSuccess, setWithdrawSuccess] = useState<boolean>(false);
+  const [withdrawError, setWithdrawError] = useState<string>('');
+  const [exitLoading, setExitLoading] = useState<boolean>(false);
+  const [exitSuccess, setExitSuccess] = useState<boolean>(false);
+  const [exitMsg, setExitMsg] = useState<string>('');
+
+  // Governance action handlers
+  const handleVote = (proposalId: string, vote: 'yes' | 'no') => {
+    if (!isConnected || !walletAddress || !project) {
+      connectWallet();
+      return;
+    }
+    const userBacking = project.backers?.find(b => b.address === walletAddress);
+    if (!userBacking) {
+      alert(t('detail.alertOnlyBackersCanVote'));
+      return;
+    }
+    const userTokens = Math.round(userBacking.amount / project.tokenPrice);
+    const weight = Math.round(Math.sqrt(userTokens));
+    if (weight <= 0) {
+      alert(t('detail.alertZeroVoteWeight'));
+      return;
+    }
+    setVoteSubmitting(proposalId);
+    setTimeout(() => {
+      voteOnProposal(proposalId, project.id, walletAddress, vote, weight);
+      setVoteSubmitting(null);
+    }, 800);
+  };
+
+  const handleCreateProposal = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project || !walletAddress) return;
+
+    // Allow creator or sandbox test addresses to trigger mock withdrawal
+    if (project.creatorAddress !== walletAddress && walletAddress !== 'VibeDev_88ff') {
+      setWithdrawError(t('detail.errorOnlyCreatorWithdraw'));
+      return;
+    }
+
+    const amount = Number(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setWithdrawError(t('detail.errorInvalidWithdrawAmount'));
+      return;
+    }
+
+    const projectProposals = proposals[project.id] || [];
+    const passedAmount = projectProposals
+      .filter(p => p.status === 'passed')
+      .reduce((sum, p) => sum + p.amount, 0);
+    const totalGovAllocated = project.raisedAmount * 0.5;
+    const remainingGovFunds = totalGovAllocated - passedAmount;
+
+    if (amount > remainingGovFunds) {
+      setWithdrawError(t('detail.errorWithdrawExceedsGov', { amount, balance: remainingGovFunds.toFixed(2) }));
+      return;
+    }
+
+    if (!withdrawPurpose.trim()) {
+      setWithdrawError(t('detail.errorExplainPurpose'));
+      return;
+    }
+
+    setWithdrawError('');
+    createProposal(project.id, amount, withdrawPurpose.trim());
+    setWithdrawAmount('');
+    setWithdrawPurpose('');
+    setWithdrawSuccess(true);
+    setTimeout(() => setWithdrawSuccess(false), 3000);
+  };
+
+  const handleExitProject = () => {
+    if (!project || !walletAddress) return;
+    const userBacking = project.backers?.find(b => b.address === walletAddress);
+    if (!userBacking || userBacking.amount <= 0) {
+      alert(t('detail.alertNoShareToExit'));
+      return;
+    }
+
+    if (!confirm(t('detail.confirmExitBurnMessage'))) {
+      return;
+    }
+
+    setExitLoading(true);
+    setExitMsg('');
+
+    setTimeout(() => {
+      const userTokens = Math.round(userBacking.amount / project.tokenPrice);
+      const projectProposals = proposals[project.id] || [];
+      const passedAmount = projectProposals
+        .filter(p => p.status === 'passed')
+        .reduce((sum, p) => sum + p.amount, 0);
+      const totalGovAllocated = project.raisedAmount * 0.5;
+      const remainingRatio = totalGovAllocated > 0 ? (totalGovAllocated - passedAmount) / totalGovAllocated : 1;
+      const refundableTON = Number((userBacking.amount * remainingRatio * 0.95).toFixed(2));
+
+      createExitRequest(project.id, walletAddress, refundableTON, userTokens);
+      addFunds(refundableTON);
+
+      setExitSuccess(true);
+      setExitMsg(t('detail.exitRefundSuccess', { tokens: userTokens, ticker: project.agentTicker, refunded: refundableTON }));
+      setExitLoading(false);
+    }, 1500);
+  };
+
+  // Swap states
+  const [swapType, setSwapType] = useState<'buy' | 'sell'>('buy');
+  const [swapAmount, setSwapAmount] = useState<string>('20');
+  const [swapSuccess, setSwapSuccess] = useState(false);
+  const [swapSuccessMsg, setSwapSuccessMsg] = useState('');
+  const [swapErrText, setSwapErrText] = useState('');
+
+  // Local storage inventory helper for swaps
+  const getLocalInventory = (): Record<string, number> => {
+    if (typeof window === 'undefined') return {};
+    const data = localStorage.getItem('vc_inventory');
+    return data ? JSON.parse(data) : { "tok-1": 500, "tok-2": 150 };
+  };
+
+  const saveLocalInventory = (inv: Record<string, number>) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('vc_inventory', JSON.stringify(inv));
+    }
+  };
+
+  const localInventory = getLocalInventory();
+
+  // Swap trigger handler
+  const handleSwap = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSwapErrText('');
+    setSwapSuccess(false);
+
+    if (!isConnected || !profile) {
+      handleWalletFallback();
+      return;
+    }
+
+    const val = Number(swapAmount);
+    if (isNaN(val) || val <= 0) {
+      setSwapErrText(t('detail.errorInvalidAmount'));
+      return;
+    }
+
+    if (!project) return;
+
+    const tokenBalance = localInventory[project.id] || 0;
+
+    if (swapType === 'buy') {
+      if (profile.balanceTON < val) {
+        setSwapErrText(t('detail.errorInsufficientTon', { balance: profile.balanceTON }));
+        return;
+      }
+
+      const boughtTokens = Number((val / project.tokenPrice).toFixed(2));
+
+      updateProfile({
+        balanceTON: Number((profile.balanceTON - val).toFixed(2))
+      });
+
+      const nextInv = { ...localInventory, [project.id]: (localInventory[project.id] || 0) + boughtTokens };
+      saveLocalInventory(nextInv);
+
+      setSwapSuccessMsg(t('detail.swapBuySuccess', { spent: val, bought: boughtTokens, ticker: project.agentTicker }));
+      setSwapSuccess(true);
+      setSwapAmount('20');
+    } else {
+      if (tokenBalance < val) {
+        setSwapErrText(t('detail.errorInsufficientTokens', { ticker: project.agentTicker, balance: tokenBalance }));
+        return;
+      }
+
+      const receivedTON = Number((val * project.tokenPrice).toFixed(2));
+
+      updateProfile({
+        balanceTON: Number((profile.balanceTON + receivedTON).toFixed(2))
+      });
+
+      const nextInv = { ...localInventory, [project.id]: Math.max(0, Number((tokenBalance - val).toFixed(2))) };
+      saveLocalInventory(nextInv);
+
+      setSwapSuccessMsg(t('detail.swapSellSuccess', { sold: val, ticker: project.agentTicker, received: receivedTON }));
+      setSwapSuccess(true);
+      setSwapAmount('10');
+    }
+  };
+
+  // Invest handler
+  const handleInvest = (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorText('');
+
+    if (!isConnected || !profile) {
+      handleWalletFallback();
+      return;
+    }
+
+    const amount = Number(investAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setErrorText(t('detail.errorInvalidSubscribeAmount'));
+      return;
+    }
+
+    if (!project) return;
+
+    if (investmentMode !== 'team' && amount < project.minInvestment) {
+      setErrorText(t('detail.errorMinSubscribeAmount', { min: project.minInvestment }));
+      return;
+    }
+    if (investmentMode === 'team' && amount < 5) {
+      setErrorText(t('detail.errorTeamMinSubscribe'));
+      return;
+    }
+
+    if (profile.balanceTON < amount) {
+      setErrorText(t('detail.errorWalletTonInsufficient', { balance: profile.balanceTON }));
+      return;
+    }
+
+    const isInvested = investInProject(project.id, amount, profile.walletAddress);
+    if (isInvested) {
+      updateProfile({
+        balanceTON: Number((profile.balanceTON - amount).toFixed(2))
+      });
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+      }, 5000);
+    } else {
+      setErrorText(t('detail.errorBroadcastTx'));
+    }
+  };
+
+  // 72H Sandbox Simulation State declarations
+  const [isSandboxCollapsed, setIsSandboxCollapsed] = useState(true);
+  const [currentHour, setCurrentHour] = useState<number>(0);
+  const [simulatedProfit, setSimulatedProfit] = useState<number>(0);
+  const [sandboxLogs, setSandboxLogs] = useState<Array<{ time: string; message: string; type: 'info' | 'success' | 'warn' | 'system' }>>([
+    { time: "00:00:00", message: "🔒 [SYSTEM] 72H Live Sandbox Code Execution Simulator initialized.", type: 'system' },
+    { time: "00:01:10", message: "⚙️ [AST AUDIT] AST structural check passed. Zero external re-entrancy vectors found.", type: 'success' },
+    { time: "00:05:30", message: "📡 [NETWORK] Handshake established with TON decentralized proxy nodes.", type: 'info' }
+  ]);
+
+  const project = projects.find(p => p.id === id);
+
+  const handleFastForward = (hoursToAdd: number) => {
+    if (!project) return;
+    const newHour = Math.min(72, currentHour + hoursToAdd);
+    if (newHour === currentHour) return;
+
+    setCurrentHour(newHour);
+    const addedLogs: typeof sandboxLogs = [];
+    const profitSegment = Number((Math.random() * 3.5 + 1.5).toFixed(2));
+    setSimulatedProfit(p => Number((p + profitSegment).toFixed(2)));
+
+    // Event timeline milestones mapping
+    if (newHour >= 12 && currentHour < 12) {
+      addedLogs.push(
+        { time: "12:00:00", message: "🤖 [AGENT SIM] Autonomous telemetry scan active. Filtered 45 high-weight arbitrage triggers.", type: 'info' },
+        { time: "12:45:00", message: `📈 [YIELD] High-frequency cross-DEX transaction complete! Generated profit: +${(profitSegment * 0.4).toFixed(2)} TON.`, type: 'success' }
+      );
+      if (project.milestones && project.milestones[0] && project.milestones[0].status !== 'completed') {
+        advanceProjectMilestone(project.id, 0, 'completed');
+        // Automatically make next milestone ongoing
+        if (project.milestones[1] && project.milestones[1].status === 'pending') {
+          advanceProjectMilestone(project.id, 1, 'ongoing');
+        }
+        addedLogs.push({ time: "13:00:00", message: "🏆 [MILESTONE 1 VERIFIED] Concept code draft review OK. Autoreleased 25% funds.", type: 'success' });
+      }
+    }
+    if (newHour >= 24 && currentHour < 24) {
+      addedLogs.push(
+        { time: "24:00:00", message: "🌐 [COMMUNITY] Auto-posting Twitter and Telegram AI metrics updates.", type: 'info' },
+        { time: "24:30:00", message: "⚙️ [DEPLOY] Deploying dynamic smart router test oracle to mainnet.", type: 'success' }
+      );
+      if (project.milestones && project.milestones[1] && project.milestones[1].status !== 'completed') {
+        advanceProjectMilestone(project.id, 1, 'completed');
+        if (project.milestones[2] && project.milestones[2].status === 'pending') {
+          advanceProjectMilestone(project.id, 2, 'ongoing');
+        }
+        addedLogs.push({ time: "25:00:00", message: "🏆 [MILESTONE 2 VERIFIED] Decentralized deploy tested pass. Released 25% funds.", type: 'success' });
+      }
+    }
+    if (newHour >= 48 && currentHour < 48) {
+      addedLogs.push(
+        { time: "48:00:00", message: "⚡ [STRESS TEST] Virtual load: 15,000 transactions/min. Solved dynamic memepool slippage.", type: 'info' },
+        { time: "50:00:00", message: `💸 [FEE DISPATCH] Executed on-chain automatic multi-sig tax collection: +${(profitSegment * 0.8).toFixed(2)} TON.`, type: 'success' }
+      );
+      if (project.milestones && project.milestones[2] && project.milestones[2].status !== 'completed') {
+        advanceProjectMilestone(project.id, 2, 'completed');
+        if (project.milestones[3] && project.milestones[3].status === 'pending') {
+          advanceProjectMilestone(project.id, 3, 'ongoing');
+        }
+        addedLogs.push({ time: "50:30:00", message: "🏆 [MILESTONE 3 VERIFIED] Scalability & pool seed parameters verified. Released 25% funds.", type: 'success' });
+      }
+    }
+    if (newHour >= 72 && currentHour < 72) {
+      addedLogs.push(
+        { time: "71:59:00", message: "🛡️ [AUDIT] All compliance checkpoints crossed. Yield routing tables fully updated.", type: 'system' },
+        { time: "72:00:00", message: "🎉 [CYCLE PASS] 72-Hour validation complete! Entering autonomous continuous routing mode.", type: 'success' }
+      );
+      if (project.milestones && project.milestones[3] && project.milestones[3].status !== 'completed') {
+        advanceProjectMilestone(project.id, 3, 'completed');
+        addedLogs.push({ time: "72:00:00", message: "🏆 [MILESTONE 4 VERIFIED] Fully Commercialized milestone reached! Enabled general AMM seed trading.", type: 'success' });
+      }
+    } else if (addedLogs.length === 0) {
+      addedLogs.push({
+        time: `${String(newHour).padStart(2, '0')}:00:00`,
+        message: `🔄 [HEARTBEAT] Health ping stable. Node uptime: 100%. Simulated epoch yield: +${profitSegment} TON`,
+        type: 'info'
+      });
+    }
+
+    setSandboxLogs(prev => [...prev, ...addedLogs]);
+  };
+
+  const handleResetSandbox = () => {
+    if (!project) return;
+    setCurrentHour(0);
+    setSimulatedProfit(0);
+    setSandboxLogs([
+      { time: "00:00:00", message: "↩️ [SYSTEM] Sandbox state re-initialized to Hour 0.", type: 'system' },
+      { time: "00:01:10", message: "⚙️ [AST AUDIT] AST structural check passed. Zero external re-entrancy vectors found.", type: 'success' }
+    ]);
+    // Reset milestones back to pending/ongoing to allow re-run of the test sandbox!
+    if (project.milestones) {
+      advanceProjectMilestone(project.id, 0, 'ongoing');
+      advanceProjectMilestone(project.id, 1, 'pending');
+      advanceProjectMilestone(project.id, 2, 'pending');
+      advanceProjectMilestone(project.id, 3, 'pending');
+    }
+  };
+
+  const handleWalletFallback = () => {
+    connectWallet();
+  };
+
+  if (!project) {
+    return (
+      <div className="max-w-md mx-auto py-24 px-4 text-center space-y-4">
+        <Bot size={48} className="text-rose-500 mx-auto animate-bounce" />
+        <h2 className="text-lg font-black text-white">{t('detail.projectNotFound')}</h2>
+        <p className="text-xs text-gray-400">
+          {t('detail.projectRecycledDesc')}
+        </p>
+        <Link
+          to="/feed"
+          className="inline-block px-5 py-2 bg-[#635BFF] text-white text-xs font-bold rounded-lg"
+        >
+          {t('detail.backToExplore')}
+        </Link>
+      </div>
+    );
+  }
+
+  // Get Cover Gradient Index
+  const getGradientIndex = (id: string) => {
+    let sum = 0;
+    for (let i = 0; i < id.length; i++) {
+      sum += id.charCodeAt(sum % id.length);
+    }
+    const gradients = [
+      'from-[#3B82F6] via-[#1E40AF] to-[#0F172A]',
+      'from-[#10B981] via-[#065F46] to-[#0A0F1D]',
+      'from-[#F59E0B] via-[#92400E] to-[#0D0B1A]',
+      'from-[#EC4899] via-[#9D174D] to-[#0F0C1B]',
+      'from-[#8B5CF6] via-[#5B21B6] to-[#080B1A]',
+      'from-[#14B8A6] via-[#115E59] to-[#060812]'
+    ];
+    return gradients[sum % gradients.length];
+  };
+
+  const gradientClass = getGradientIndex(project.id);
+  const isFinished = project.status === 'success';
+
+  // Calculate simulated remaining days
+  const getRemainingDays = () => {
+    const end = new Date(project.endTime).getTime();
+    const diff = end - Date.now();
+    if (diff <= 0) return 0;
+    return Math.ceil(diff / (24 * 3600 * 1000));
+  };
+  const remDays = getRemainingDays();
+
+  // Simulated live income chart for success state / running model
+  const simulatedHistory = [
+    { day: "05-20", gas: 180, income: 85, payouts: 59 },
+    { day: "05-21", gas: 210, income: 110, payouts: 77 },
+    { day: "05-22", gas: 250, income: 140, payouts: 98 },
+    { day: "05-23", gas: 310, income: 195, payouts: 136 },
+    { day: "05-24", gas: 290, income: 180, payouts: 126 },
+    { day: "05-25", gas: 360, income: 232, payouts: 162 },
+    { day: "05-26", gas: 420, income: 284, payouts: 198 },
+    { day: "05-27", gas: 480, income: 322, payouts: 225 }
+  ];
+
+  // Simulated Tx list representation
+  const simulatedTxs = [
+    { id: "tx-da2", action: t('detail.actionAdSponsorship'), amount: "84.5 TON", from: "EQF1_sponsor_88", time: t('common.hoursAgo', { count: 2 }), status: t('detail.statusConfirmed') },
+    { id: "tx-f1a", action: t('detail.actionHighFreqProfit'), amount: "12.2 TON", from: "Ston.Fi Pool A", time: t('common.hoursAgo', { count: 5 }), status: t('detail.statusConfirmed') },
+    { id: "tx-a09", action: t('detail.actionAllocationPayout'), amount: "-198.0 TON", from: t('detail.osaMultisigAccount'), time: t('common.daysAgo', { count: 1 }), status: t('detail.statusSettled') },
+    { id: "tx-bca", action: t('detail.actionDexRoyalties'), amount: "44.0 TON", from: "EQA2_api_caller", time: t('common.daysAgo', { count: 1 }), status: t('detail.statusConfirmed') }
+  ];
+
+  const radialMilestoneData = (project.milestones || []).map((ms, index) => {
+    let progressVal = 0;
+    if (ms.status === 'completed') progressVal = 100;
+    else if (ms.status === 'ongoing') progressVal = Math.min(99, 40 + (currentHour / 72) * 60);
+    else progressVal = 10;
+
+    let color = '#3B82F6';
+    if (index === 0) color = '#10B981';
+    else if (index === 1) color = '#635BFF';
+    else if (index === 2) color = '#0EA5E9';
+    else if (index === 3) color = '#F59E0B';
+
+    return {
+      name: ms.title,
+      value: progressVal,
+      fill: color
+    };
+  });
+
+  const handlePostComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentText.trim()) return;
+
+    if (!isConnected) {
+      handleWalletFallback();
+      return;
+    }
+
+    const commentator = profile?.username || 'TON_Gamer_0x8b';
+    addComment(project.id, newCommentText.trim(), commentator);
+    setNewCommentText('');
+    setCommentSuccess(true);
+    setTimeout(() => setCommentSuccess(false), 2000);
+  };
+
+  const handleUpvote = () => {
+    upvoteProject(project.id);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 text-left select-none animate-in fade-in duration-200">
+      {/* Referral welcome banner */}
+      {refParam && (
+        <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-2xl flex items-center gap-3">
+          <Sparkles size={16} className="text-emerald-400 shrink-0" />
+          <p className="text-xs text-slate-300 leading-normal">
+            <span dangerouslySetInnerHTML={{ __html: t('detail.referrerExperienceActivated', { referrer: TONService.shortenAddress(refParam) }) }} />
+          </p>
+        </div>
+      )}
+
+      {/* Team Spark co-building invitation card */}
+      {invitedTeam && (
+        <div className="bg-[#1C160E]/50 border border-amber-500/25 p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Users size={20} className="text-amber-500 shrink-0 mt-0.5 animate-pulse" />
+            <div className="space-y-1">
+              <span className="text-[10px] font-mono text-amber-500 font-bold block uppercase tracking-wider">{t('detail.groupSparkInviteHeader')}</span>
+              <p className="text-xs text-gray-300">
+                <span dangerouslySetInnerHTML={{ __html: t('detail.groupSparkInviteDesc', { creator: invitedTeam.creatorName, current: invitedTeam.currentAmount, target: invitedTeam.targetAmount }) }} />
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                setSelectedTeamId(invitedTeam.id);
+                const formEl = document.getElementById('invest-form');
+                if (formEl) {
+                  formEl.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs rounded-xl transition cursor-pointer active:scale-95"
+            >
+              {t('detail.joinTeamBtn')}
+            </button>
+            <button
+              onClick={() => setSelectedTeamId(undefined)}
+              className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-850 text-gray-400 hover:text-white text-xs font-bold rounded-xl transition cursor-pointer"
+            >
+              {t('detail.supportSoloBtn')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Back to feed anchor */}
+      <Link
+        to="/feed"
+        className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition"
+        title="Go Back"
+      >
+        <ArrowLeft size={13} />
+        <span>{t('detail.backToExploreFeed')}</span>
+      </Link>
+
+      {/* Hero Header Area */}
+      <div className={`rounded-3xl bg-gradient-to-br ${gradientClass} border border-[#212652] overflow-hidden shadow-2xl relative min-h-[220px] flex flex-col justify-end p-6 md:p-8 space-y-4`}>
+        {/* Subtle decorative mesh overlay */}
+        <div className="absolute inset-0 bg-black/40 mix-blend-multiply pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          {/* Brand/Product titles */}
+          <div className="space-y-2 max-w-2xl text-left">
+            <span className="p-1 px-2 pb-1 bg-white/10 rounded border border-white/20 text-[9.5px] font-mono font-bold tracking-wider text-white">
+              {project.category || 'DeFi Autonomous Robot'}
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+              <span>{project.agentName}</span>
+              <span className="text-[#A5C0FF] font-mono font-normal text-lg">(${project.agentTicker})</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-200 font-medium leading-relaxed max-w-xl">
+              {project.title}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] text-gray-300">
+              <span className="bg-[#090A14]/70 p-1 px-2 rounded-md font-mono border border-gray-800">
+                   {t('detail.multisigCreator')} {project.creatorAddress}
+              </span>
+              <span className="bg-[#090A14]/70 p-1 px-2 rounded-md font-sans border border-gray-800 flex items-center gap-1">
+                   {t('detail.onchainVerification')}
+                <span className={project.onchainVerifyStatus === 'verified' ? 'text-emerald-400 font-bold' : 'text-gray-400'}>
+                  {project.onchainVerifyStatus === 'verified' ? 'verified' : 'unverified'}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid: Wide core workflow tabs (left) and modular Lifecycle Emission Swapper (right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Left Section: Wide Tabs layout */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Header tabs row */}
+          <div className="flex bg-[#0A0B16] border border-[#1C1F3F] p-1 rounded-xl scrollbar-thin overflow-x-auto w-full">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'overview' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {t('detail.tabOverview')}
+            </button>
+            <button
+              onClick={() => setActiveTab('spark')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'spark' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {t('detail.tabSpark')}
+            </button>
+            <button
+              onClick={() => setActiveTab('health')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'health' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {t('detail.tabProjectHealth')}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('vesting')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  activeTab === 'vesting' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+              {t('detail.tabVesting')}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('operations')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  activeTab === 'operations' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+              {t('detail.tabOperations')}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('governance')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'governance' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {t('detail.tabGovernance')}
+            </button>
+            <button
+              onClick={() => setActiveTab('proof')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'proof' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {t('detail.tabProof')}
+            </button>
+            <button
+              onClick={() => setActiveTab('discussion')}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap px-4 ${
+                activeTab === 'discussion' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              Discussion ({project.commentsCount || project.comments?.length || 0})
+            </button>
+          </div>
+
+          {/* Tab content rendering logic */}
+          <div className="bg-[#0C0E1D] border border-[#1A1F45] rounded-2xl p-6 min-h-[300px] text-left">
+            {/* 1. Overview Tab */}
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                <div className="space-y-2.5">
+                  <h3 className="text-sm font-black text-white border-b border-[#21244E] pb-2 flex items-center gap-1.5">
+                    <Bot size={15} className="text-[#635BFF]" />
+                    <span>{t('detail.agentArchitectureTitle')}</span>
+                  </h3>
+                  <p className="text-xs text-gray-300 leading-relaxed font-sans">{project.description}</p>
+                  <p className="text-xs text-gray-400 leading-relaxed font-sans mt-2">
+                    {t('detail.agentArchitectureDescLong')}
+                  </p>
+                </div>
+
+                {/* RadialBarChart Milestone Tracker */}
+                <div className="bg-[#121429] border border-[#212652] rounded-2xl p-5 text-left space-y-3">
+                  <h4 className="text-xs font-black text-white flex items-center gap-1.5 uppercase font-sans text-[#A699FF]">
+                    {t('detail.milestonesRadarTitle')}
+                  </h4>
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="w-[180px] h-[180px] shrink-0 relative flex items-center justify-center font-sans">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <RadialBarChart
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="20%"
+                          outerRadius="100%"
+                          barSize={12}
+                          data={radialMilestoneData}
+                        >
+                          <RadialBar
+                            background={{ fill: '#141630' }}
+                            dataKey="value"
+                            cornerRadius={5}
+                          />
+                          <Tooltip
+                            contentStyle={{ backgroundColor: '#090A14', borderColor: '#22254B', color: '#fff', fontSize: '10px' }}
+                            formatter={(value: any, name: string, props: any) => [`${value}% ` + t('detail.statusDelivered'), props.payload.name]}
+                          />
+                        </RadialBarChart>
+                      </ResponsiveContainer>
+                      <div className="absolute text-center">
+                        <span className="text-[9px] text-gray-500 font-mono block">AVERAGE</span>
+                        <span className="text-sm font-black text-emerald-400 font-mono">
+                          {((radialMilestoneData.reduce((sum, d) => sum + d.value, 0)) / radialMilestoneData.length).toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 space-y-2 w-full">
+                      {radialMilestoneData.map((ms, idx) => {
+                        const originalMs = project.milestones?.[idx];
+                        return (
+                          <div key={idx} className="flex justify-between items-center text-[10.5px] bg-[#090A15]/60 p-2 rounded-lg border border-[#191D3E]/45">
+                            <div className="flex items-center gap-2 max-w-[70%]">
+                              <span className="w-2.5 h-2.5 rounded-sm shrink-0" style={{ backgroundColor: ms.fill }} />
+                              <span className="text-gray-300 font-bold truncate">{ms.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="font-mono text-white font-bold">{ms.value.toFixed(0)}%</span>
+                              <span className={`text-[8.5px] px-1.5 py-0.2 rounded uppercase font-sans font-black ${
+                                originalMs?.status === 'completed' ? 'bg-emerald-950/40 text-emerald-400' : originalMs?.status === 'ongoing' ? 'bg-sky-955/40 text-sky-400 animate-pulse' : 'bg-slate-900 text-gray-500'
+                              }`}>
+                                {originalMs?.status || 'pending'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Screenshot/Demo Placeholder Grid */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-gray-200">{t('detail.sandboxScreenshotTitle')}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 bg-[#121429] border border-[#212650] rounded-xl flex items-center gap-3.5">
+                      <div className="p-2.5 bg-[#635BFF]/10 rounded-lg text-[#847BFF]">
+                        <HardDrive size={18} />
+                      </div>
+                      <div className="text-left font-mono">
+                        <span className="text-[10.5px] font-bold text-gray-200 block">{t('detail.astTranslationModule')}</span>
+                        <span className="text-[9px] text-gray-500">{t('detail.compilerReady')}</span>
+                      </div>
+                    </div>
+                    <div className="p-4 bg-[#121429] border border-[#212650] rounded-xl flex items-center gap-3.5">
+                      <div className="p-2.5 bg-[#10B981]/10 rounded-lg text-emerald-400">
+                        <Award size={18} />
+                      </div>
+                      <div className="text-left font-mono">
+                        <span className="text-[10.5px] font-bold text-gray-200 block">{t('detail.ammBacktesting')}</span>
+                        <span className="text-[9px] text-gray-500">{t('detail.slippageLossMin')}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 智能体真实多签交割和共建账本 */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between border-b border-[#21244E] pb-2">
+                    <h3 className="text-xs font-black text-white flex items-center gap-1.5 uppercase font-sans text-indigo-300">
+                      <Coins size={14} className="text-[#FF9F1A]" />
+                      <span>{t('detail.ledgerTitle')}</span>
+                    </h3>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <div className="min-w-full inline-block align-middle">
+                      <div className="overflow-hidden border border-[#21244D] rounded-xl bg-[#090A15]/85">
+                        <table className="min-w-full divide-y divide-slate-800/40 text-xs text-left">
+                          <thead>
+                            <tr className="bg-[#121429]/95 text-gray-400 font-mono text-[9px] uppercase font-black">
+                              <th className="p-3 pl-4">{t('detail.colAction')}</th>
+                              <th className="p-3">{t('detail.colAmount')}</th>
+                              <th className="p-3">{t('detail.colFrom')}</th>
+                              <th className="p-3">{t('detail.colTime')}</th>
+                              <th className="p-3 pr-4 text-center">{t('detail.expectedPayoutPerformanceTooltip')}</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-800/25 font-mono">
+                            {simulatedTxs.map((tx, idx) => {
+                              // Expected ROI dynamic calculation as requested
+                              const originalAmt = parseFloat(tx.amount);
+                              const dynamicROI = (18.5 + (simulatedProfit * 1.25) + (project.progress * 0.15) - (idx * 3.5)).toFixed(2);
+                              const simulatedROIValue = (originalAmt && originalAmt > 0) ? (originalAmt * (1 + parseFloat(dynamicROI) / 100)).toFixed(1) : 0;
+
+                              return (
+                                <tr key={tx.id} className="hover:bg-white/[0.02] transition">
+                                  <td className="p-3 pl-4 font-sans text-left">
+                                    <span className="font-mono text-[10px] text-gray-500 block">#{tx.id}</span>
+                                    <span className="text-white font-extrabold text-[11.5px] block">{tx.action}</span>
+                                  </td>
+                                  <td className={`p-3 font-bold ${tx.amount.startsWith('-') ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                    {tx.amount.startsWith('-') ? '' : '+'}{tx.amount}
+                                  </td>
+                                  <td className="p-3 text-gray-400 text-[10.5px] font-sans truncate max-w-[125px]" title={tx.from}>
+                                    {tx.from}
+                                  </td>
+                                  <td className="p-3 text-gray-500 text-[10.5px]">
+                                    <span>{tx.time}</span>
+                                  </td>
+                                  <td className="p-3 pr-4 text-center align-middle">
+                                    {/* Tooltip Wrapper */}
+                                    <div className="relative group/tool inline-block">
+                                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#635BFF]/10 hover:bg-[#635BFF]/35 border border-[#635BFF]/35 text-[#A699FF] rounded-lg text-[10px] font-bold cursor-help transition">
+                                        <span>{t('detail.ledgerAllocation', { roi: dynamicROI })}</span>
+                                        <HelpCircle size={11} className="text-sky-300" />
+                                      </span>
+
+                                      {/* Tooltip block positioned absolute */}
+                                      <div className="absolute right-0 bottom-full mb-2 hidden group-hover/tool:block w-70 p-4.5 bg-[#090A14] border border-[#21265E] rounded-xl shadow-2xl text-[10.5px] leading-relaxed z-50 text-gray-300 font-sans space-y-2 select-none animate-in fade-in duration-100">
+                                        <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
+                                          <span className="font-semibold text-white uppercase tracking-wider text-[10px]">{t('detail.expectedPayoutReportTitle')}</span>
+                                          <span className="text-[8px] bg-[#635BFF]/20 text-[#A699FF] rounded p-0.5 px-1 font-mono font-bold">LIVE ALLOC</span>
+                                        </div>
+                                        <p className="text-xs text-gray-400">
+                                          {t('detail.expectedPayoutReportDesc')}
+                                        </p>
+                                        <div className="bg-[#05060E] p-2 rounded border border-slate-800/60 font-mono text-[11px] flex justify-between items-center text-white">
+                                          <span>{t('detail.expectedPayoutPerformance')}</span>
+                                          <span className="text-emerald-400 font-black">{dynamicROI}%</span>
+                                        </div>
+                                        <div className="text-[10px] space-y-1 pt-1.5 border-t border-slate-800/40 text-gray-400 font-mono">
+                                          <div className="flex justify-between">
+                                            <span>{t('detail.accumulatedAgentProfit')}</span>
+                                            <span className="text-gray-200">+{simulatedProfit.toFixed(2)} TON</span>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <span>{t('detail.sparkAchievementProgress')}</span>
+                                            <span className="text-gray-200">{project.progress}%</span>
+                                          </div>
+                                          {originalAmt && originalAmt > 0 ? (
+                                            <div className="flex justify-between border-t border-dashed border-slate-800/50 pt-1 text-white text-[10.5px]">
+                                              <span>{t('detail.estimatedPayoutAmount')}</span>
+                                              <span className="text-emerald-450 font-black">≈ {simulatedROIValue} TON</span>
+                                            </div>
+                                          ) : null}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Info */}
+                <div className="space-y-3 pt-2">
+                  <h3 className="text-xs font-black text-white border-b border-[#21244E] pb-2 flex items-center gap-1.5">
+                    <Users size={14} className="text-sky-400" />
+                    <span>{t('detail.creatorTeamHistoryTitle')}</span>
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed bg-[#101224] p-3 rounded-xl border border-[#20234B]">
+                    {project.teamDesc || t('detail.defaultTeamDesc')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* 2. Spark Tab */}
+            {activeTab === 'spark' && (
+              <div className="space-y-6 animate-in fade-in duration-100">
+                {/* Creator Assurance model details banner */}
+                <div className="p-4 bg-[#142A1D]/30 border border-emerald-900/40 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={16} className="text-emerald-400" />
+                    <span className="text-xs font-bold text-white uppercase">
+                      {t('detail.assuranceModeLabel')} {project.assuranceMode === 'staked' ? t('detail.assuranceModeStaked') : t('detail.assuranceModeUnstaked')}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">
+                    {project.assuranceMode === 'staked'
+                      ? t('detail.assuranceModeStakedDesc')
+                      : t('detail.assuranceModeUnstakedDesc')}
+                  </p>
+                </div>
+
+                {/* Milestones timeline */}
+                <div className="space-y-4 text-left">
+                  <h3 className="text-xs font-bold text-white border-b border-[#21244E] pb-2">{t('detail.milestoneTimelineTitle')}</h3>
+
+                  <div className="space-y-4">
+                    {(project.milestones || []).map((ms, index) => (
+                      <div key={index} className="flex gap-4 items-start relative pl-2 group">
+                        {/* Timeline visual bar */}
+                        <div className="flex flex-col items-center">
+                          <span className={`w-6 h-6 rounded-full flex items-center justify-center font-mono text-[10px] font-bold ${
+                            ms.status === 'completed' ? 'bg-[#10B981] text-black' : ms.status === 'ongoing' ? 'bg-sky-500 text-black animate-pulse' : 'bg-gray-800 text-gray-500'
+                          }`}>
+                            {index + 1}
+                          </span>
+                          {index < (project.milestones || []).length - 1 && (
+                            <div className="w-0.5 h-12 bg-gray-800 group-hover:bg-gray-700 transition" />
+                          )}
+                        </div>
+
+                        {/* Title and condition */}
+                        <div className="bg-[#101224] p-3 rounded-xl border border-[#1F234C] flex-1">
+                          <div className="flex justify-between items-center text-[10.5px]">
+                            <span className="font-bold text-white">{ms.title}</span>
+                            <span className="bg-[#080916] px-1.5 py-0.2 rounded font-mono text-[9px] text-gray-400">
+                              {t('detail.initialRelease', { ratio: ms.releaseRadio })}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1">{t('detail.unlockConditionLabel')} {ms.condition}</p>
+                          <span className={`text-[9px] font-bold block mt-1 uppercase ${
+                            ms.status === 'completed' ? 'text-emerald-400' : ms.status === 'ongoing' ? 'text-sky-400' : 'text-gray-500'
+                          }`}>
+                            {t('detail.currentProgressLabel')} {ms.status === 'completed' ? t('detail.statusVerified') : ms.status === 'ongoing' ? t('detail.statusDeveloping') : t('detail.statusLocked')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Jump to fund button overlay */}
+                {!isFinished && (
+                  <div className="pt-2 text-center">
+                    <button
+                      onClick={() => navigate(`/launch/${project.id}`)}
+                      className="px-6 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl transition cursor-pointer"
+                    >
+                      {t('detail.supportProjectImmediate')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Project Health Tab */}
+            {activeTab === 'health' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {/* 1. Public Metrics Panel */}
+                <div className="bg-[#121424] border border-[#22253E] rounded-2xl p-6 space-y-6">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-[#22253E] pb-4">
+                    <div>
+                      <span className="text-[10px] text-gray-500 font-mono tracking-wider block">PUBLIC STATUS TELEMETRY</span>
+                      <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
+                        <Activity className="text-emerald-400" size={16} />
+                        <span>{t('detail.healthDashboardTitle')}</span>
+                      </h4>
+                    </div>
+                    <span className="p-1 px-3 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full shrink-0">
+                      {t('detail.currentStageMiddle')}
+                    </span>
+                  </div>
+
+                  {/* Top Stats Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-[#1A1C2C] border border-[#22253E] rounded-xl p-4.5 text-left">
+                      <span className="text-[9.5px] text-gray-400 font-mono tracking-wider block">FUNDING PROGRESS</span>
+                      <span className="text-lg font-black text-white block mt-1">
+                        {((project.raisedAmount / project.goalAmount) * 100).toFixed(0)}%
+                      </span>
+                      <div className="text-[9.5px] text-emerald-400 mt-1 font-bold">{t('detail.goalReachedCheck')}</div>
+                    </div>
+                    <div className="bg-[#1A1C2C] border border-[#22253E] rounded-xl p-4.5 text-left">
+                      <span className="text-[9.5px] text-gray-400 font-mono tracking-wider block">TOKEN DEPLOYMENT</span>
+                      <span className="text-lg font-black text-white block mt-1">{t('detail.statusDeployedAllocated')}</span>
+                      <span className="text-[9.5px] text-gray-505 block mt-1 font-mono">TEP-74 JETTON CONTRACT</span>
+                    </div>
+                    <div className="bg-[#1A1C2C] border border-[#22253E] rounded-xl p-4.5 text-left">
+                      <span className="text-[9.5px] text-gray-400 font-mono tracking-wider block">GOVERNANCE VALUE</span>
+                      <span className="text-lg font-black text-white block mt-1">
+                        {(() => {
+                          const projectProposals = proposals[project.id] || [];
+                          const passedAmount = projectProposals
+                            .filter(p => p.status === 'passed')
+                            .reduce((sum, p) => sum + p.amount, 0);
+                          return (project.raisedAmount * 0.5 - passedAmount).toFixed(0);
+                        })()} TON
+                      </span>
+                      <div className="text-[9.5px] text-purple-400 mt-1 font-bold">{t('detail.governanceEscrowLocked')}</div>
+                    </div>
+                  </div>
+
+                  {/* Grid of Chart + List Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                    {/* Recharts Pie Chart (40% width on md+) */}
+                    <div className="md:col-span-5 flex flex-col items-center justify-center p-3 bg-[#1A1C2C]/50 border border-[#22253E]/50 rounded-xl min-h-[220px]">
+                      <span className="text-[9.5px] text-gray-400 font-bold block mb-2">{t('detail.fundingFlowTitle')}</span>
+                      <div className="relative w-40 h-40">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={[
+                                { name: t('detail.fundingDistributionTeam'), value: 30 },
+                                { name: t('detail.fundingDistributionGov'), value: 50 },
+                                { name: t('detail.fundingDistributionCreator'), value: 18 },
+                                { name: t('detail.fundingDistributionFee'), value: 2 },
+                              ]}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={65}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              <Cell fill="#635BFF" />
+                              <Cell fill="#FFA825" />
+                              <Cell fill="#10B981" />
+                              <Cell fill="#EF4444" />
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{ backgroundColor: '#090A13', borderColor: '#23264B', borderRadius: '8px', fontSize: '11px' }}
+                              formatter={(value) => [`${value}%`, t('detail.fundingDistributionRatio')]}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                          <span className="text-lg font-black text-white font-mono">100%</span>
+                          <span className="text-[8px] text-gray-500 font-bold uppercase">Allocated</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Chart list detail cards (70% width on md+) */}
+                    <div className="md:col-span-7 space-y-3.5 text-left">
+                      {(() => {
+                        const projectProposals = proposals[project.id] || [];
+                        const passedAmount = projectProposals
+                          .filter(p => p.status === 'passed')
+                          .reduce((sum, p) => sum + p.amount, 0);
+
+                        const totalGovAllocated = project.raisedAmount * 0.5;
+                        const remainingGovFunds = totalGovAllocated - passedAmount;
+                        const teamAllocated = project.raisedAmount * 0.3;
+                        const teamReleased = teamAllocated + passedAmount;
+                        const projectAllocated = project.raisedAmount * 0.18;
+                        const platformFee = project.raisedAmount * 0.02;
+
+                        return (
+                          <>
+                            {/* Team shares */}
+                            <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#635BFF]" />
+                                <div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionTeam')} (30% Immediate)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.teamOpsImmediateDesc')}</div>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-xs font-black text-white">{teamReleased.toFixed(1)} / {teamAllocated.toFixed(0)} TON</div>
+                                <span className="p-0.5 px-2 bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 rounded text-[9px] font-bold inline-block mt-0.5">
+                                  {t('detail.teamOpsReleased')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Gov shares */}
+                            <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#FFA825]" />
+                                <div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.govEscrowTitle')}</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.govEscrowDesc')}</div>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-xs font-black text-white">{remainingGovFunds.toFixed(1)} / {totalGovAllocated.toFixed(0)} TON</div>
+                                <span className="p-0.5 px-2 bg-[#FFA825]/10 text-[#FFA825] border border-[#FFA825]/20 rounded text-[9px] font-bold inline-block mt-0.5">
+                                  {t('detail.govEscrowLockedStatus')}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Project allocation */}
+                            <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
+                                <div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionCreator')} (18% Project)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.creatorControlDesc')}</div>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-xs font-black text-white">{projectAllocated.toFixed(0)} TON</div>
+                                <span className="text-[9px] text-[#10B981] font-bold block mt-0.5">{t('detail.creatorControlStatus')}</span>
+                              </div>
+                            </div>
+
+                            {/* Platform fee */}
+                            <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+                                <div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionFee')} (2% Fee)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.platformFeeDesc')}</div>
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0">
+                                <div className="text-xs font-black text-white">{platformFee.toFixed(0)} TON</div>
+                                <span className="text-[9px] text-gray-400 font-bold block mt-0.5">{t('detail.platformFeeStatus')}</span>
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* Bottom details grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[#22253E] pt-5 text-xs text-gray-300">
+                    <div>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.unlockStatus')}</span>
+                      <span className="font-bold text-amber-500 mt-0.5 block">{t('detail.statusRequiresVote')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.activeUsers')}</span>
+                      <span className="font-bold text-white mt-0.5 block">{t('detail.activeUsersGrowth')}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.tokenMarketPrice')}</span>
+                      <span className="font-bold text-emerald-400 mt-0.5 block">0.42 TON (+15% 7d)</span>
+                    </div>
+                    <div>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.deliveredMilestonesCount')}</span>
+                      <span className="font-bold text-[#8B83FF] mt-0.5 block">{t('detail.milestonesRatio')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Pending Proposals List (Only displayed if user backed this project) */}
+                {(() => {
+                  const projectProposals = proposals[project.id] || [];
+                  const activeProps = projectProposals.filter(p => p.status === 'active');
+                  const userBacking = project.backers?.find(b => b.address === walletAddress);
+                  const userTokens = userBacking ? Math.round(userBacking.amount / project.tokenPrice) : 0;
+                  const userVoteWeight = userTokens > 0 ? Math.round(Math.sqrt(userTokens)) : 0;
+
+                  return (
+                    <div className="space-y-4 text-left">
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider pl-1">{t('detail.governanceProposalsTitle')}</h4>
+
+                      {activeProps.length === 0 ? (
+                        <div className="bg-[#121424]/40 border border-[#22253E] p-6 rounded-2xl text-center text-xs text-gray-500 leading-relaxed">
+                          {t('detail.noPendingProposals')}<br />
+                          <span className="text-[10px] text-gray-600">{t('detail.secondWithdrawalNotify')}</span>
+                        </div>
+                      ) : (
+                        activeProps.map((prop) => {
+                          const hasVoted = prop.votedAddresses?.includes(walletAddress || "");
+                          const totalVotesWeight = prop.yesWeight + prop.noWeight;
+                          const yesPercent = totalVotesWeight > 0 ? (prop.yesWeight / totalVotesWeight) * 100 : 0;
+                          const noPercent = totalVotesWeight > 0 ? (prop.noWeight / totalVotesWeight) * 100 : 0;
+
+                          return (
+                            <div key={prop.id} className="bg-[#121424] border border-[#22253E] rounded-2xl p-5.5 space-y-4">
+                              <div className="flex justify-between items-start gap-4 flex-wrap">
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="p-1 px-2 text-[9.5px] font-mono font-bold bg-[#FFA825]/10 text-[#FFA825] border border-[#FFA825]/20 rounded-md">
+                                      {t('detail.pendingWithdrawalRequest')}
+                                    </span>
+                                    <span className="text-xs text-gray-400 font-bold">{t('detail.proposalId', { id: prop.id.toUpperCase() })}</span>
+                                  </div>
+                                  <h5 className="text-sm font-bold text-white mt-2 leading-relaxed">
+                                    {t('detail.withdrawalAmountLabel')}<span className="text-[#8B83FF] font-black">{prop.amount} TON</span>
+                                  </h5>
+                                  <p className="text-xs text-gray-300 mt-1 leading-relaxed bg-[#1A1C2C]/50 p-2.5 rounded-xl border border-slate-900 font-sans">
+                                    <strong className="text-gray-400">{t('detail.withdrawalPurposeLabel')}</strong>{prop.purpose}
+                                  </p>
+                                </div>
+                                <div className="text-right shrink-0">
+                                  <span className="text-[10px] text-rose-400 font-bold block bg-rose-950/20 p-1 px-2.5 rounded-full border border-rose-900/35">
+                                    {t('detail.remainingTimeLabel', { hours: 48 })}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Voting stats weight charts */}
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-[10.5px] font-bold text-gray-400">
+                                  <span>{t('detail.proposalYesPercent', { percent: yesPercent.toFixed(0), weight: prop.yesWeight.toFixed(0) })}</span>
+                                  <span>{t('detail.proposalNoPercent', { percent: noPercent.toFixed(0), weight: prop.noWeight.toFixed(0) })}</span>
+                                </div>
+                                <div className="h-2 w-full bg-[#1A1C2C] rounded-full overflow-hidden flex">
+                                  <div className="h-full bg-[#10B981] transition-all duration-300" style={{ width: `${yesPercent}%` }} />
+                                  <div className="h-full bg-[#EF4444] transition-all duration-300" style={{ width: `${noPercent}%` }} />
+                                </div>
+                                <div className="text-[9.5px] text-gray-500 font-sans mt-1">
+                                  {t('detail.proposalVotesSummary', { yesCount: prop.votesCount?.yes || 0, noCount: prop.votesCount?.no || 0 })}
+                                </div>
+                              </div>
+
+                              {/* Action Buttons panel for Backers */}
+                              <div className="border-t border-[#22253E] pt-4.5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div>
+                                  {userVoteWeight > 0 ? (
+                                    <div className="text-xs text-gray-300 font-bold">
+                                      {t('detail.yourHolding')} <span className="text-emerald-400">{userTokens}</span> {project.agentTicker} |
+                                      {t('detail.yourVoteWeight')} <span className="text-indigo-400">{userVoteWeight}</span>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-505 font-bold">
+                                      {t('detail.cannotVoteNoTokens')}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {userVoteWeight > 0 && (
+                                  <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                                    {hasVoted ? (
+                                      <div className="p-2 px-4 bg-slate-900 border border-slate-850 text-gray-400 text-xs font-bold rounded-xl flex items-center gap-1.5 w-full justify-center">
+                                        <CheckCircle size={14} className="text-emerald-400" />
+                                        <span>{t('detail.youVoted')}</span>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <button
+                                          disabled={voteSubmitting === prop.id}
+                                          onClick={() => handleVote(prop.id, 'yes')}
+                                          className="flex-1 sm:flex-initial p-2 px-5 bg-emerald-650 hover:bg-emerald-550 text-white text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1 min-w-[90px]"
+                                        >
+                                          {voteSubmitting === prop.id ? t('common.submitting') : t('detail.voteApprove')}
+                                        </button>
+                                        <button
+                                          disabled={voteSubmitting === prop.id}
+                                          onClick={() => handleVote(prop.id, 'no')}
+                                          className="flex-1 sm:flex-initial p-2 px-5 bg-rose-650 hover:bg-rose-550 text-white text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1 min-w-[90px]"
+                                        >
+                                          {voteSubmitting === prop.id ? t('common.submitting') : t('detail.voteReject')}
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Vesting Tab */}
+            {activeTab === 'vesting' && (() => {
+              const projectRounds = rounds[project.id] || [];
+              if (projectRounds.length === 0) {
+                const avgPrice = project.raisedAmount > 0 && project.goalAmount > 0
+                  ? 0.01 + (project.raisedAmount / project.goalAmount) * 0.005
+                  : 0.01;
+                loadRounds(project.id, 1000000, avgPrice);
+                return <div className="text-gray-400 text-xs p-8 text-center">{t('detail.loadingUnlockData')}</div>;
+              }
+              const unlockedRounds = projectRounds.filter(r => r.unlocked).length;
+              const totalLocked = 38;
+              const unlockedPct = projectRounds[0]?.unlocked ? 2 + (unlockedRounds - 1) * (totalLocked / 10) : 0;
+              return (
+                <div className="space-y-6 animate-fade-in">
+                  {/* Summary header */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                      <div className="text-2xl font-black text-white">{unlockedRounds}/10</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.roundUnlocked')}</div>
+                    </div>
+                    <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                      <div className="text-2xl font-black text-[#635BFF]">{unlockedPct.toFixed(1)}%</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.teamUnlocked')}</div>
+                    </div>
+                    <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                      <div className="text-2xl font-black text-[#FFA825]">50%</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.priceIncreasePerRound')}</div>
+                    </div>
+                    <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                      <div className="text-2xl font-black text-emerald-400">24h</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.maintenanceDuration')}</div>
+                    </div>
+                  </div>
+
+                  {/* Round timeline */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('detail.tenRoundsProgress')}</span>
+                    {projectRounds.map((round) => (
+                      <div key={round.round}
+                        className={`p-3 border rounded-xl flex items-center gap-4 ${
+                          round.unlocked ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[#1A1C2C] border-[#22253E]'
+                        }`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${
+                          round.unlocked ? 'bg-emerald-500 text-white' : 'bg-[#22253E] text-gray-500'
+                        }`}>
+                          {round.unlocked ? '✓' : round.round}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-bold text-white">
+                            {t('detail.roundUnlockProgress', { round: round.round, locked: round.locked })}
+                          </div>
+                          <div className="text-[9px] text-gray-500 mt-0.5">
+                            {t('detail.priceThresholdTrigger', { price: round.priceThreshold })}
+                            {round.matched && !round.unlocked && (
+                              <span className="text-amber-400 ml-2">{t('detail.maintenanceHours', { hours: round.matchedAt ? Math.ceil((Date.now() - new Date(round.matchedAt).getTime()) / 3600000) : '?' })}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className={`text-xs font-black ${round.unlocked ? 'text-emerald-400' : 'text-gray-500'}`}>
+                            {round.unlocked ? t('detail.statusRoundReleased') : round.matched ? t('detail.statusRoundWaiting') : t('detail.statusRoundLocked')}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Operations Tab */}
+            {activeTab === 'operations' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-[#635BFF]">10%</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsTokenPool')}</div>
+                  </div>
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-emerald-400">2.3%</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsUsed')}</div>
+                  </div>
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-white">3</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsApplicationLog')}</div>
+                  </div>
+                </div>
+
+                {/* Apply form */}
+                <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">{t('detail.applyOpsBudgetTitle')}</span>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder={t('detail.opsAmountPlaceholder')} className="flex-1 bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <input type="text" placeholder={t('detail.opsPurposePlaceholder')} className="flex-[2] bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <button className="px-4 py-2 bg-[#635BFF] text-white rounded-lg text-xs font-bold hover:bg-[#5245EE] transition">
+                      {t('detail.submitOpsApplication')}
+                    </button>
+                  </div>
+                </div>
+
+                {/* History */}
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('detail.opsApplicationLog')}</span>
+                  {[
+                    { id: 1, amount: '1.2%', purpose: t('detail.mockOpsPurpose1'), status: 'passed', votes: { yes: 45, no: 8 } },
+                    { id: 2, amount: '0.8%', purpose: t('detail.mockOpsPurpose2'), status: 'passed', votes: { yes: 52, no: 3 } },
+                    { id: 3, amount: '2.5%', purpose: t('detail.mockOpsPurpose3'), status: 'active', votes: { yes: 18, no: 12 } },
+                  ].map((item) => (
+                    <div key={item.id} className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          item.status === 'passed' ? 'bg-emerald-500/10 text-emerald-400' :
+                          item.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
+                          'bg-amber-500/10 text-amber-400'
+                        }`}>
+                          {item.status === 'passed' ? t('detail.opsStatusPassed') : item.status === 'rejected' ? t('detail.opsStatusRejected') : t('detail.opsStatusVoting')}
+                        </span>
+                        <div>
+                          <div className="text-xs font-bold text-white">{item.purpose}</div>
+                          <div className="text-[9px] text-gray-500">{t('detail.opsPoolPercentage', { amount: item.amount })}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6 text-xs">
+                        <span className="text-emerald-400">✅ {item.votes.yes}</span>
+                        <span className="text-red-400">❌ {item.votes.no}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Governance Tab */}
+            {activeTab === 'governance' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {/* 1. Vote History Log List */}
+                <div className="bg-[#121424] border border-[#22253E] rounded-2xl p-6 text-left">
+                  <div className="border-b border-[#22253E] pb-3 mb-5">
+                    <span className="text-[10px] text-gray-500 font-mono tracking-wider block">LEDGER PROTOCOL LOGS</span>
+                    <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
+                      <ClipboardList className="text-[#8B83FF]" size={16} />
+                      <span>{t('detail.governanceHistoryTitle')}</span>
+                    </h4>
+                  </div>
+
+                  {(() => {
+                    const projectProposals = proposals[project.id] || [];
+                    const historicalProps = projectProposals.filter(p => p.status !== 'active');
+
+                    if (historicalProps.length === 0) {
+                      return (
+                        <p className="text-xs text-gray-555 py-6 text-center">{t('detail.noGovernanceHistory')}</p>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-3.5">
+                        {historicalProps.map((prop) => {
+                          const yesWeight = prop.yesWeight || 0;
+                          const noWeight = prop.noWeight || 0;
+                          const totalWeight = yesWeight + noWeight;
+                          const yesPercent = totalWeight > 0 ? (yesWeight / totalWeight) * 100 : 0;
+                          const isPassed = prop.status === 'passed';
+
+                          return (
+                            <div key={prop.id} className="p-4 bg-[#1A1C2C]/65 border border-[#22253E] rounded-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+                              <div className="space-y-1.5 text-left">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={`p-0.5 px-2 text-[9px] font-bold rounded ${
+                                    isPassed
+                                      ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
+                                      : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
+                                  }`}>
+                                    {isPassed ? t('detail.govProposalPassed') : t('detail.govProposalRejected')}
+                                  </span>
+                                  <span className="text-gray-500 font-mono text-[10px]">{t('detail.proposalId', { id: prop.id.toUpperCase() })}</span>
+                                </div>
+                                <div className="font-bold text-white text-xs">
+                                  {t('detail.fundsWithdrawalLabel')}<span className="text-emerald-450 font-extrabold">+{prop.amount} TON</span>
+                                </div>
+                                <p className="text-gray-450 text-[11px] leading-relaxed max-w-lg font-sans">
+                                  <strong className="text-gray-500">{t('detail.withdrawalPurposeHistoryLabel')}</strong>{prop.purpose}
+                                </p>
+                              </div>
+
+                              <div className="text-left sm:text-right shrink-0">
+                                <span className="text-gray-500 text-[10px] block">{t('detail.finalYesWeightPercent')}</span>
+                                <span className={`text-sm font-mono font-extrabold block mt-0.5 ${isPassed ? 'text-emerald-450' : 'text-rose-450'}`}>
+                                  {yesPercent.toFixed(1)}%
+                                </span>
+                                <span className="text-[9.5px] text-gray-500 block font-mono mt-0.5">
+                                  ({yesWeight.toFixed(0)} YES / {noWeight.toFixed(0)} NO)
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* 2. Creator proposal submission form */}
+                {(project.creatorAddress === walletAddress || walletAddress === 'VibeDev_88ff') && (
+                  <div className="bg-[#121424] border border-[#22253E] rounded-2xl p-6 text-left">
+                    <div className="border-b border-[#22253E] pb-3 mb-5">
+                      <span className="text-[10px] text-gray-500 font-mono tracking-wider block">CREATOR CONSOLE ONLY</span>
+                      <h4 className="text-sm font-bold text-white mt-0.5">{t('detail.initiateWithdrawalTitle')}</h4>
+                    </div>
+
+                    {withdrawSuccess && (
+                      <div className="p-3 bg-emerald-950/25 border border-emerald-900/35 text-emerald-400 text-xs rounded-xl mb-4.5">
+                        {t('detail.withdrawalProposalSuccess')}
+                      </div>
+                    )}
+
+                    {withdrawError && (
+                      <div className="p-3 bg-rose-955/20 border border-rose-900/30 text-rose-400 text-xs rounded-xl mb-4.5">
+                        ⚠️ {withdrawError}
+                      </div>
+                    )}
+
+                    <form onSubmit={handleCreateProposal} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.withdrawTonAmountLabel')}</label>
+                          <input
+                            type="text"
+                            placeholder={t('detail.withdrawTonAmountPlaceholder')}
+                            value={withdrawAmount}
+                            onChange={(e) => setWithdrawAmount(e.target.value)}
+                            className="w-full bg-[#1A1C2C] border border-[#22253E] focus:border-[#635BFF] text-white rounded-xl px-3.5 py-2.5 text-xs outline-none transition"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.availableGovBalance')}</label>
+                          <div className="w-full bg-[#1A1C2C] border border-[#22253E] text-gray-405 rounded-xl px-3.5 py-2.5 text-xs outline-none font-mono">
+                            {(() => {
+                              const projectProposals = proposals[project.id] || [];
+                              const passedAmount = projectProposals
+                                .filter(p => p.status === 'passed')
+                                .reduce((sum, p) => sum + p.amount, 0);
+                              return (project.raisedAmount * 0.5 - passedAmount).toFixed(2);
+                            })()} TON
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.withdrawalPurposePlaceholder')}</label>
+                        <textarea
+                          placeholder={t('detail.withdrawalPurposeDetailedPlaceholder')}
+                          value={withdrawPurpose}
+                          onChange={(e) => setWithdrawPurpose(e.target.value)}
+                          className="w-full bg-[#1A1C2C] border border-[#22253E] focus:border-[#635BFF] text-white rounded-xl px-3.5 py-2.5 text-xs outline-none transition h-20 resize-none font-sans"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-black rounded-xl transition cursor-pointer"
+                      >
+                        {t('detail.submitWithdrawalProposal')}
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {/* 3. Exit Mechanism Panel */}
+                <div className="bg-[#121424] border border-[#22253E] rounded-2xl p-6 text-left space-y-5">
+                  <div className="border-b border-[#22253E] pb-3">
+                    <span className="text-[10px] text-gray-500 font-mono tracking-wider block">COMPLIANCE AND SAFETY PANELS</span>
+                    <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
+                      <ShieldAlert className="text-rose-450" size={16} />
+                      <span>{t('detail.exitTokenBurnTitle')}</span>
+                    </h4>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                    {/* Left: window and checks */}
+                    <div className="md:col-span-7 space-y-4">
+                      <div className="flex items-center gap-2 bg-slate-950/20 border border-slate-900 p-3 rounded-xl">
+                        <Calendar size={15} className="text-rose-455" />
+                        <div>
+                          <div className="text-xs font-bold text-white">{t('detail.exitWindowRemaining', { days: 42 })}</div>
+                          <div className="text-[9.5px] text-gray-500 font-sans mt-0.5">{t('detail.exitWindowDesc')}</div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <span className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.exitConditionChecklist')}</span>
+                        <div className="space-y-2 text-[11px] font-sans">
+                          <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between">
+                            <span className="text-gray-300">{t('detail.exitConditionCodeSilence')}</span>
+                            <span className="text-rose-400 font-extrabold flex items-center gap-1 shrink-0">
+                              <AlertCircle size={12} />
+                              {t('detail.exitConditionTriggered')}
+                            </span>
+                          </div>
+                          <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between">
+                            <span className="text-gray-300">{t('detail.exitConditionPriceDrop')}</span>
+                            <span className="text-gray-500 font-semibold flex items-center gap-1 shrink-0">
+                              <CheckCircle size={12} className="text-gray-600" />
+                              {t('detail.exitConditionNotTriggered')}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-[9.5px] text-gray-500 block leading-normal">
+                          {t('detail.exitConditionNote')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: calculation and submit */}
+                    <div className="md:col-span-5 bg-[#1A1C2C] border border-[#22253E] rounded-xl p-5 space-y-4 flex flex-col justify-between">
+                      {exitSuccess ? (
+                        <div className="space-y-3 py-4 text-center">
+                          <CheckCircle className="text-emerald-450 mx-auto" size={32} />
+                          <p className="text-xs text-gray-200 leading-relaxed font-sans">{exitMsg}</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="space-y-3.5">
+                            <span className="text-[9.5px] text-gray-400 font-bold block uppercase">{t('detail.exitRefundCalculationTitle')}</span>
+                            {(() => {
+                              const userBacking = project.backers?.find(b => b.address === walletAddress);
+                              const userTokens = userBacking ? Math.round(userBacking.amount / project.tokenPrice) : 0;
+
+                              const projectProposals = proposals[project.id] || [];
+                              const passedAmount = projectProposals
+                                .filter(p => p.status === 'passed')
+                                .reduce((sum, p) => sum + p.amount, 0);
+                              const totalGovAllocated = project.raisedAmount * 0.5;
+                              const remainingRatio = totalGovAllocated > 0 ? (totalGovAllocated - passedAmount) / totalGovAllocated : 1;
+                              const refundableTON = userBacking ? Number((userBacking.amount * remainingRatio * 0.95).toFixed(2)) : 0;
+
+                              return (
+                                <div className="space-y-2 text-xs">
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-450">{t('detail.tokensToBeBurned')}</span>
+                                    <span className="font-bold text-white font-mono">{userTokens} {project.agentTicker}</span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-gray-450">{t('detail.refundCoefficient')}</span>
+                                    <span className="font-bold text-gray-300 font-mono">{(remainingRatio * 0.95 * 100).toFixed(0)}%</span>
+                                  </div>
+                                  <div className="flex justify-between border-t border-[#22253E] pt-2 mt-1">
+                                    <span className="text-gray-400 font-bold">{t('detail.refundableTon')}</span>
+                                    <span className="font-black text-emerald-400 font-mono text-sm">{refundableTON} TON</span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          </div>
+
+                          <div className="pt-2">
+                            {(() => {
+                              const userBacking = project.backers?.find(b => b.address === walletAddress);
+                              const hasShare = userBacking && userBacking.amount > 0;
+                              return (
+                                <button
+                                  type="button"
+                                  disabled={exitLoading || !hasShare}
+                                  onClick={handleExitProject}
+                                  className={`w-full py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                                    hasShare
+                                      ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-950/20'
+                                      : 'bg-slate-900 border border-slate-800 text-gray-500 cursor-not-allowed'
+                                  }`}
+                                >
+                                  {exitLoading ? t('detail.refundingFunds') : t('detail.confirmExitBurn')}
+                                </button>
+                              );
+                            })()}
+                            {!project.backers?.some(b => b.address === walletAddress) && (
+                              <span className="text-[9px] text-gray-500 block text-center mt-2 leading-relaxed">
+                                {t('detail.cannotRefundNoSpark')}
+                              </span>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Proof Tab - 72H Sandbox Simulation Console */}
+            {activeTab === 'proof' && (
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {/* Collapsible Sandbox Console Header */}
+                <div className="bg-[#0D0F1F] border border-[#23275A] p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-left shadow-lg">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="p-1 px-2 rounded bg-indigo-500/10 border border-indigo-500/20 text-[#A699FF] text-[9px] font-mono font-bold tracking-widest uppercase">72H SANDBOX SIMULATOR</span>
+                      <span className="text-[10px] text-emerald-450 font-bold flex items-center gap-1 bg-emerald-500/10 p-0.5 px-2.5 rounded-full border border-emerald-500/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>{t('detail.verifiableAutonomousAudit')}</span>
+                      </span>
+                    </div>
+                    <h3 className="text-base font-black text-white flex items-center gap-1.5 mt-1">
+                      <Bot size={18} className="text-[#635BFF]" />
+                      <span>{t('detail.sandboxTrialTitle')}</span>
+                    </h3>
+                    <p className="text-xs text-gray-400 leading-relaxed font-sans">
+                      {t('detail.sandboxTrialDesc')}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSandboxCollapsed(!isSandboxCollapsed)}
+                    className="px-4 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0"
+                  >
+                    {isSandboxCollapsed ? t('detail.expandSandbox') : t('detail.collapseSandbox')}
+                  </button>
+                </div>
+
+                {!isSandboxCollapsed && (
+                  <>
+                    <div className="bg-gradient-to-br from-[#110E34] to-[#0A0B1A] border border-[#26215D] rounded-2xl p-5 relative overflow-hidden text-left">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-2xl pointer-events-none" />
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#212453] pb-4">
+                        <div className="space-y-1">
+                          <span className="p-1 px-2.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-[#A699FF] text-[9.5px] font-mono font-black uppercase tracking-wider">
+                            {t('detail.sandboxConsoleTitle')}
+                          </span>
+                          <h4 className="text-base font-black text-white flex items-center gap-1.5 mt-1">
+                            <Bot size={16} className="text-emerald-400" />
+                            <span>{t('detail.sandboxEvolutionTitle')}</span>
+                          </h4>
+                        </div>
+
+                        <div className="bg-[#05060E] border border-[#1B1E38] p-2.5 px-4 rounded-xl flex items-center gap-3 shrink-0">
+                          <div className="text-left">
+                            <span className="text-[9px] text-gray-500 font-mono block">ELAPSED TIME</span>
+                            <span className="font-mono text-lg font-black text-white">{currentHour}/72 <span className="text-xs text-gray-400">Hours</span></span>
+                          </div>
+                          <div className="w-[1px] h-8 bg-slate-800" />
+                          <div className="text-left font-mono">
+                            <span className="text-[9px] text-gray-500 block">SIMULATED PROFIT</span>
+                            <span className="text-sm font-black text-emerald-400">+{simulatedProfit.toFixed(2)} TON</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Hour Indicator Progress Timeline */}
+                      <div className="py-4 select-none">
+                        <div className="flex justify-between items-center text-[10px] text-gray-400 mb-2 font-mono">
+                          <span>{t('detail.sandboxHour0')}</span>
+                          <span>{t('detail.sandboxHour24')}</span>
+                          <span>{t('detail.sandboxHour48')}</span>
+                          <span>{t('detail.sandboxHour72')}</span>
+                        </div>
+
+                        <div className="w-full h-2.5 bg-[#050711] rounded-full overflow-hidden border border-[#1A1F3B] p-0.5 relative">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 rounded-full transition-all duration-300"
+                            style={{ width: `${(currentHour / 72) * 100}%` }}
+                          />
+                          {/* Interval markers */}
+                          <span className="absolute left-[33.3%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-indigo-800" />
+                          <span className="absolute left-[66.6%] top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-sky-800" />
+                        </div>
+                      </div>
+
+                      {/* Acceleration controllers */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => handleFastForward(12)}
+                          disabled={currentHour >= 72}
+                          className="py-1.5 px-3 bg-[#111326] hover:bg-[#1C1F3F] border border-[#212550] text-[#A699FF] hover:text-white rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
+                        >
+                          {t('detail.fastForward12H')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFastForward(24)}
+                          disabled={currentHour >= 72}
+                          className="py-1.5 px-3 bg-[#111326] hover:bg-[#1C1F3F] border border-[#212550] text-[#A699FF] hover:text-white rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
+                        >
+                          {t('detail.fastForward24H')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleFastForward(72)}
+                          disabled={currentHour >= 72}
+                          className="py-1.5 px-3 bg-indigo-505/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg text-[10.5px] font-bold border border-indigo-505/20 transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
+                        >
+                          {t('detail.fastForward72H')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleResetSandbox}
+                          className="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-[10.5px] font-bold border border-red-950/30 transition flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          {t('detail.resetSimulation')}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Virtual Telemetry Terminal Logs window */}
+                    <div className="space-y-2 text-left">
+                      <div className="flex items-center justify-between text-[11px] text-gray-500 font-mono">
+                        <span className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                          <span>{t('detail.sandboxLogsTitle')}</span>
+                        </span>
+                        <span>Node: SG_W3_Validator_7</span>
+                      </div>
+
+                      <div className="bg-[#05060B] border border-[#191C3E] rounded-2xl p-4 h-60 overflow-y-auto font-mono text-[10.5px] leading-relaxed space-y-2.5 scrollbar-thin scroll-smooth select-text">
+                        {sandboxLogs.map((log, index) => {
+                          let colorClass = 'text-gray-300';
+                          if (log.type === 'success') colorClass = 'text-emerald-400 font-semibold';
+                          if (log.type === 'warn') colorClass = 'text-amber-400 font-semibold';
+                          if (log.type === 'system') colorClass = 'text-purple-400 font-black';
+                          if (log.type === 'info') colorClass = 'text-sky-300';
+
+                          return (
+                            <div key={index} className="flex gap-2 items-start hover:bg-white/5 p-1 rounded-md transition duration-75">
+                              <span className="text-gray-600 shrink-0 select-none">[{log.time}]</span>
+                              <span className={colorClass}>{log.message}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Simulated revenue and layout stats */}
+                    <div className="bg-[#0B0C18]/60 p-4 border border-[#1E2145] rounded-xl text-left text-xs leading-relaxed text-gray-400">
+                      <span dangerouslySetInnerHTML={{ __html: t('detail.sandboxSimulatorTip') }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* 4. Discussion Tab */}
+            {activeTab === 'discussion' && (
+              <div className="space-y-5 animate-in fade-in duration-100">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#1A1F3F] pb-2">{t('detail.forumTitle')}</h3>
+
+                {/* Comment Form Submit block */}
+                <form onSubmit={handlePostComment} className="space-y-3">
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-[10px] text-gray-500 font-mono tracking-wider block">{t('detail.publishPerspectiveLabel')}</label>
+                    <textarea
+                      placeholder={isConnected ? t('detail.forumPlaceholderConnected') : t('detail.forumPlaceholderDisconnected')}
+                      disabled={!isConnected}
+                      value={newCommentText}
+                      onChange={(e) => setNewCommentText(e.target.value)}
+                      rows={3}
+                      className="w-full bg-[#121429] border border-[#21254F] focus:border-[#635BFF] p-3 text-xs text-gray-200 rounded-xl outline-none transition resize-none"
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    {commentSuccess ? (
+                      <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1 animate-in fade-in">
+                        <ShieldCheck size={12} />
+                        <span>{t('detail.perspectiveBroadcastSuccess')}</span>
+                      </span>
+                    ) : (
+                      <span className="text-[9.5px] text-gray-500">{t('detail.forumDisclaimer')}</span>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={!isConnected || !newCommentText.trim()}
+                      className="px-4 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <Send size={11} />
+                      <span>{t('detail.publishComment')}</span>
+                    </button>
+                  </div>
+                </form>
+
+                {/* Comments Stream feed */}
+                <div className="space-y-4 pt-4 border-t border-[#1C1F3F]/60">
+                  {(project.comments || []).length === 0 ? (
+                    <p className="text-gray-500 text-xs text-center py-6 block">{t('detail.noForumPerspectives')}</p>
+                  ) : (
+                    <div className="space-y-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
+                      {(project.comments || []).map((comm) => (
+                        <div key={comm.id} className="bg-[#121429] p-3 rounded-xl border border-[#212450] space-y-1 text-left">
+                          <div className="flex justify-between items-center text-[10px] text-gray-500 font-mono">
+                            <span className="font-bold text-[#8680E5]">@{comm.author}</span>
+                            <span>{new Date(comm.timestamp).toLocaleString()}</span>
+                          </div>
+                          <p className="text-xs text-slate-300 leading-relaxed font-sans">{comm.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Unified Lifecycle Emission and Capital Engine */}
+        <div className="lg:col-span-4 space-y-6">
+          <div id="invest-form">
+            <LifecycleEmissionCard
+              project={project}
+              profile={profile}
+              isConnected={isConnected}
+              connectWallet={connectWallet}
+              updateProfile={updateProfile}
+              addFunds={addFunds}
+              investInProject={investInProject}
+              teamId={selectedTeamId}
+              onSuccess={handleSparkSuccess}
+            />
+          </div>
+
+          {/* Genesis Backer Card */}
+          {(() => {
+            const firstBacker = project.backers && project.backers.length > 0
+              ? [...project.backers].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0]
+              : null;
+
+            return (
+              <div className="bg-[#090A13] border border-[#1C1F3F] rounded-3xl p-5 space-y-3 text-left">
+                <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#141630] pb-2">
+                  <Crown size={14} className="text-amber-400" />
+                  <span>{t('detail.genesisBackerTitle')}</span>
+                </h3>
+
+                {firstBacker ? (
+                  <div className="flex items-center justify-between gap-3 bg-[#0E101F]/40 border border-[#1D2140] p-3 rounded-2xl">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[8.5px] text-gray-500 font-mono block">WALLET ADDRESS</span>
+                      <span className="text-[11px] font-mono font-bold text-gray-300 block truncate" title={firstBacker.address}>
+                        {firstBacker.address}
+                      </span>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-[8.5px] text-gray-500 font-mono block">SUPPORTED</span>
+                      <span className="text-xs font-black text-amber-400 font-mono">{firstBacker.amount} TON</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-[#0E101F]/20 border border-dashed border-[#1E2245] rounded-2xl text-center">
+                    <p className="text-[11px] text-gray-400 leading-relaxed font-sans">
+                      {t('detail.firstSparkPerson')}<strong className="text-amber-400">{t('detail.toBeFilled')}</strong><br />
+                      {t('detail.firstSparkPersonTip')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Active Teams list for group buy */}
+          {project.status === 'active' && (
+            <div className="bg-[#090A13] border border-[#1C1F3F] rounded-3xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black text-white uppercase tracking-wider">
+                  👥 {t('detail.activeSquadsHeader', { count: projectActiveTeams.length })}
+                </h3>
+                <button
+                  onClick={() => {
+                    setSelectedTeamId(undefined);
+                    const formEl = document.getElementById('invest-form');
+                    if (formEl) {
+                      formEl.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                  className="px-2 py-1.5 bg-[#635BFF]/10 hover:bg-[#635BFF]/20 text-[#8C84FF] text-[10px] font-bold rounded-xl border border-[#635BFF]/20 transition cursor-pointer"
+                >
+                  + {t('detail.initiateSquadBtn')}
+                </button>
+              </div>
+
+              {projectActiveTeams.length === 0 ? (
+                <p className="text-[11px] text-gray-500 py-3 text-center border border-dashed border-slate-900 rounded-xl leading-relaxed">
+                  {t('detail.noActiveSquads')}
+                </p>
+              ) : (
+                <div className="space-y-3.5 pr-1 max-h-[220px] overflow-y-auto scrollbar-thin">
+                  {projectActiveTeams.map((team) => {
+                    const progress = (team.currentAmount / team.targetAmount) * 100;
+                    return (
+                      <div key={team.id} className="p-3 bg-[#111324]/40 border border-[#202341] rounded-xl space-y-2.5 text-xs text-left">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-gray-300 font-sans">{t('detail.squadTitle', { name: team.creatorName })}</span>
+                          <span className="text-[10px] text-sky-400 font-bold bg-sky-950/20 px-1.5 py-0.5 rounded font-mono">
+                            {t('detail.squadMembersCount', { count: team.members.length })}
+                          </span>
+                        </div>
+
+                        {/* Progress Bar */}
+                        <div className="space-y-1 font-mono text-[10px] text-gray-400">
+                          <div className="flex justify-between">
+                            <span>{t('detail.squadProgress', { current: team.currentAmount, target: team.targetAmount })}</span>
+                            <span>{progress.toFixed(0)}%</span>
+                          </div>
+                          <div className="h-1 bg-[#05060F] rounded-full overflow-hidden border border-[#161833]">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#635BFF] to-sky-400 animate-pulse rounded-full"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-1">
+                          <span className="text-[9.5px] text-gray-550">{t('detail.squadDeadline')}</span>
+                          <button
+                            onClick={() => {
+                              setSelectedTeamId(team.id);
+                              const formEl = document.getElementById('invest-form');
+                              if (formEl) {
+                                formEl.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
+                            className="px-3 py-1 bg-sky-500 hover:bg-sky-600 text-black font-extrabold text-[10px] rounded-lg transition cursor-pointer active:scale-95"
+                          >
+                            {t('common.join')}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showCelebration && (
+        <CelebrationOverlay
+          projectName={project.agentName}
+          amount={backedAmount}
+          onComplete={handleCelebrationComplete}
+        />
+      )}
+
+      {showShareModal && (
+        <ShareModal
+          project={project}
+          amount={backedAmount}
+          teamId={backedTeamId}
+          onClose={() => {
+            setShowShareModal(false);
+            setBackedTeamId(undefined);
+          }}
+        />
+      )}
+
+      {/* Floating Simulation Stage Jumper */}
+      {activeTab === 'proof' && (
+        <div className="fixed bottom-6 right-6 z-50 group flex flex-col items-end gap-2">
+          <div className="hidden group-hover:flex flex-col gap-1.5 bg-[#090A14]/95 border border-[#23275A] p-2.5 rounded-2xl shadow-2xl animate-in slide-in-from-bottom duration-150 w-44">
+            <span className="text-[9px] font-mono font-black text-indigo-400 px-1 uppercase tracking-widest block border-b border-slate-800/60 pb-1 mb-1 text-center">Stage Jumper</span>
+            {[
+              { hour: 0, label: "0H - Init AST Check" },
+              { hour: 24, label: "24H - Deploy Sandbox" },
+              { hour: 48, label: "48H - Audits Scan" },
+              { hour: 72, label: "72H - Release Spark" }
+            ].map((stg) => (
+              <button
+                key={stg.hour}
+                type="button"
+                onClick={() => {
+                  if (stg.hour > currentHour) {
+                    handleFastForward(stg.hour - currentHour);
+                  } else if (stg.hour < currentHour) {
+                    // Backtrack hour
+                    setCurrentHour(stg.hour);
+                    setSimulatedProfit(Number((stg.hour * 0.15).toFixed(2)));
+                    setSandboxLogs(prev => [
+                      ...prev,
+                      { time: "SYSTEM", message: `↩️ Rollback simulation stage to Hour ${stg.hour}.`, type: 'system' }
+                    ]);
+                  }
+                }}
+                className={`w-full px-2.5 py-1 text-left rounded-lg text-[10px] font-mono font-bold transition flex justify-between items-center ${
+                  currentHour === stg.hour
+                    ? 'bg-[#635BFF] text-white font-black'
+                    : 'text-gray-400 bg-[#121429] hover:bg-[#635BFF]/15 hover:text-white'
+                }`}
+              >
+                <span>{stg.label}</span>
+                <span>{currentHour === stg.hour ? '●' : ''}</span>
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#635BFF] to-[#8F7BFF] hover:scale-105 hover:from-[#5048E5] hover:to-[#837BFF] text-white shadow-2xl shadow-[#635BFF]/30 flex items-center justify-center transition-all border border-[#837BFF]/40 active:scale-95 cursor-pointer font-bold relative"
+            title="Jump simulation stages"
+          >
+            <Sparkles size={18} className="text-amber-300 animate-pulse" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

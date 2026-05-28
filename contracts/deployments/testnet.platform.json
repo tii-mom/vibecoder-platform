@@ -1,0 +1,61 @@
+{
+  "network": "testnet",
+  "deployer": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+  "generatedAt": "2026-06-02T14:04:37.450Z",
+  "dryRun": false,
+  "recipients": {
+    "earlyOps": "0QCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQU_g",
+    "liquidity": "0QDsx-vPapMJyIh3LYEQXAF_wp0iAWk8I6ZN7Vw79zqTDIjo"
+  },
+  "vcDistribution": {
+    "verifiedAt": "2026-06-02T14:07:00Z",
+    "totalSupplyVc": "980010002",
+    "adminRevoked": false,
+    "balancesVc": {
+      "FUND": "250000000",
+      "VC_REWARD_POOL": "450000000",
+      "EARLY_FUNDRAISING": "100000000",
+      "LIQUIDITY": "50000000",
+      "EARLY_OPS": "30010002"
+    },
+    "testMints": {
+      "tonkeeperVisibilityCheck": {
+        "recipient": "0QCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQU_g",
+        "amountVc": "10002",
+        "verifiedBalanceVc": "30010002"
+      }
+    }
+  },
+  "contracts": {
+    "VC_JETTON": {
+      "address": "UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf",
+      "bounceable": "EQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvN7a",
+      "selfVcWallet": null
+    },
+    "FUND": {
+      "address": "UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q",
+      "bounceable": "EQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CCDV",
+      "selfVcWallet": "UQDpT4TSkmsq3rjrOEOLcPSKDNylRwBvpKdmMwTTWy0WiDfI"
+    },
+    "VC_REWARD_POOL": {
+      "address": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+      "bounceable": "EQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiQuI",
+      "selfVcWallet": "UQB_6tidcV8vFsJb3oy27-Itv6LTk0BbUH--wMG5DjeaSBCZ"
+    },
+    "EARLY_FUNDRAISING": {
+      "address": "UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD",
+      "bounceable": "EQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdv0G",
+      "selfVcWallet": "UQA8hAxkr5Vtsb3zEUUyA_zxdaBReHQWGxATBYzTajxusVVN"
+    },
+    "LAUNCH_FEE": {
+      "address": "UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-",
+      "bounceable": "EQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXu2h7",
+      "selfVcWallet": "UQBU8R6iGg1syMRfmRwMqlwJZihgCH4jNm7F_b4z-CvbDCc2"
+    },
+    "TOKEN_LAUNCHER": {
+      "address": "UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs",
+      "bounceable": "EQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeXgp",
+      "selfVcWallet": null
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "network": "mainnet",
+  "dryRun": true,
+  "generatedAt": "2026-06-02T16:04:36.094Z",
+  "admin": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+  "adminPolicy": "personal-wallet-retained",
+  "metadataUri": "https://ivory-keen-perch-796.mypinata.cloud/ipfs/bafkreifs5odqmuqrz5pwfx73sfxqq6r6gnpfqlpepny2mmqdxhhscwvuwi",
+  "recipients": {
+    "earlyOps": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+    "liquidity": "UQDsx-vPapMJyIh3LYEQXAF_wp0iAWk8I6ZN7Vw79zqTDDNi",
+    "treasury": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq"
+  },
+  "contracts": {
+    "VC_JETTON": {
+      "address": "UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf",
+      "bounceable": "EQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvN7a",
+      "selfVcWallet": null
+    },
+    "FUND": {
+      "address": "UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q",
+      "bounceable": "EQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CCDV",
+      "selfVcWallet": "UQDpT4TSkmsq3rjrOEOLcPSKDNylRwBvpKdmMwTTWy0WiDfI"
+    },
+    "VC_REWARD_POOL": {
+      "address": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+      "bounceable": "EQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiQuI",
+      "selfVcWallet": "UQB_6tidcV8vFsJb3oy27-Itv6LTk0BbUH--wMG5DjeaSBCZ"
+    },
+    "EARLY_FUNDRAISING": {
+      "address": "UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD",
+      "bounceable": "EQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdv0G",
+      "selfVcWallet": "UQA8hAxkr5Vtsb3zEUUyA_zxdaBReHQWGxATBYzTajxusVVN"
+    },
+    "LAUNCH_FEE": {
+      "address": "UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-",
+      "bounceable": "EQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXu2h7",
+      "selfVcWallet": "UQBU8R6iGg1syMRfmRwMqlwJZihgCH4jNm7F_b4z-CvbDCc2"
+    },
+    "TOKEN_LAUNCHER": {
+      "address": "UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs",
+      "bounceable": "EQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeXgp",
+      "selfVcWallet": null
+    }
+  }
+}
