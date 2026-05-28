@@ -1,0 +1,9 @@
+name = "vibecoder-api"
+main = "src/index.ts"
+compatibility_date = "2024-02-22"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "vibecoder-db"
+database_id = "vibecoder-db-id-placeholder"
+migrations_dir = "migrations"

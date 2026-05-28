@@ -1,0 +1,66 @@
+[package]
+name = "my-acton-project"
+description = "A TON blockchain project"
+version = "0.1.0"
+license = "MIT"
+
+[contracts.early_subscription]
+display-name = "Early Subscription"
+src = "contracts/platform/token-system/early-subscription/early_subscription.tolk"
+depends = []
+
+[contracts.fund]
+display-name = "Fund"
+src = "contracts/platform/token-system/fund/fund.tolk"
+depends = []
+
+[contracts.launch_campaign]
+display-name = "Launch Campaign"
+src = "contracts/launch/launch-campaign/launch_campaign.tolk"
+depends = []
+
+[contracts.launch_fee]
+display-name = "Launch Fee"
+src = "contracts/platform/token-system/launch-fee/launch_fee.tolk"
+depends = []
+
+[contracts.project_token]
+display-name = "Project Token"
+src = "contracts/launch/project-token/project_token.tolk"
+depends = []
+
+[contracts.project_token_wallet]
+display-name = "Project Token Wallet"
+src = "contracts/launch/project-token/project_token_wallet.tolk"
+depends = []
+
+[contracts.strategic]
+display-name = "Strategic"
+src = "contracts/platform/token-system/strategic/strategic.tolk"
+depends = []
+
+[contracts.token_launcher]
+display-name = "Token Launcher"
+src = "contracts/platform/infra/token-launcher/token_launcher.tolk"
+depends = []
+
+[contracts.vc_jetton]
+display-name = "Vc Jetton"
+src = "contracts/platform/token-system/vc-jetton/vc_jetton.tolk"
+depends = []
+
+[contracts.vesting]
+display-name = "Vesting"
+src = "contracts/launch/vesting/vesting.tolk"
+depends = []
+
+[fmt]
+width = 100
+ignore = []
+
+[import-mappings]
+acton = ".acton"
+contracts = "contracts"
+gen = "gen"
+tests = "tests"
+wrappers = "wrappers"
