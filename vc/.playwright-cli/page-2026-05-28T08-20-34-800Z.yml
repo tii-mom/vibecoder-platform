@@ -1,0 +1,202 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - img [ref=e7]
+      - generic [ref=e10]: 首个面向全球开发者的 TON 生态 AI Agent 联合公募平台
+    - generic [ref=e11]:
+      - heading "Create. Spark. Earn." [level=1] [ref=e12]
+      - generic [ref=e13]: 小梦想，大世界 • Small Dreams, Big World
+    - paragraph [ref=e14]: 你的 AI，全球共建。让全球最顶尖的开发者自主孵化链上机器人，全球支持者用 $VC / TON 提供流动性与代码治理。
+    - generic [ref=e15]:
+      - button "开始创建你的 Agent" [ref=e16] [cursor=pointer]:
+        - generic [ref=e17]: 开始创建你的 Agent
+        - img [ref=e18]
+      - link "浏览星火市场" [ref=e20] [cursor=pointer]:
+        - /url: "#/spark"
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: NETWORK METRICS
+        - img [ref=e27]
+      - heading "142" [level=3] [ref=e30]
+      - paragraph [ref=e31]: 已孵化 Agent 机器人
+    - generic [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]: NETWORK METRICS
+        - img [ref=e35]
+      - heading "1,284,500 TON" [level=3] [ref=e40]
+      - paragraph [ref=e41]: 累计成功筹集资金
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]: NETWORK METRICS
+        - img [ref=e45]
+      - heading "$2,450,000" [level=3] [ref=e47]
+      - paragraph [ref=e48]: 全球开发者累计创收
+    - generic [ref=e49]:
+      - generic [ref=e50]:
+        - generic [ref=e51]: NETWORK METRICS
+        - img [ref=e52]
+      - heading "18,480+" [level=3] [ref=e57]
+      - paragraph [ref=e58]: 活跃全球持币人
+  - generic [ref=e59]:
+    - generic [ref=e60]:
+      - text: POSITIONING & VISION
+      - heading "星火之聚，燎原之势" [level=2] [ref=e61]
+      - paragraph [ref=e62]: VibeCoder 填补了 Vibe 开发者从“完成代码”到“获得资金、用户与持续收入”的鸿沟。
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]:
+          - heading "什么是 VibeCoder 自动星火共建？" [level=3] [ref=e66]:
+            - img [ref=e67]
+            - generic [ref=e70]: 什么是 VibeCoder 自动星火共建？
+          - paragraph [ref=e71]: 在 Vibe 时代，全球优秀的极客只需动动嘴和键盘就能写出惊艳的 AI 智能体产品。然而如何解决商业化、冷启动、资金缺口和治理问题？
+          - paragraph [ref=e72]: VibeCoder 通过创建 Spark (星火募资) 模型，为优秀的 Agent 提供最高 10,000 $VC 储备的开发者质押底池，并通过 智能评估、四阶段里程碑资金自动释放 以及 TON Agent 专属收款钱包 彻底解决商业变现。
+        - generic [ref=e73]:
+          - generic [ref=e74]: AI
+          - generic [ref=e75]:
+            - generic [ref=e76]: AI 共建助手 (Co-Build Copilot)
+            - text: 24h 自动发现优质 Agent 资产并推荐共建
+      - generic [ref=e77]:
+        - generic [ref=e78]:
+          - generic [ref=e79]: 传统早期支持模式 (Web2/Crypto)
+          - generic [ref=e80]: VibeCoder Spark
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - generic [ref=e83]: ❌ “捐赠”式共建，得到一句感谢、周边或零承诺，无实际链上分配
+            - generic [ref=e84]: ✅ 转化为 Agent 未来产品分配份额与创世代币额度，持币即享自动分配权
+          - generic [ref=e85]:
+            - generic [ref=e86]: ❌ 项目后续开发和成功与你没有经济利益挂钩，无法共享增长溢价
+            - generic [ref=e87]: ✅ 项目代币在二层 Launchpad 上市，随用户、营收增长获得持续套利升值
+          - generic [ref=e88]:
+            - generic [ref=e89]: ❌ 没有约束机制，开发者拿钱可能跑路，毫无共建安全感与约束
+            - generic [ref=e90]: ✅ Spark 设立四阶段里程碑防割，开发组需质押底座 + 多签卫士守护解禁
+          - generic [ref=e91]:
+            - generic [ref=e92]: ❌ 靠纯粹感性决定投不投，充斥着喊单空气和虚假宣发
+            - generic [ref=e93]: ✅ AI 助手执掌 AST 静态代码审计、推特信号流打分、冷启动自动托管
+  - generic [ref=e94]:
+    - generic [ref=e95]:
+      - text: ECOSYSTEM CYCLE
+      - heading "三步赋能，让代码变身自运行的链上生产力" [level=2] [ref=e96]
+      - paragraph [ref=e97]: VibeCoder 智能孵化闭环：精准连接开发者创造力与全球资本网络流动性。
+    - generic [ref=e98]:
+      - generic [ref=e99]:
+        - generic [ref=e100]: "01"
+        - generic [ref=e101]: STUDIO UTILS
+        - heading "一站式极速创建 Agent" [level=3] [ref=e102]
+        - paragraph [ref=e103]: 在 Studio 填参接入大模型，上传你的代码脚本即可自动编译并获得专有 TON 链上安全托管密钥，进入代打服务。
+      - generic [ref=e104]:
+        - generic [ref=e105]: "02"
+        - generic [ref=e106]: SPARK
+        - heading "发起星火，获取启动资金" [level=3] [ref=e107]
+        - paragraph [ref=e108]: 自动生成代币份额估值，发起联合共建活动。全球支持者使用 TON 份额直接兑换您的 Agent 创世代币分配权。
+      - generic [ref=e109]:
+        - generic [ref=e110]: "03"
+        - generic [ref=e111]: YIELD SHARING
+        - heading "自动分配，生态长期共赢" [level=3] [ref=e112]
+        - paragraph [ref=e113]: 代码上线运营开始盈利（交易做单佣金、社交赞助、付费代码服务），盈利由 TON 合约每日按代币持股自动空投。
+  - generic [ref=e115]:
+    - generic [ref=e116]:
+      - generic [ref=e117]:
+        - text: LIVE CAMPAIGN
+        - heading "推荐孵化中项目" [level=2] [ref=e118]
+        - paragraph [ref=e119]: 正在星火阶段的 AI Agent 项目，拥有极高潜力与独特运营模型。
+      - link "查看全部星火池" [ref=e120] [cursor=pointer]:
+        - /url: "#/spark"
+        - generic [ref=e121]: 查看全部星火池
+        - img [ref=e122]
+    - generic [ref=e124]:
+      - generic [ref=e125]:
+        - generic [ref=e126]:
+          - generic [ref=e127]:
+            - generic [ref=e128]: $OSA
+            - generic [ref=e129]: 融筹中
+          - heading "OmniSocial ($OSA) 2.0 升级星火共建" [level=3] [ref=e130]
+          - paragraph [ref=e131]: 本星火计划旨在募集 5,000 TON 以实现深度推特自主阅读和全自动 Farcaster 智能分发功能。支持者将按 1 TON = 100 OSA 的固定比例在活动结束后自动获得 $OSA 创世代币分配权，享受整个 AI 网红全网赞助金额的 70% 自动划拨分配。
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - generic [ref=e134]:
+              - generic [ref=e135]: 已筹资金
+              - generic [ref=e136]: 3250 / 5000 TON
+            - generic [ref=e139]:
+              - generic [ref=e140]: 65% 完成
+              - generic [ref=e141]: 84 Backers
+          - link "星火详情" [ref=e143] [cursor=pointer]:
+            - /url: "#/spark/spark-1"
+            - generic [ref=e144]: 星火详情
+            - img [ref=e145]
+      - generic [ref=e148]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]: $CVA
+            - generic [ref=e152]: 融筹中
+          - heading "CodeVibe Auditor 安全服务网络星火共建启动" [level=3] [ref=e153]
+          - paragraph [ref=e154]: 寻找募集 10,000 TON，用于租赁 GPU 算力及微调包含 FunC 专有安全漏洞特征的私有大语言模型。所有星火共建参与者将共同按比例获取该审计 Agent 每日产生的商业分配分成包（代币 $CVA 折扣返还）。
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - generic [ref=e158]: 已筹资金
+              - generic [ref=e159]: 4100 / 10000 TON
+            - generic [ref=e162]:
+              - generic [ref=e163]: 41% 完成
+              - generic [ref=e164]: 42 Backers
+          - link "星火详情" [ref=e166] [cursor=pointer]:
+            - /url: "#/spark/spark-2"
+            - generic [ref=e167]: 星火详情
+            - img [ref=e168]
+      - generic [ref=e171]:
+        - generic [ref=e172]:
+          - generic [ref=e173]:
+            - generic [ref=e174]: $TBP
+            - generic [ref=e175]: 筹集完毕
+          - heading "$TBP 自动套利多功能量化机器人星火共建" [level=3] [ref=e176]
+          - paragraph [ref=e177]: 已成功募完 8,000 TON！代币已被全量发放并可在 Launchpad 内部根据 AMM 回购算法自由交易。《TrendBot Pro》已正式开启自动分配策略。
+        - generic [ref=e178]:
+          - generic [ref=e179]:
+            - generic [ref=e180]:
+              - generic [ref=e181]: 已筹资金
+              - generic [ref=e182]: 8000 / 8000 TON
+            - generic [ref=e185]:
+              - generic [ref=e186]: 100% 完成
+              - generic [ref=e187]: 195 Backers
+          - link "星火详情" [ref=e189] [cursor=pointer]:
+            - /url: "#/spark/spark-3"
+            - generic [ref=e190]: 星火详情
+            - img [ref=e191]
+      - generic [ref=e194]:
+        - generic [ref=e195]:
+          - generic [ref=e196]:
+            - generic [ref=e197]: $MGAI
+            - generic [ref=e198]: 筹集完毕
+          - heading "$MGAI 机器人竞技场对决星火共建计划" [level=3] [ref=e199]
+          - paragraph [ref=e200]: $MGAI 星火共建完美收盘，机器人正代表全体持有人在 TON 链游大杀四方！代币上线二级 Launchpad 板块，交易火热！
+        - generic [ref=e201]:
+          - generic [ref=e202]:
+            - generic [ref=e203]:
+              - generic [ref=e204]: 已筹资金
+              - generic [ref=e205]: 12000 / 12000 TON
+            - generic [ref=e208]:
+              - generic [ref=e209]: 100% 完成
+              - generic [ref=e210]: 210 Backers
+          - link "星火详情" [ref=e212] [cursor=pointer]:
+            - /url: "#/spark/spark-4"
+            - generic [ref=e213]: 星火详情
+            - img [ref=e214]
+  - generic [ref=e218]:
+    - heading "现在就发起你的首个 Web3 AI 机器人" [level=2] [ref=e219]
+    - paragraph [ref=e220]: 极简封装、自由募资。无论是交易对冲策略、Discord 社区博弈 AI 还是 Telegram 赛博网红，VibeCoder 都能帮你在 TON 上赋予其代币内核。
+    - button "立即连接 TON 启动 Studio" [ref=e222] [cursor=pointer]:
+      - img [ref=e223]
+      - generic [ref=e226]: 立即连接 TON 启动 Studio
+  - contentinfo [ref=e227]:
+    - generic [ref=e228]:
+      - generic [ref=e229]:
+        - generic [ref=e231]: VC
+        - generic [ref=e232]: VibeCoder © 2026.
+        - generic [ref=e233]: Built in sandbox
+      - generic [ref=e234]:
+        - link "GitHub" [ref=e235] [cursor=pointer]:
+          - /url: https://github.com/vibecoder
+          - img [ref=e236]
+          - generic [ref=e239]: GitHub
+        - generic [ref=e240]: "|"
+        - generic [ref=e241]: Secure Audit Verified

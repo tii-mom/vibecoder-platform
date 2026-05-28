@@ -1,0 +1,234 @@
+- generic [ref=e242]:
+  - generic [ref=e244]:
+    - generic [ref=e245]:
+      - img [ref=e246]
+      - paragraph [ref=e248]: 风险提示：AI Agent 运行于链上智能合约与底层大模型，属于早期极高波动性资产。星火共建及支持可能面临代码漏洞、模型偏差及结算风险，请知悉并理性参与。
+    - button [ref=e249] [cursor=pointer]:
+      - img [ref=e250]
+  - banner [ref=e253]:
+    - link "VibeCoder VC AI AGENT SYNDICATED CAPITAL" [ref=e254] [cursor=pointer]:
+      - /url: "#/"
+      - img [ref=e257]
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - generic [ref=e262]: VibeCoder
+          - generic [ref=e263]: VC
+        - generic [ref=e264]: AI AGENT SYNDICATED CAPITAL
+    - generic [ref=e267]:
+      - generic [ref=e268]:
+        - generic [ref=e269]: 154.2 TON
+        - generic [ref=e271]: "|"
+        - generic [ref=e272]: 21500 $VC
+      - button "TON EQA7_v...KeEpeR" [ref=e274] [cursor=pointer]:
+        - generic [ref=e275]: TON
+        - generic [ref=e276]: EQA7_v...KeEpeR
+        - img [ref=e277]
+  - generic [ref=e279]:
+    - complementary [ref=e280]:
+      - button [ref=e281] [cursor=pointer]:
+        - img [ref=e282]
+      - navigation [ref=e284]:
+        - generic [ref=e285]: WORKSPACE CONSOLE
+        - link "探索发现" [ref=e286] [cursor=pointer]:
+          - /url: "#/feed"
+          - img [ref=e287]
+          - generic [ref=e291]: 探索发现
+        - link "Agent Studio" [ref=e292] [cursor=pointer]:
+          - /url: "#/studio"
+          - img [ref=e293]
+          - generic [ref=e298]: Agent Studio
+        - link "Spark 星火共建" [ref=e299] [cursor=pointer]:
+          - /url: "#/spark"
+          - img [ref=e300]
+          - generic [ref=e305]: Spark 星火共建
+        - link "Launchpad" [ref=e306] [cursor=pointer]:
+          - /url: "#/launchpad"
+          - img [ref=e307]
+          - generic [ref=e312]: Launchpad
+        - link "AI 共建助手" [ref=e313] [cursor=pointer]:
+          - /url: "#/copilot"
+          - img [ref=e314]
+          - generic [ref=e319]: AI 共建助手
+        - link "我的持仓 2" [ref=e491] [cursor=pointer]:
+          - /url: "#/portfolio"
+          - img [ref=e321]
+          - generic [ref=e324]:
+            - generic [ref=e325]: 我的持仓
+            - generic [ref=e326]: "2"
+        - link "Dev Hub" [ref=e327] [cursor=pointer]:
+          - /url: "#/devhub"
+          - img [ref=e328]
+          - generic [ref=e331]: Dev Hub
+        - link "设置中心" [ref=e332] [cursor=pointer]:
+          - /url: "#/settings"
+          - img [ref=e333]
+          - generic [ref=e337]: 设置中心
+      - generic [ref=e339]:
+        - generic [ref=e340]:
+          - generic [ref=e341]:
+            - img [ref=e342]
+            - generic [ref=e345]: 星火雷达 (ALERT HUB)
+          - generic [ref=e347]:
+            - button "模拟最新星火推进动态" [ref=e348] [cursor=pointer]:
+              - img [ref=e349]
+            - button "清空记录" [ref=e351] [cursor=pointer]:
+              - img [ref=e352]
+        - generic [ref=e355]:
+          - generic [ref=e492] [cursor=pointer]:
+            - generic [ref=e494]:
+              - generic [ref=e495]:
+                - generic [ref=e496]: $OSA
+                - generic [ref=e497]: 💰 OmniSocial Influencer 资金池自动释放结算
+              - generic [ref=e498]: 💼 已持仓
+            - paragraph [ref=e499]: 由于达到既定代码可用阶段，智能托管中心成功释放 155 TON 及 787 $VC 并分配给全网星火支持者！
+            - generic [ref=e500]:
+              - generic [ref=e501]: +155 TON
+              - generic [ref=e502]: "|"
+              - generic [ref=e503]: +787 $VC
+            - button "验证 Proof 沙盒 »" [ref=e504]:
+              - generic [ref=e505]: 验证 Proof 沙盒 »
+          - generic [ref=e356] [cursor=pointer]:
+            - generic [ref=e358]:
+              - generic [ref=e359]:
+                - generic [ref=e360]: $TBP
+                - generic [ref=e361]: 🚀 $TBP 阶段 4 分配资金自动结算拨付完成
+              - generic [ref=e362]: 💼 已持仓
+            - paragraph [ref=e363]: 开发团队已完成全网分税自动路由机制，120 TON 及 3,000 $VC 尾盘保证金已安全划拨进入流动结算合约底座。
+            - generic [ref=e364]:
+              - generic [ref=e365]: +120 TON
+              - generic [ref=e366]: "|"
+              - generic [ref=e367]: +3000 $VC
+            - button "验证 Proof 沙盒 »" [ref=e368]:
+              - generic [ref=e369]: 验证 Proof 沙盒 »
+          - generic [ref=e370] [cursor=pointer]:
+            - generic [ref=e371]:
+              - generic [ref=e372]:
+                - generic [ref=e373]: $OSA
+                - generic [ref=e374]: ✨ OmniSocial 阶段 1 「核心推特交互升级」顺利达成
+              - generic [ref=e375]: 💼 已持仓
+            - paragraph [ref=e376]: 大语言模型动态阅读与自动 Farcaster 智能发布静态代码完成多签中继审核，恭喜该里程碑顺利解禁通航！
+            - button "验证 Proof 沙盒 »" [ref=e377]:
+              - generic [ref=e378]: 验证 Proof 沙盒 »
+        - button "全部标为已读 (2)" [ref=e506] [cursor=pointer]
+      - generic [ref=e383]:
+        - generic [ref=e384]: WALLET CONNECTED
+        - generic [ref=e385]: EQA7_v...KeEpeR
+    - main [ref=e386]:
+      - generic [ref=e388]:
+        - generic [ref=e389]:
+          - generic [ref=e390]:
+            - generic [ref=e391]: ✦ AI Project Discovery Feed
+            - heading "星火探索信息流" [level=1] [ref=e392]
+          - generic [ref=e395]: 项目 1 / 4
+        - generic [ref=e396]:
+          - generic [ref=e397]:
+            - button [disabled] [ref=e398]:
+              - img [ref=e399]
+            - button [ref=e401] [cursor=pointer]:
+              - img [ref=e402]
+          - generic [ref=e404]:
+            - generic [ref=e405]:
+              - generic [ref=e406]:
+                - generic [ref=e407]:
+                  - generic [ref=e408]: 社交
+                  - generic [ref=e409]:
+                    - img [ref=e410]
+                    - generic [ref=e413]: Staked 保障
+                - generic [ref=e414]: ✓ 已审计部署
+              - generic [ref=e415]:
+                - generic [ref=e416]:
+                  - generic [ref=e418]:
+                    - generic [ref=e419]: OSA
+                    - generic [ref=e420]:
+                      - heading "OmniSocial Influencer" [level=2] [ref=e421]
+                      - generic [ref=e422]: "Creator: VibeDev_88ff"
+                  - generic [ref=e423]:
+                    - generic [ref=e424]: "85"
+                    - generic [ref=e425]:
+                      - generic [ref=e426]: COPILOT
+                      - text: AI 评估安全分
+                - heading "OmniSocial ($OSA) 2.0 升级星火共建" [level=3] [ref=e427]
+                - paragraph [ref=e428]: 本星火计划旨在募集 5,000 TON 以实现深度推特自主阅读和全自动 Farcaster 智能分发功能。支持者将按 1 TON = 100 OSA 的固定比例在活动结束后自动获得 $OSA 创世代币分配权，享受整个 AI 网红全网赞助金额的 70% 自动划拨分配。
+                - generic [ref=e429]:
+                  - generic [ref=e430] [cursor=pointer]: "#TON"
+                  - generic [ref=e431] [cursor=pointer]: "#AI"
+                  - generic [ref=e432] [cursor=pointer]: "#网红"
+                  - generic [ref=e433] [cursor=pointer]: "#智能分发"
+              - generic [ref=e434]:
+                - generic [ref=e435]:
+                  - generic [ref=e436]:
+                    - generic [ref=e437]: 星火共建进度
+                    - generic [ref=e438]: 3,250 / 5,000 TON
+                  - generic [ref=e439]: 65%
+                - generic [ref=e442]:
+                  - generic [ref=e443]:
+                    - img [ref=e444]
+                    - generic [ref=e449]: 84 人参与共建
+                  - generic [ref=e450]: "剩余约: 15 天"
+            - generic [ref=e451]:
+              - generic [ref=e452]:
+                - generic [ref=e453]: ✦ Co-building status
+                - generic [ref=e454]:
+                  - generic [ref=e455]:
+                    - generic [ref=e456]: 起共建额
+                    - generic [ref=e457]: 5 TON
+                  - generic [ref=e458]:
+                    - generic [ref=e459]: 保底模型
+                    - generic [ref=e460]: staked
+                  - generic [ref=e461]:
+                    - generic [ref=e462]: 项目状态
+                    - generic [ref=e463]: active
+              - generic [ref=e464]:
+                - button "✦ Spark this Project" [active] [ref=e465] [cursor=pointer]:
+                  - img [ref=e466]
+                  - generic [ref=e469]: ✦ Spark this Project
+                - button "跳过此项目" [ref=e470] [cursor=pointer]:
+                  - img [ref=e471]
+                  - generic [ref=e473]: 跳过此项目
+              - generic [ref=e474]:
+                - button "详情" [ref=e475] [cursor=pointer]:
+                  - img [ref=e476]
+                  - generic [ref=e478]: 详情
+                - button "分享" [ref=e479] [cursor=pointer]:
+                  - img [ref=e480]
+                  - generic [ref=e486]: 分享
+                - button "探讨 (3)" [ref=e487] [cursor=pointer]:
+                  - img [ref=e488]
+                  - generic [ref=e490]: 探讨 (3)
+        - generic [ref=e508]:
+          - button [ref=e509] [cursor=pointer]:
+            - img [ref=e510]
+          - generic [ref=e513]:
+            - generic [ref=e514]: ✦ Spark Project backer terminal
+            - heading "支持共建 OmniSocial Influencer ($OSA)" [level=2] [ref=e515]
+            - paragraph [ref=e516]: OmniSocial ($OSA) 2.0 升级星火共建
+          - generic [ref=e517]:
+            - button "直接独立支持" [ref=e518] [cursor=pointer]:
+              - img [ref=e519]
+              - generic [ref=e521]: 直接独立支持
+            - button "极客拼单共建" [ref=e522] [cursor=pointer]:
+              - img [ref=e523]
+              - generic [ref=e528]: 极客拼单共建
+          - generic [ref=e529]:
+            - generic [ref=e530]:
+              - generic [ref=e531]: 支持共建数额 (TON)
+              - generic [ref=e532]: "可用余额: 154.2 TON"
+            - generic [ref=e533]:
+              - spinbutton [ref=e534]: "10"
+              - generic [ref=e535]: TON
+            - generic [ref=e536]:
+              - button "5 TON" [ref=e537] [cursor=pointer]
+              - button "10 TON" [ref=e538] [cursor=pointer]
+              - button "50 TON" [ref=e539] [cursor=pointer]
+              - button "100 TON" [ref=e540] [cursor=pointer]
+          - generic [ref=e541]:
+            - img [ref=e542]
+            - generic [ref=e545]:
+              - generic [ref=e546]: 🎁 首次体验：使用 15 TON 首投体验金
+              - paragraph [ref=e547]:
+                - text: 平台已为您自动垫付首笔
+                - strong [ref=e548]: 15 TON
+                - text: 共建体验金，结算收益解锁门槛为持仓实存资产 ≥ 5 TON 且完成一次链上交互。
+          - button "✦ 确认发送星火共建资金" [ref=e549] [cursor=pointer]:
+            - generic [ref=e550]: ✦ 确认发送星火共建资金
+          - paragraph [ref=e551]: 此动作仅为 VibeCoder 沙箱测试环境模拟，不代表真实主网主权代币扣拨。
