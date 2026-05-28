@@ -148,6 +148,7 @@ export default function Sidebar() {
     { name: 'Launch', path: '/launch', icon: CoinsIcon, tooltip: '早期 Agent 联合星火共建（里程碑防割）' },
     { name: 'AI 共建助手', path: '/copilot', icon: SparklesIcon, tooltip: '自动化代码评估评分、风控分级与托管认配' },
     { name: '我的持仓', path: '/portfolio', icon: FolderIcon, tooltip: '管理你支持的 AI 资产、分配记录与共建明细', showBadge: true },
+    { name: '赏金市场', path: '/bounty', icon: CoinsIcon, tooltip: '完成任务赚 VC 和代币奖励' },
     { name: '特权与邀请', path: '/invite', icon: GiftIcon, tooltip: '查看你的星火共建邀请链路与解锁的生态特权' },
     { name: '设置中心', path: '/settings', icon: SettingsIcon, tooltip: '自定义网关与秘钥管理' },
   ];

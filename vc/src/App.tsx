@@ -17,6 +17,7 @@ const DevHubPage = lazy(() => import('./pages/DevHubPage'));
 const WalletSDKDocPage = lazy(() => import('./pages/WalletSDKDocPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const InvitePage = lazy(() => import('./pages/InvitePage'));
+const BountyPage = lazy(() => import('./pages/BountyPage'));
 
 // A sleek visual loading screen while codechunks load
 function RouteLoading() {
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/devhub/docs" element={<WalletSDKDocPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/invite" element={<InvitePage />} />
+            <Route path="/bounty" element={<BountyPage />} />
           </Route>
 
           {/* Safe fallback fallback */}

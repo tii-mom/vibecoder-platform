@@ -25,7 +25,7 @@ export default function SparkDetail() {
   const { proposals, votes, exitRequests, voteOnProposal, createProposal, createExitRequest } = useGovernanceStore();
   const { rounds, loadRounds } = useVestingStore();
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'spark' | 'health' | 'vesting' | 'governance' | 'proof' | 'discussion'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'spark' | 'health' | 'vesting' | 'operations' | 'governance' | 'proof' | 'discussion'>('overview');
   
   // URL parameters parsing
   const queryParams = new URLSearchParams(location.search);
@@ -654,6 +654,15 @@ export default function SparkDetail() {
                 }`}
               >
               Vesting (解锁)
+              </button>
+
+              <button
+                onClick={() => setActiveTab('operations')}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors ${
+                  activeTab === 'operations' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+              Operations (运营)
               </button>
 
               <button
@@ -1341,6 +1350,68 @@ export default function SparkDetail() {
                 </div>
               );
             })()}
+
+            {/* Operations Tab */}
+            {activeTab === 'operations' && (
+              <div className="space-y-6 animate-fade-in">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-[#635BFF]">10%</div>
+                    <div className="text-[9px] text-gray-500 mt-1">运营代币池</div>
+                  </div>
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-emerald-400">2.3%</div>
+                    <div className="text-[9px] text-gray-500 mt-1">已使用</div>
+                  </div>
+                  <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
+                    <div className="text-2xl font-black text-white">3</div>
+                    <div className="text-[9px] text-gray-500 mt-1">申请记录</div>
+                  </div>
+                </div>
+
+                {/* Apply form */}
+                <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">团队申请运营预算</span>
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="金额 (%)" className="flex-1 bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <input type="text" placeholder="用途说明" className="flex-[2] bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <button className="px-4 py-2 bg-[#635BFF] text-white rounded-lg text-xs font-bold hover:bg-[#5245EE] transition">
+                      提交申请
+                    </button>
+                  </div>
+                </div>
+
+                {/* History */}
+                <div className="space-y-2">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">申请历史</span>
+                  {[
+                    { id: 1, amount: '1.2%', purpose: 'X 平台营销推广', status: 'passed', votes: { yes: 45, no: 8 } },
+                    { id: 2, amount: '0.8%', purpose: '社区AMA活动奖品', status: 'passed', votes: { yes: 52, no: 3 } },
+                    { id: 3, amount: '2.5%', purpose: '审计费用', status: 'active', votes: { yes: 18, no: 12 } },
+                  ].map((item) => (
+                    <div key={item.id} className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          item.status === 'passed' ? 'bg-emerald-500/10 text-emerald-400' :
+                          item.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
+                          'bg-amber-500/10 text-amber-400'
+                        }`}>
+                          {item.status === 'passed' ? '已通过' : item.status === 'rejected' ? '已拒绝' : '投票中'}
+                        </span>
+                        <div>
+                          <div className="text-xs font-bold text-white">{item.purpose}</div>
+                          <div className="text-[9px] text-gray-500">{item.amount} 运营代币池</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6 text-xs">
+                        <span className="text-emerald-400">✅ {item.votes.yes}</span>
+                        <span className="text-red-400">❌ {item.votes.no}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Governance Tab */}
             {activeTab === 'governance' && (
