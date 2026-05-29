@@ -60,7 +60,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(!ex, 1301);
         incProject(sh);
         val rec = beginCell().storeUint(sh, 256).storeBool(1).storeCoins(500000000000)
-            .storeBool(0).storeCoins(0).storeBool(0).endCell();
+            .storeBool(0).storeCoins(0).storeBool(0);
         stakes.uDictSetBuilder(256, ph, rec);
         saveData();
         return;
@@ -79,7 +79,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         sp.loadBool();
         assert(!fp, 1303);
         val rec = beginCell().storeUint(ch, 256).storeBool(st).storeCoins(sa)
-            .storeBool(1).storeCoins(300000000000).storeBool(0).endCell();
+            .storeBool(1).storeCoins(300000000000).storeBool(0);
         stakes.uDictSetBuilder(256, ph, rec);
         saveData();
         return;
@@ -107,7 +107,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         val rec = beginCell().storeUint(ch, 256).storeBool(1).storeCoins(0)
-            .storeBool(fp).storeCoins(fa).storeBool(1).endCell();
+            .storeBool(fp).storeCoins(fa).storeBool(1);
         stakes.uDictSetBuilder(256, ph, rec);
         saveData();
         return;

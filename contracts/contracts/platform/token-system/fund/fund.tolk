@@ -37,8 +37,11 @@ fun calcWallet(owner: slice): slice {
     return beginCell().storeUint(4, 3).storeInt(0, 8)
         .storeUint(cellHash(init), 256).endCell().beginParse();
 }
+fun hashToSlice(h: int): slice {
+    return beginCell().storeUint(h, 256).endCell().beginParse();
+}
 fun isAllowed(hash: int): int {
-    var (_, found) = allowedProjects.sDictGet(256, hash);
+    var (_, found) = allowedProjects.sDictGet(256, hashToSlice(hash));
     return found;
 }
 fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: slice) {
@@ -66,14 +69,14 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
     if (op == OP_ADD) {
         assert(isSliceBitsEqual(sender, adminAddr), 801);
         val (_, ph) = parseStandardAddress(msgBody.loadAddress());
-        allowedProjects.sDictSet(256, ph, beginCell().endCell().beginParse());
+        allowedProjects.sDictSet(256, hashToSlice(ph), beginCell().endCell().beginParse());
         saveData();
         return;
     }
     if (op == OP_REMOVE) {
         assert(isSliceBitsEqual(sender, adminAddr), 801);
         val (_, ph) = parseStandardAddress(msgBody.loadAddress());
-        allowedProjects.sDictDelete(256, ph);
+        allowedProjects.sDictDelete(256, hashToSlice(ph));
         saveData();
         return;
     }
