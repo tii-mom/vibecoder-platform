@@ -72,15 +72,6 @@ fun deployContracts() {
         .storeUint(1, 1+4+4+64+32+1+1).storeRef(masterInit).storeUint(0, 32).endCell(), 1);
     deployed = 1; status = STATUS_SUCCESS;
     govRemaining = mulDivFloor(raised, 5, 10); govInitial = govRemaining;
-    val teamShare = mulDivFloor(raised, 3, 10);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(teamShare)
-        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
-    val projectShare = mulDivFloor(raised, 18, 100);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(projectShare)
-        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
-    val platformFee = mulDivFloor(raised, 2, 100);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(platformAddr).storeCoins(platformFee)
-        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
     totalSqrtWeight = 0;
     var (key, valSlice, ok) = investors.uDictGetFirst(256);
     while (ok) {
@@ -91,6 +82,7 @@ fun deployContracts() {
             .storeRef(beginCell().storeCoins(0).storeSlice(inv).storeSlice(tokenAddr).storeRef(walletCode).endCell())
             .endCell();
         val wa = beginCell().storeUint(4, 3).storeInt(0, 8).storeUint(cellHash(wi), 256).endCell().beginParse();
+        saveData();
         sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(30000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeUint(21, 32).storeUint(0, 64)
             .storeSlice(inv).storeCoins(tokens).storeSlice(inv).storeCoins(0)
@@ -98,6 +90,17 @@ fun deployContracts() {
         var (nk, nvs, ns) = investors.uDictGetNext(256, key);
         key = nk; valSlice = nvs; ok = ns;
     }
+    saveData();
+
+    val teamShare = mulDivFloor(raised, 3, 10);
+    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(teamShare)
+        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
+    val projectShare = mulDivFloor(raised, 18, 100);
+    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(projectShare)
+        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
+    val platformFee = mulDivFloor(raised, 2, 100);
+    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(platformAddr).storeCoins(platformFee)
+        .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
     val platformTokens = mulDivFloor(raised, 8, 100) * 100;
     sendMessage(beginCell().storeUint(0x18, 6).storeSlice(platformAddr).storeCoins(30000000)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(21, 32).storeUint(0, 64)
