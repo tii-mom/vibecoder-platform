@@ -253,4 +253,96 @@ app.post('/api/v1/bounty/claim', async (c) => {
   }
 });
 
+// ============================================================
+// Agentic Wallet + Automation Endpoints
+// ============================================================
+
+// 19. POST /api/v1/agentic/create - Create agentic wallet
+app.post('/api/v1/agentic/create', async (c) => {
+  try {
+    const { user_id } = await c.req.json();
+    if (!user_id) return c.json({ success: false, error: 'user_id required' }, 400);
+    const walletId = `aw-${Date.now()}`;
+    const dashboardUrl = `https://agents.ton.org/setup/${walletId}`;
+    await c.env.DB.prepare(
+      'INSERT INTO agentic_wallets (id, user_id, wallet_address, status, dashboard_url) VALUES (?, ?, ?, ?, ?)'
+    ).bind(walletId, user_id, '', 'PENDING', dashboardUrl).run();
+    return c.json({ success: true, walletId, dashboardUrl });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 20. GET /api/v1/agentic/status - Get agentic wallet status
+app.get('/api/v1/agentic/status', async (c) => {
+  try {
+    const userId = c.req.query('user_id');
+    if (!userId) return c.json({ success: false, error: 'user_id required' }, 400);
+    const wallet = await c.env.DB.prepare(
+      'SELECT * FROM agentic_wallets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(userId).first();
+    return c.json({ success: true, data: wallet || null });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 21. GET /api/v1/automation/rules - List user's automation rules
+app.get('/api/v1/automation/rules', async (c) => {
+  try {
+    const userId = c.req.query('user_id');
+    if (!userId) return c.json({ success: false, error: 'user_id required' }, 400);
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM automation_rules WHERE user_id = ? ORDER BY created_at DESC'
+    ).bind(userId).all();
+    return c.json({ success: true, data: results });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 22. POST /api/v1/automation/rules - Create automation rule
+app.post('/api/v1/automation/rules', async (c) => {
+  try {
+    const { user_id, rule_type, condition_json, action_json, project_id } = await c.req.json();
+    if (!user_id || !rule_type) return c.json({ success: false, error: 'user_id and rule_type required' }, 400);
+    const ruleId = `rule-${Date.now()}`;
+    await c.env.DB.prepare(
+      'INSERT INTO automation_rules (id, user_id, rule_type, project_id, condition_json, action_json) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(ruleId, user_id, rule_type, project_id || null,
+           JSON.stringify(condition_json || {}), JSON.stringify(action_json || {})).run();
+    return c.json({ success: true, ruleId });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 23. PUT /api/v1/automation/rules/:id - Toggle rule enabled
+app.put('/api/v1/automation/rules/:id', async (c) => {
+  try {
+    const ruleId = c.req.param('id');
+    const { enabled } = await c.req.json();
+    await c.env.DB.prepare(
+      'UPDATE automation_rules SET enabled = ? WHERE id = ?'
+    ).bind(enabled ? 1 : 0, ruleId).run();
+    return c.json({ success: true });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 24. GET /api/v1/agentic/logs - Get agentic wallet logs
+app.get('/api/v1/agentic/logs', async (c) => {
+  try {
+    const walletId = c.req.query('wallet_id');
+    if (!walletId) return c.json({ success: false, error: 'wallet_id required' }, 400);
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM agentic_logs WHERE wallet_id = ? ORDER BY created_at DESC LIMIT 20'
+    ).bind(walletId).all();
+    return c.json({ success: true, data: results });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
 export default app;

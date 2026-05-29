@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bot, ShieldCheck, ToggleLeft, ToggleRight, Sparkles, TrendingUp, Cpu, Sliders, AlertTriangle, ListFilter, Play, History, FileText, CheckCircle2 } from 'lucide-react';
+import { Bot, ShieldCheck, ToggleLeft, ToggleRight, Sparkles, TrendingUp, Cpu, Sliders, AlertTriangle, ListFilter, Play, History, FileText, CheckCircle2, Wallet, Zap, Settings, Clock } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { useSparkStore } from '../store/sparkStore';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
@@ -414,6 +414,110 @@ export default function CopilotPage() {
                   <li><strong>监督节点共识释放：</strong> 绑定链上分配审计网关，仅在满足节点合规释放阈值时安全释放资产。</li>
                   <li><strong>智能复利轮动：</strong> 支持自动化多签分配分流，提取分配自动注入二代 Launchpad 流动池增收。</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* === Automation & Agentic Wallet Section === */}
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center gap-2 px-1">
+              <Zap size={16} className="text-[#635BFF]" />
+              <span className="text-sm font-black text-white uppercase tracking-wider">AI 自动化 & Agentic Wallet</span>
+            </div>
+
+            {/* Agentic Wallet Card */}
+            <div className="p-4 bg-[#1C1A3F]/50 border border-[#635BFF]/20 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Wallet size={16} className="text-[#8B83FF]" />
+                  <span className="text-xs font-bold text-white">Agentic Wallet（AI 自主钱包）</span>
+                </div>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded text-[9px] font-bold">
+                  {isConnected ? '可用' : '需连接钱包'}
+                </span>
+              </div>
+              <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">
+                分钥钱包：你持有 Owner Key（控制权），AI 持有 Operator Key（操作权）。
+                AI 可自动 Spark、投票、退出，你随时可撤销。
+              </p>
+              <button
+                onClick={handleWalletFallback}
+                className="w-full py-2.5 bg-[#635BFF] text-white rounded-lg text-xs font-bold hover:bg-[#5245EE] transition flex items-center justify-center gap-2"
+              >
+                <Bot size={14} />
+                {isConnected ? '创建 Agentic Wallet' : '连接钱包以创建 AI 钱包'}
+              </button>
+            </div>
+
+            {/* Automation Rules */}
+            <div className="p-4 bg-[#121620] border border-[#22253E] rounded-xl space-y-3">
+              <div className="flex items-center gap-2">
+                <Settings size={14} className="text-gray-400" />
+                <span className="text-xs font-bold text-white">自动化规则</span>
+              </div>
+
+              {/* Auto-Spark Rule */}
+              <div className="p-3 bg-[#1A1C2C] rounded-lg border border-[#22253E] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={12} className="text-[#635BFF]" />
+                    <span className="text-[11px] font-bold text-white">自动 Spark</span>
+                  </div>
+                  <button className="text-[10px] text-gray-400 hover:text-white transition">
+                    {autoLaunchpad ? <ToggleRight size={18} className="text-[#635BFF]" /> : <ToggleLeft size={18} />}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-[9px] text-gray-500 block">最低评分</label>
+                    <input type="number" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))}
+                      className="w-full bg-[#0A0B14] border border-[#22253E] rounded px-2 py-1 text-[10px] text-white" />
+                  </div>
+                  <div>
+                    <label className="text-[9px] text-gray-500 block">单次上限 TON</label>
+                    <input type="number" value={maxVcPerProject / 5} onChange={(e) => setMaxVcPerProject(Number(e.target.value) * 5)}
+                      className="w-full bg-[#0A0B14] border border-[#22253E] rounded px-2 py-1 text-[10px] text-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Auto-Vote Rule */}
+              <div className="p-3 bg-[#1A1C2C] rounded-lg border border-[#22253E] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck size={12} className="text-emerald-400" />
+                    <span className="text-[11px] font-bold text-white">自动投票 · 同意 ≤ 1000 TON 提款</span>
+                  </div>
+                  <button className="text-[10px]">
+                    <ToggleRight size={18} className="text-[#635BFF]" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Auto-Exit Rule */}
+              <div className="p-3 bg-[#1A1C2C] rounded-lg border border-[#22253E] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={12} className="text-red-400" />
+                    <span className="text-[11px] font-bold text-white">自动退出 · 7 天未更新 → 退出窗口触发</span>
+                  </div>
+                  <button className="text-[10px]">
+                    <ToggleLeft size={18} className="text-gray-600" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Performance */}
+              <div className="border-t border-[#22253E] pt-3 flex items-center justify-between text-[10px]">
+                <div className="flex items-center gap-2">
+                  <Clock size={12} className="text-gray-500" />
+                  <span className="text-gray-400">近期执行</span>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-emerald-400">✅ 自动 Spark 2 次</span>
+                  <span className="text-emerald-400">✅ 自动投票 1 次</span>
+                  <span className="text-gray-600">⏸ 退出 0 次</span>
+                </div>
               </div>
             </div>
           </div>
