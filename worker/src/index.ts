@@ -9,13 +9,73 @@ const app = new Hono<{ Bindings: Bindings }>();
 
 // Enable CORS for frontend integration
 app.use('/api/*', cors({
-  origin: '*', // In production, replace with specific frontend URL
+  origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowHeaders: ['Content-Type', 'Authorization'],
   exposeHeaders: ['Content-Length'],
   maxAge: 600,
   credentials: true,
 }));
+
+// Telegram Bot webhook
+app.post('/telegram/webhook', async (c) => {
+  try {
+    const body = await c.req.json() as any;
+    const msg = body?.message;
+    if (!msg) return c.json({ ok: true });
+
+    const chatId = msg.chat?.id;
+    const text = msg.text || '';
+
+    let reply = '';
+    if (text === '/start' || text.includes('start')) {
+      reply = `🚀 *VibeCoder — AI 项目发现与 Launch 平台*
+
+发现下一个顶级 AI Agent，一键 Spark 支持。
+
+• 📋 */launch* — 浏览项目市场
+• ⚡ */spark* — Spark 一个项目
+• 💼 */portfolio* — 我的持仓
+• 🎯 */bounty* — 赏金任务赚 VC
+• 🤖 */copilot* — AI 分析
+
+*立即体验：* [Open VibeCoder](https://app.72h.lol)`;
+    } else if (text === '/launch') {
+      reply = '📋 [浏览 Launch 项目市场](https://app.72h.lol#/launch)';
+    } else if (text === '/spark' || text === '/feed') {
+      reply = '⚡ [发现项目 · 一键 Spark](https://app.72h.lol#/feed)';
+    } else if (text === '/portfolio') {
+      reply = '💼 [查看我的持仓](https://app.72h.lol#/portfolio)';
+    } else if (text === '/bounty') {
+      reply = '🎯 [赏金市场 · 做任务赚 VC](https://app.72h.lol#/bounty)';
+    } else if (text === '/copilot') {
+      reply = '🤖 [AI 共建助手](https://app.72h.lol#/copilot)';
+    } else if (text === '/invite') {
+      reply = '👥 [邀请好友解锁特权](https://app.72h.lol#/invite)';
+    } else if (text === '/help') {
+      reply = '❓ 有任何问题？加入我们的 [Telegram 社区](https://t.me/vibecoder) 获得帮助。';
+    } else {
+      reply = '👋 嗨！我是 VibeCoder Bot。发送 /start 查看所有功能。';
+    }
+
+    if (chatId && reply) {
+      const botToken = '8221556211:AAFXHq3EufSUArqnHoOn-36INjwUL4imQXQ';
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: reply,
+          parse_mode: 'Markdown',
+          disable_web_page_preview: false,
+        }),
+      });
+    }
+    return c.json({ ok: true });
+  } catch (e) {
+    return c.json({ ok: false }, 500);
+  }
+});
 
 // 1. GET /api/v1/launches - Get all launch projects
 app.get('/api/v1/launches', async (c) => {
