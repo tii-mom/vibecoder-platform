@@ -22,6 +22,7 @@
     },
     "allowImportingTsExtensions": true,
     "types": [
+      "vite/client",
       "node",
       "react",
       "react-dom"
