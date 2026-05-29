@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Settings, Shield, Key, CheckCircle, Wallet, UserCircle, 
-  ChevronRight, RefreshCw, LogOut, Copy, Check, Info, Bell, BellRing, Coins,
-  Bot, Terminal
+  ChevronRight, RefreshCw, LogOut,   Copy, Check, Info, Bell, BellRing, Coins,
+  Bot, Terminal, CheckCircle2
 } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
+import { useContractStore } from '../store/contractStore';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -419,10 +420,46 @@ export default function SettingsPage() {
             </div>
           </Card>
 
+          {/* Contract Addresses */}
+          <Card className="mt-6">
+            <div className="p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Bot size={14} className="text-[#635BFF]" />
+                <span className="text-xs font-bold text-white">Testnet 合约地址</span>
+              </div>
+              <ContractList />
+            </div>
+          </Card>
+
         </div>
 
       </div>
 
+    </div>
+  );
+}
+
+function ContractList() {
+  const { contracts, loading, fetchContracts } = useContractStore();
+  const [copied, setCopied] = useState('');
+
+  useEffect(() => { fetchContracts(); }, []);
+
+  if (loading) return <div className="text-[10px] text-gray-500">加载中...</div>;
+  if (!contracts.length) return <div className="text-[10px] text-gray-500">暂无合约数据</div>;
+
+  return (
+    <div className="space-y-1.5">
+      {contracts.map((c) => (
+        <div key={c.contract_name} className="flex items-center justify-between text-[10px] p-1.5 hover:bg-[#1A1C2C] rounded transition">
+          <span className="text-gray-400 font-mono w-28 shrink-0">{c.contract_name}</span>
+          <code className="text-[#8B83FF] font-mono truncate mx-2 flex-1 text-right">{c.address.substring(0,12)}...{c.address.substring(c.address.length-8)}</code>
+          <button onClick={() => { navigator.clipboard.writeText(c.address); setCopied(c.contract_name); setTimeout(()=>setCopied(''),2000); }}
+            className="p-1 hover:bg-[#22253E] rounded text-gray-500 hover:text-white shrink-0">
+            {copied === c.contract_name ? <CheckCircle2 size={12} className="text-emerald-400" /> : <Copy size={12} />}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
