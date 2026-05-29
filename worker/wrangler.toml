@@ -12,3 +12,7 @@ migrations_dir = "migrations"
 [vars]
 TONCENTER_API_KEY = "061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891"
 TON_NETWORK = "testnet"
+
+routes = [
+  "api.72h.lol/*",
+]
