@@ -1,36 +1,51 @@
 // VibeCoder Deploy Script — TON Testnet
 // npx tsx scripts/deploy.ts
 
-import { TonClient, WalletContractV5R1, internal, toNano, beginCell } from '@ton/ton';
+import { TonClient, WalletContractV4, internal, toNano, beginCell } from '@ton/ton';
 import { mnemonicToPrivateKey } from '@ton/crypto';
-import { getHttpEndpoint } from '@orbs-network/ton-access';
 import { compile } from '@ton/blueprint';
 import { Address } from '@ton/core';
 import 'dotenv/config';
 
 const MNEMONIC = process.env.DEPLOYER_MNEMONIC || '';
-if (!MNEMONIC) throw new Error('Set DEPLOYER_MNEMONIC in .env');
+// Fix NBSP and quotes in mnemonic
+const MNEMONIC_FIXED = MNEMONIC.replace(/"/g, '').replace(/\u00a0/g, ' ').trim();
+const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
+if (!MNEMONIC_FIXED || MNEMONIC_FIXED.split(' ').length < 12) throw new Error('Set valid DEPLOYER_MNEMONIC (24 words) in .env');
+
+const endpoint = TONCENTER_KEY
+  ? `https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_KEY}`
+  : 'https://testnet.toncenter.com/api/v2/jsonRPC';
 
 async function deployOne(client: TonClient, wallet: any, keyPair: any, codeCell: any, dataCell: any, value: bigint = toNano('0.1')): Promise<Address> {
   const stateInit = beginCell().storeUint(6, 5).storeRef(codeCell).storeRef(dataCell).endCell();
   const hash = stateInit.hash();
   const addr = new Address(0, hash);
-  
-  await wallet.sendTransfer({
-    seqno: await wallet.getSeqno(),
-    secretKey: keyPair.secretKey,
-    messages: [internal({ to: addr, value, init: { code: codeCell, data: dataCell }, body: beginCell().endCell() })]
-  });
-  
-  await new Promise(r => setTimeout(r, 8000));
-  return addr;
+
+  // Retry loop for TonCenter lite server sync issues
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const seqno = await wallet.getSeqno();
+      await wallet.sendTransfer({
+        seqno, secretKey: keyPair.secretKey,
+        messages: [internal({ to: addr, value, init: { code: codeCell, data: dataCell }, body: beginCell().endCell() })]
+      });
+      await new Promise(r => setTimeout(r, 10000));
+      return addr;
+    } catch (e: any) {
+      if (attempt < 4 && e.message?.includes('500')) {
+        console.log(`  Retry ${attempt + 1}/5 after 10s...`);
+        await new Promise(r => setTimeout(r, 10000));
+      } else { throw e; }
+    }
+  }
+  throw new Error('Failed after 5 retries');
 }
 
 async function main() {
-  const endpoint = await getHttpEndpoint({ network: 'testnet' });
   const client = new TonClient({ endpoint });
-  const keyPair = await mnemonicToPrivateKey(MNEMONIC.split(' '));
-  const wallet = client.open(WalletContractV5R1.create({ workchain: 0, publicKey: keyPair.publicKey }));
+  const keyPair = await mnemonicToPrivateKey(MNEMONIC_FIXED.split(' '));
+  const wallet = client.open(WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey }));
   
   console.log(`Wallet: ${wallet.address.toString({bounceable: false})}\n`);
   
