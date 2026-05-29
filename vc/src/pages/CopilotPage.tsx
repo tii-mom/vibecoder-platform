@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Bot, ShieldCheck, ToggleLeft, ToggleRight, Sparkles, TrendingUp, Cpu, Sliders, AlertTriangle, ListFilter, Play, History, FileText, CheckCircle2, Wallet, Zap, Settings, Clock } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { useSparkStore } from '../store/sparkStore';
+import { analyzeProject } from '../services/ai';
+import type { CopilotAnalysis } from '../services/ai';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 
@@ -18,6 +20,20 @@ export default function CopilotPage() {
   const [maxVcPerProject, setMaxVcPerProject] = useState<number>(500);
   const [autoLaunchpad, setAutoLaunchpad] = useState<boolean>(true);
   const [autoCompound, setAutoCompound] = useState<boolean>(true);
+
+  // AI Analysis
+  const [aiResult, setAiResult] = useState<CopilotAnalysis | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiProject, setAiProject] = useState('');
+
+  const runAiAnalysis = async () => {
+    const p = projects[0];
+    if (!p) return;
+    setAiLoading(true);
+    const r = await analyzeProject(p.agentName, p.description, p.raisedAmount, p.goalAmount);
+    setAiResult(r);
+    setAiLoading(false);
+  };
 
   // Settings modification notice
   const [saveNotify, setSaveNotify] = useState(false);
@@ -355,9 +371,50 @@ export default function CopilotPage() {
                         <span className={`font-mono font-black ${meetsThreshold ? 'text-emerald-400' : 'text-gray-500'}`}>
                           {meetsThreshold ? '● COMPLIANT (完全满足策略，自动建仓)' : '○ FILTERED OUT (不满足策略设定，已排除)'}
                         </span>
-                      </div>
-                    </div>
+              </div>
+            </div>
+
+            {/* AI Analysis Card */}
+            <div className="p-4 bg-[#121620] border border-[#635BFF]/20 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Bot size={14} className="text-[#635BFF]" />
+                  <span className="text-xs font-bold text-white">DeepSeek AI 实时分析</span>
+                </div>
+                <button
+                  onClick={runAiAnalysis}
+                  disabled={aiLoading || !projects.length}
+                  className="px-3 py-1.5 bg-[#635BFF] text-white rounded text-[10px] font-bold hover:bg-[#5245EE] disabled:opacity-40 transition"
+                >
+                  {aiLoading ? '分析中...' : '分析首个项目'}
+                </button>
+              </div>
+              {aiResult && (
+                <div className="space-y-2 p-3 bg-[#0A0B14] rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      aiResult.score >= 85 ? 'bg-amber-500/10 text-amber-400' :
+                      aiResult.score >= 70 ? 'bg-[#635BFF]/10 text-[#635BFF]' :
+                      'bg-gray-500/10 text-gray-400'
+                    }`}>评分 {aiResult.score}/100</span>
+                    <span className="text-[10px] text-gray-400">{aiResult.summary}</span>
                   </div>
+                  {aiResult.strengths.length > 0 && (
+                    <div className="text-[10px]">
+                      <span className="text-emerald-400 font-bold">✅ 优势: </span>
+                      {aiResult.strengths.join(', ')}
+                    </div>
+                  )}
+                  {aiResult.risks.length > 0 && (
+                    <div className="text-[10px]">
+                      <span className="text-red-400 font-bold">⚠️ 风险: </span>
+                      {aiResult.risks.join(', ')}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
                 );
               })}
             </div>
