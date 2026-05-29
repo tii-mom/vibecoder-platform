@@ -22,60 +22,208 @@ app.post('/telegram/webhook', async (c) => {
   try {
     const body = await c.req.json() as any;
     const msg = body?.message;
-    if (!msg) return c.json({ ok: true });
+    const cb = body?.callback_query;
+    const botToken = '8221556211:AAFXHq3EufSUArqnHoOn-36INjwUL4imQXQ';
+    const tgApi = (method: string, data: any) =>
+      fetch(`https://api.telegram.org/bot${botToken}/${method}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
 
-    const chatId = msg.chat?.id;
-    const text = msg.text || '';
+    // Handle callback queries (inline button clicks)
+    if (cb) {
+      const cbId = cb.id;
+      const cbData = cb.data;
+      const chatId = cb.message?.chat?.id;
+      await tgApi('answerCallbackQuery', { callback_query_id: cbId });
 
-    let reply = '';
-    if (text === '/start' || text.includes('start')) {
-      reply = `🚀 *VibeCoder — AI 项目发现与 Launch 平台*
-
-发现下一个顶级 AI Agent，一键 Spark 支持。
-
-• 📋 */launch* — 浏览项目市场
-• ⚡ */spark* — Spark 一个项目
-• 💼 */portfolio* — 我的持仓
-• 🎯 */bounty* — 赏金任务赚 VC
-• 🤖 */copilot* — AI 分析
-
-*立即体验：* [Open VibeCoder](https://app.72h.lol)`;
-    } else if (text === '/launch') {
-      reply = '📋 [浏览 Launch 项目市场](https://app.72h.lol#/launch)';
-    } else if (text === '/spark' || text === '/feed') {
-      reply = '⚡ [发现项目 · 一键 Spark](https://app.72h.lol#/feed)';
-    } else if (text === '/portfolio') {
-      reply = '💼 [查看我的持仓](https://app.72h.lol#/portfolio)';
-    } else if (text === '/bounty') {
-      reply = '🎯 [赏金市场 · 做任务赚 VC](https://app.72h.lol#/bounty)';
-    } else if (text === '/copilot') {
-      reply = '🤖 [AI 共建助手](https://app.72h.lol#/copilot)';
-    } else if (text === '/invite') {
-      reply = '👥 [邀请好友解锁特权](https://app.72h.lol#/invite)';
-    } else if (text === '/help') {
-      reply = '❓ 有任何问题？加入我们的 [Telegram 社区](https://t.me/vibecoder) 获得帮助。';
-    } else {
-      reply = '👋 嗨！我是 VibeCoder Bot。发送 /start 查看所有功能。';
+      if (cbData === 'menu') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: mainMenuText(),
+          reply_markup: mainMenuKeyboard(),
+        });
+      } else if (cbData === 'launch_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '📋 <b>Launch 项目市场</b>\n\n发现早期 AI Agent 项目，查看融资进度、团队信息、代币经济模型。',
+          reply_markup: { inline_keyboard: [[{ text: '🚀 浏览项目', web_app: { url: 'https://app.72h.lol#/launch' } }]] }
+        });
+      } else if (cbData === 'spark_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '⚡ <b>发现项目 · 一键 Spark</b>\n\n全屏竖滑信息流，刷到感兴趣的 AI 项目直接 Spark 支持。',
+          reply_markup: { inline_keyboard: [[{ text: '⚡ 开始刷项目', web_app: { url: 'https://app.72h.lol#/feed' } }]] }
+        });
+      } else if (cbData === 'portfolio_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '💼 <b>我的持仓</b>\n\n查看你支持的项目、持有的代币、解锁进度和收益。',
+          reply_markup: { inline_keyboard: [[{ text: '💼 打开持仓', web_app: { url: 'https://app.72h.lol#/portfolio' } }]] }
+        });
+      } else if (cbData === 'bounty_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '🎯 <b>赏金市场 · 赚 VC</b>\n\n关注 X、加群、Spark 项目 — 完成任务得 VC。机器人自动验证！',
+          reply_markup: { inline_keyboard: [[{ text: '🎯 赏金市场', web_app: { url: 'https://app.72h.lol#/bounty' } }]] }
+        });
+      } else if (cbData === 'copilot_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '🤖 <b>AI Copilot</b>\n\nDeepSeek AI 智能评分、风险检测、自动 Spark 策略。',
+          reply_markup: { inline_keyboard: [[{ text: '🤖 打开 Copilot', web_app: { url: 'https://app.72h.lol#/copilot' } }]] }
+        });
+      } else if (cbData === 'invite_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '👥 <b>邀请好友 · 解锁特权</b>\n\n1人=审计端 · 3人=算力折扣 · 5人=早鸟通道。',
+          reply_markup: { inline_keyboard: [[{ text: '👥 邀请好友', web_app: { url: 'https://app.72h.lol#/invite' } }]] }
+        });
+      } else if (cbData === 'help_nav') {
+        await tgApi('sendMessage', {
+          chat_id: chatId, parse_mode: 'HTML',
+          text: '❓ <b>帮助中心</b>\n\nVibeCoder = AI 项目发现与 Launch 平台。\n开发者发起 Launch → 用户 Spark 支持 → 55% 自动部署代币。',
+          reply_markup: { inline_keyboard: [[{ text: '🚀 立即体验', web_app: { url: 'https://app.72h.lol' } }]] }
+        });
+      }
+      return c.json({ ok: true });
     }
 
-    if (chatId && reply) {
-      const botToken = '8221556211:AAFXHq3EufSUArqnHoOn-36INjwUL4imQXQ';
-      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: reply,
-          parse_mode: 'Markdown',
-          disable_web_page_preview: false,
-        }),
+    if (!msg) return c.json({ ok: true });
+    const chatId = msg.chat?.id;
+    const text = (msg.text || '').trim();
+
+    if (!chatId) return c.json({ ok: true });
+
+    // /start — welcome message with inline keyboard
+    if (text === '/start' || text.includes('/start')) {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: welcomeText(msg.chat?.first_name || ''),
+        reply_markup: mainMenuKeyboard(),
       });
     }
+    // /launch
+    else if (text === '/launch') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '📋 <b>Launch 项目市场</b>\n\n发现早期 AI Agent 项目，查看融资进度、团队信息、代币经济模型。每个项目都经过 AI Copilot 智能评分。',
+        reply_markup: { inline_keyboard: [
+          [{ text: '🚀 浏览项目', web_app: { url: 'https://app.72h.lol#/launch' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /spark
+    else if (text === '/spark' || text === '/feed') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '⚡ <b>发现项目 · 一键 Spark</b>\n\n全屏竖滑信息流，刷到感兴趣的项目直接 Spark 支持。三段式定价，早鸟更多代币奖励！',
+        reply_markup: { inline_keyboard: [
+          [{ text: '⚡ 开始刷项目', web_app: { url: 'https://app.72h.lol#/feed' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /portfolio
+    else if (text === '/portfolio') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '💼 <b>我的持仓</b>\n\n查看你支持的项目、持有的代币、解锁进度和收益。随时管理你的 AI 资产组合。',
+        reply_markup: { inline_keyboard: [
+          [{ text: '💼 打开持仓', web_app: { url: 'https://app.72h.lol#/portfolio' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /bounty
+    else if (text === '/bounty') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '🎯 <b>赏金市场 · 做任务赚 VC</b>\n\n关注 X、加入社群、Spark 项目 — 完成简单任务获得 VC 奖励。机器人自动验证，收益实时到账！',
+        reply_markup: { inline_keyboard: [
+          [{ text: '🎯 赏金市场', web_app: { url: 'https://app.72h.lol#/bounty' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /copilot
+    else if (text === '/copilot') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '🤖 <b>AI 共建助手 Copilot</b>\n\nDeepSeek AI 驱动的智能分析引擎。自动化评分、风险检测、策略推荐。配置自动 Spark 规则，AI 替你管理投资。',
+        reply_markup: { inline_keyboard: [
+          [{ text: '🤖 打开 Copilot', web_app: { url: 'https://app.72h.lol#/copilot' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /invite
+    else if (text === '/invite') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '👥 <b>邀请好友 · 解锁特权</b>\n\n邀请 1 人解锁审计端 · 3 人解锁算力折扣 · 5 人解锁早鸟通道。查看你的邀请进度和已解锁特权。',
+        reply_markup: { inline_keyboard: [
+          [{ text: '👥 邀请好友', web_app: { url: 'https://app.72h.lol#/invite' } }],
+          [{ text: '📋 返回主菜单', callback_data: 'menu' }],
+        ]}
+      });
+    }
+    // /help
+    else if (text === '/help') {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: '❓ <b>帮助中心</b>\n\n<b>什么是 VibeCoder？</b>\nAI 项目发现与 Launch 平台。开发者发起 Launch，用户 Spark 支持。55% 募资达成自动部署代币。\n\n<b>怎么开始？</b>\n点击下方按钮进入 Mini App，连接 TON 钱包即可。\n\n<b>什么是 VC？</b>\nVC 是平台代币。做赏金任务赚 VC，质押 VC 发起 Launch，用 VC 解锁 AI 深度分析。',
+        reply_markup: { inline_keyboard: [
+          [{ text: '🚀 立即体验', web_app: { url: 'https://app.72h.lol' } }],
+        ]}
+      });
+    }
+    // Fallback
+    else {
+      await tgApi('sendMessage', {
+        chat_id: chatId, parse_mode: 'HTML',
+        text: `👋 嗨 ${msg.chat?.first_name || '朋友'}！我是 VibeCoder Bot。\n\n发送 /start 查看完整功能菜单 🚀`,
+        reply_markup: { inline_keyboard: [
+          [{ text: '🚀 打开 VibeCoder', web_app: { url: 'https://app.72h.lol' } }],
+        ]}
+      });
+    }
+
     return c.json({ ok: true });
   } catch (e) {
     return c.json({ ok: false }, 500);
   }
 });
+
+function welcomeText(name: string): string {
+  return `<b>🚀 欢迎来到 VibeCoder，${name || '朋友'}！</b>\n\n<b>AI 项目发现与 Launch 平台</b>\n发现下一个顶级 AI Agent，一键 Spark 支持，55% 自动部署代币。\n\n━━━━━━━━━━━━━━\n✨ <b>快速开始</b>\n━━━━━━━━━━━━━━\n• 📋 浏览 Launch 项目市场\n• ⚡ 刷 Feed 一键 Spark\n• 💼 管理你的持仓组合\n• 🎯 做赏金任务赚 VC\n• 🤖 AI Copilot 智能分析\n\n<b>💰 新用户免费领 15 TON 体验金</b>\n点击下方按钮立即体验 👇`;
+}
+
+function mainMenuText(): string {
+  return `<b>📋 功能菜单</b>\n\n请选择你需要的功能：`;
+}
+
+function mainMenuKeyboard() {
+  return {
+    inline_keyboard: [
+      [{ text: '🚀 打开 VibeCoder', web_app: { url: 'https://app.72h.lol' } }],
+      [
+        { text: '📋 Launch 市场', callback_data: 'launch_nav' },
+        { text: '⚡ 刷 Feed', callback_data: 'spark_nav' },
+      ],
+      [
+        { text: '💼 持仓', callback_data: 'portfolio_nav' },
+        { text: '🎯 赏金', callback_data: 'bounty_nav' },
+      ],
+      [
+        { text: '🤖 Copilot', callback_data: 'copilot_nav' },
+        { text: '👥 邀请', callback_data: 'invite_nav' },
+      ],
+      [{ text: '❓ 帮助', callback_data: 'help_nav' }],
+    ],
+  };
+}
 
 // 1. GET /api/v1/launches - Get all launch projects
 app.get('/api/v1/launches', async (c) => {
