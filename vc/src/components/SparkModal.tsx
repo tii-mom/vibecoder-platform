@@ -1,6 +1,117 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Zap, Users, Sparkles, AlertCircle } from 'lucide-react';
+import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useSparkStore } from '../store/sparkStore';
+import { useContractStore } from '../store/contractStore';
+
+const TON_DECIMALS = 9;
+const SPARK_OPCODE = 0x111;
+const SIMPLE_COMMENT_OPCODE = 0;
+const MAX_COMMENT_BYTES = 123; // 127 bytes cell limit minus 4-byte comment opcode.
+
+type FundingMode = 'testnet' | 'sandbox';
+
+const crc32cTable = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i += 1) {
+    let crc = i;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc & 1) ? (0x82f63b78 ^ (crc >>> 1)) : (crc >>> 1);
+    }
+    table[i] = crc >>> 0;
+  }
+  return table;
+})();
+
+const crc32c = (bytes: Uint8Array) => {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = crc32cTable[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+};
+
+const toBase64 = (bytes: Uint8Array) => {
+  let binary = '';
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+  return btoa(binary);
+};
+
+const createSingleCellPayload = (data: Uint8Array) => {
+  if (data.length > 127) {
+    throw new Error('TON payload cell is too large.');
+  }
+
+  const header = new Uint8Array([
+    0xb5, 0xee, 0x9c, 0x72, // BOC magic
+    0x41, // has_crc32c + 1-byte counters/sizes, no index
+    0x01, // 1-byte total cell-size offset
+    0x01, // cells count
+    0x01, // roots count
+    0x00, // absent cells
+    data.length + 2, // total cell size: descriptors + data
+    0x00, // root cell index
+    0x00, // cell descriptor: ordinary cell, 0 refs
+    data.length * 2, // full-byte bitstring descriptor
+  ]);
+  const withoutCrc = new Uint8Array(header.length + data.length);
+  withoutCrc.set(header);
+  withoutCrc.set(data, header.length);
+
+  const checksum = crc32c(withoutCrc);
+  const boc = new Uint8Array(withoutCrc.length + 4);
+  boc.set(withoutCrc);
+  boc[withoutCrc.length] = checksum & 0xff;
+  boc[withoutCrc.length + 1] = (checksum >>> 8) & 0xff;
+  boc[withoutCrc.length + 2] = (checksum >>> 16) & 0xff;
+  boc[withoutCrc.length + 3] = (checksum >>> 24) & 0xff;
+  return toBase64(boc);
+};
+
+const uint32ToBytes = (value: number) => new Uint8Array([
+  (value >>> 24) & 0xff,
+  (value >>> 16) & 0xff,
+  (value >>> 8) & 0xff,
+  value & 0xff,
+]);
+
+const createSparkOpcodePayload = () => {
+  const data = new Uint8Array(12);
+  data.set(uint32ToBytes(SPARK_OPCODE));
+  return createSingleCellPayload(data);
+};
+
+const createCommentPayload = (comment: string) => {
+  const encoder = new TextEncoder();
+  const commentBytes = encoder.encode(comment).slice(0, MAX_COMMENT_BYTES);
+  const data = new Uint8Array(4 + commentBytes.length);
+  data.set(uint32ToBytes(SIMPLE_COMMENT_OPCODE));
+  data.set(commentBytes, 4);
+  return createSingleCellPayload(data);
+};
+
+const parseTonToNano = (value: string) => {
+  const normalized = value.trim();
+  if (!/^\d+(\.\d{0,9})?$/.test(normalized)) {
+    throw new Error('请输入最多 9 位小数的 TON 金额。');
+  }
+  const [whole, fraction = ''] = normalized.split('.');
+  const nano = BigInt(whole) * 10n ** BigInt(TON_DECIMALS)
+    + BigInt(fraction.padEnd(TON_DECIMALS, '0'));
+  if (nano <= 0n) {
+    throw new Error('请输入有效的共建支持金额。');
+  }
+  return nano.toString();
+};
+
+const findEarlyFundraisingAddress = (contracts: Array<{ contract_name: string; address: string }>) => {
+  const preferredNames = ['EARLY_FUNDRAISING', 'LAUNCH_CAMPAIGN', 'EARLY_SUB', 'EARLY_SUBSCRIPTION'];
+  return preferredNames
+    .map((name) => contracts.find((contract) => contract.contract_name?.toUpperCase() === name)?.address)
+    .find(Boolean);
+};
 
 interface SparkModalProps {
   project: any;
@@ -23,19 +134,103 @@ export default function SparkModal({
 }: SparkModalProps) {
   const [amountInput, setAmountInput] = useState<string>('10');
   const [mode, setMode] = useState<'solo' | 'team'>('solo');
+  const [fundingMode, setFundingMode] = useState<FundingMode>('testnet');
+  const [hasRequestedContracts, setHasRequestedContracts] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tonConnectUI] = useTonConnectUI();
+  const { contracts, loading: contractsLoading, fetchContracts } = useContractStore();
 
   const trialBalance = profile?.trialBalance ?? 0;
   const isTrialEligible = profile && !profile.hasUsedTrial && trialBalance > 0;
-  const totalAvailable = (profile?.balanceTON || 0) + trialBalance;
+  const totalAvailable = fundingMode === 'sandbox' ? trialBalance : (profile?.balanceTON || 0);
+
+  useEffect(() => {
+    if (contracts.length === 0 && !contractsLoading && !hasRequestedContracts) {
+      setHasRequestedContracts(true);
+      fetchContracts();
+    }
+  }, [contracts.length, contractsLoading, fetchContracts, hasRequestedContracts]);
+
+  useEffect(() => {
+    if (!isTrialEligible && fundingMode === 'sandbox') {
+      setFundingMode('testnet');
+    }
+  }, [fundingMode, isTrialEligible]);
 
   const handleQuickSelect = (val: number) => {
     setAmountInput(val.toString());
     setErrorMsg('');
   };
 
-  const handleConfirm = (e: React.FormEvent) => {
+  const completeLocalSpark = (finalAmount: number) => {
+    let finalTeamId: string | undefined = undefined;
+
+    if (mode === 'team') {
+      if (teamId) {
+        const success = useSparkStore.getState().joinTeamSpark(teamId, profile.walletAddress, finalAmount);
+        if (!success) {
+          throw new Error('加入拼单失败，该拼单可能已结束或已满额。');
+        }
+        finalTeamId = teamId;
+      } else {
+        const newTeam = useSparkStore.getState().createTeamSpark(
+          project.id,
+          profile.walletAddress,
+          profile.username,
+          20, // default target is 20 TON
+          finalAmount
+        );
+        finalTeamId = newTeam.id;
+      }
+    } else {
+      const isInvested = investInProject(project.id, finalAmount, profile.walletAddress);
+      if (!isInvested) {
+        throw new Error('交易记录失败，请重试。');
+      }
+    }
+
+    return finalTeamId;
+  };
+
+  const sendTestnetSpark = async (finalAmount: number) => {
+    if (!tonConnectUI?.connected) {
+      tonConnectUI?.openModal?.();
+      throw new Error('请先通过 TonConnect 连接测试网钱包。');
+    }
+
+    if (useContractStore.getState().contracts.length === 0) {
+      await useContractStore.getState().fetchContracts();
+    }
+
+    const contractAddress = findEarlyFundraisingAddress(useContractStore.getState().contracts);
+    if (!contractAddress) {
+      throw new Error('未找到平台 EARLY_FUNDRAISING 测试网募资合约地址，请稍后重试。');
+    }
+
+    const amount = parseTonToNano(amountInput);
+    const isLaunchCampaignContract = useContractStore.getState().contracts.some((contract) => {
+      const name = contract.contract_name?.toUpperCase();
+      return contract.address === contractAddress && (name === 'EARLY_FUNDRAISING' || name === 'LAUNCH_CAMPAIGN');
+    });
+    const comment = `VibeCoder Spark ${project.id} ${finalAmount} TON ${mode}`;
+    const payload = isLaunchCampaignContract ? createSparkOpcodePayload() : createCommentPayload(comment);
+
+    await tonConnectUI.sendTransaction({
+      validUntil: Math.floor(Date.now() / 1000) + 10 * 60,
+      messages: [
+        {
+          address: contractAddress,
+          amount,
+          payload,
+        },
+      ],
+    });
+  };
+
+  const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setErrorMsg('');
 
     if (!profile) {
@@ -43,7 +238,7 @@ export default function SparkModal({
       return;
     }
 
-    let finalAmount = Number(amountInput);
+    const finalAmount = Number(amountInput);
     if (isNaN(finalAmount) || finalAmount <= 0) {
       setErrorMsg('请输入有效的共建支持金额。');
       return;
@@ -59,52 +254,42 @@ export default function SparkModal({
       return;
     }
 
-    // Clean trial balance logic: trial funds are used first, then real balance
-    const currentTrialBalance = profile.trialBalance ?? 0;
-    const trialUsed = Math.min(finalAmount, currentTrialBalance);
-    const realCost = finalAmount - trialUsed;
-
-    if (realCost > profile.balanceTON) {
-      setErrorMsg(`余额不足。需要额外支付 ${realCost.toFixed(1)} TON，当前可用余额: ${profile.balanceTON} TON。`);
+    if (fundingMode === 'sandbox' && !isTrialEligible) {
+      setErrorMsg('当前账号没有可用体验金，请切换为真实 testnet Spark。');
       return;
     }
 
-    let finalTeamId: string | undefined = undefined;
-
-    if (mode === 'team') {
-      if (teamId) {
-        const success = useSparkStore.getState().joinTeamSpark(teamId, profile.walletAddress, finalAmount);
-        if (!success) {
-          setErrorMsg('加入拼单失败，该拼单可能已结束或已满额。');
-          return;
-        }
-        finalTeamId = teamId;
-      } else {
-        const newTeam = useSparkStore.getState().createTeamSpark(
-          project.id, 
-          profile.walletAddress, 
-          profile.username, 
-          20, // default target is 20 TON
-          finalAmount
-        );
-        finalTeamId = newTeam.id;
-      }
-    } else {
-      const isInvested = investInProject(project.id, finalAmount, profile.walletAddress);
-      if (!isInvested) {
-        setErrorMsg('交易广播失败，请重试。');
-        return;
-      }
+    if (fundingMode === 'sandbox' && finalAmount > trialBalance) {
+      setErrorMsg(`体验金模拟 Spark 只能使用体验金余额，当前体验金为 ${trialBalance} TON。真实 testnet Spark 请切换到链上模式。`);
+      return;
     }
 
-    updateProfile({
-      balanceTON: Number((profile.balanceTON - realCost).toFixed(2)),
-      trialBalance: Number((currentTrialBalance - trialUsed).toFixed(2)),
-      hasUsedTrial: trialUsed > 0 ? true : profile.hasUsedTrial,
-      hasGasConsumption: realCost > 0 ? true : (profile.hasGasConsumption || false)
-    });
-    
-    onSuccess(finalAmount, finalTeamId);
+    setIsSubmitting(true);
+    try {
+      if (fundingMode === 'testnet') {
+        await sendTestnetSpark(finalAmount);
+        const finalTeamId = completeLocalSpark(finalAmount);
+
+        updateProfile({
+          hasGasConsumption: true,
+        });
+
+        onSuccess(finalAmount, finalTeamId);
+        return;
+      }
+
+      const finalTeamId = completeLocalSpark(finalAmount);
+      updateProfile({
+        trialBalance: Number((trialBalance - finalAmount).toFixed(2)),
+        hasUsedTrial: true,
+      });
+
+      onSuccess(finalAmount, finalTeamId);
+    } catch (error) {
+      setErrorMsg(error instanceof Error ? error.message : 'Spark 发送失败，请在钱包中确认交易状态后重试。');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -172,6 +357,49 @@ export default function SparkModal({
           </div>
         </div>
 
+        {/* Funding mode selectors */}
+        <div className="space-y-2">
+          <div className="grid grid-cols-2 bg-[#05060F] p-1 rounded-2xl border border-[#14162B]">
+            <button
+              type="button"
+              onClick={() => {
+                setFundingMode('testnet');
+                setErrorMsg('');
+              }}
+              className={`py-2 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                fundingMode === 'testnet'
+                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/20'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              真实 testnet Spark
+            </button>
+            <button
+              type="button"
+              disabled={!isTrialEligible}
+              onClick={() => {
+                if (!isTrialEligible) return;
+                setFundingMode('sandbox');
+                setErrorMsg('');
+              }}
+              className={`py-2 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5 ${
+                fundingMode === 'sandbox'
+                  ? 'bg-amber-500/15 text-amber-300 border border-amber-400/20 cursor-pointer'
+                  : isTrialEligible
+                    ? 'text-gray-400 hover:text-white cursor-pointer'
+                    : 'text-gray-600 cursor-not-allowed'
+              }`}
+            >
+              体验金模拟 Spark
+            </button>
+          </div>
+          <p className="text-[9.5px] text-gray-500 leading-relaxed">
+            {fundingMode === 'testnet'
+              ? '链上模式会通过 TonConnect 向测试网募资合约发送真实 testnet TON；交易提交成功前不会更新 Spark 状态，也不会扣减本地体验金。'
+              : '模拟模式只消耗平台体验金，不发起 TonConnect 交易，也不会与真实 testnet TON 余额混扣。'}
+          </p>
+        </div>
+
         {/* Solo or Team selectors */}
         <div className="grid grid-cols-2 bg-[#05060F] p-1 rounded-2xl border border-[#14162B]">
           <button
@@ -204,7 +432,7 @@ export default function SparkModal({
         <div className="space-y-2">
           <div className="flex justify-between items-center text-[11px] text-gray-400">
             <span>支持共建数额 (TON)</span>
-            <span>可用余额: {totalAvailable} TON{trialBalance > 0 ? ` (含体验金 ${trialBalance})` : ''}</span>
+            <span>{fundingMode === 'sandbox' ? '体验金余额' : '测试网余额'}: {totalAvailable} TON</span>
           </div>
           <div className="relative flex items-center">
             <input
@@ -265,14 +493,19 @@ export default function SparkModal({
         {/* Submit Confirm Button */}
         <button
           onClick={handleConfirm}
-          className="w-full py-3 bg-[#10B981] hover:bg-[#059669] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#10B981]/10 active:scale-98 transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#34D399]/20"
+          disabled={isSubmitting}
+          className={`w-full py-3 bg-[#10B981] hover:bg-[#059669] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#10B981]/10 active:scale-98 transition flex items-center justify-center gap-1.5 border border-[#34D399]/20 ${
+            isSubmitting ? 'opacity-70 cursor-wait' : 'cursor-pointer'
+          }`}
         >
-          <span>✦ 确认发送星火共建资金</span>
+          <span>{isSubmitting ? '✦ 等待钱包提交交易...' : fundingMode === 'testnet' ? '✦ 确认发送真实 testnet Spark' : '✦ 确认体验金模拟 Spark'}</span>
         </button>
 
         {/* Risk Disclaimer */}
         <p className="text-[9px] text-gray-550 leading-normal text-center font-sans">
-          此动作仅为 VibeCoder 沙箱测试环境模拟，不代表真实主网主权代币扣拨。
+          {fundingMode === 'testnet'
+            ? '真实 testnet Spark 会提交 TON 测试网交易；请在钱包中确认收款合约、金额与 payload。'
+            : '体验金模拟 Spark 仅为 VibeCoder 沙箱测试环境模拟，不代表真实主网主权代币扣拨。'}
         </p>
       </div>
     </div>
