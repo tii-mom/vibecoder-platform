@@ -12,7 +12,7 @@ global creators: cell;
 global stakes: cell;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     adminAddr = ds.loadAddress();
     vcMaster = ds.loadAddress();
     vcWalletCode = ds.loadRef();
@@ -22,7 +22,7 @@ fun loadData() {
     ds.assertEndOfSlice();
 }
 fun saveData() {
-    setContractData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster).storeRef(vcWalletCode)
+    contract.setData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster).storeRef(vcWalletCode)
         .storeSlice(myWallet).storeDict(creators).storeDict(stakes).endCell());
 }
 fun calcWallet(owner: slice): slice {
@@ -104,7 +104,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(sa)
             .storeSlice(wa).storeSlice(cr).storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         val rec = beginCell().storeUint(ch, 256).storeBool(1).storeCoins(0)
             .storeBool(fp).storeCoins(fa).storeBool(1);
