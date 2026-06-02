@@ -14,7 +14,9 @@ if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
   } catch (_) {}
 }
 
-const manifestUrl = `${window.location.origin}/tonconnect-manifest.json`;
+const manifestUrl = window.location.protocol === 'http:'
+  ? 'https://app.72h.lol/tonconnect-manifest.json'
+  : `${window.location.origin}/tonconnect-manifest.json`;
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

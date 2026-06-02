@@ -17,6 +17,7 @@ export type LaunchCampaignConfig = {
     vestingCode: Cell;
     oracleAddress: Address;
     platformAddress: Address;
+    platformFeeRate: number; // e.g. 350 for 3.5%, 800 for 8%
 };
 
 export function launchCampaignConfigToCell(config: LaunchCampaignConfig): Cell {
@@ -25,7 +26,7 @@ export function launchCampaignConfigToCell(config: LaunchCampaignConfig): Cell {
         .storeRef(config.jettonWalletCode)
         .storeRef(config.vestingCode)
         .endCell();
-        
+
     const dictsCell = beginCell()
         .storeDict(null) // investorDict
         .storeDict(null) // proposalsDict
@@ -36,11 +37,12 @@ export function launchCampaignConfigToCell(config: LaunchCampaignConfig): Cell {
         .storeCoins(0) // initialFunds
         .storeCoins(0) // totalSqrtWeight
         .endCell();
-        
+
     const addressesCell = beginCell()
-        .storeAddress(null) // tokenAddress
+        .storeAddress(config.ownerAddress) // placeholder until tokenDeployed becomes true
         .storeAddress(config.platformAddress)
         .storeAddress(config.oracleAddress)
+        .storeUint(config.platformFeeRate, 16)
         .endCell();
 
     return beginCell()
@@ -51,14 +53,14 @@ export function launchCampaignConfigToCell(config: LaunchCampaignConfig): Cell {
         .storeUint(config.deadline, 32)
         .storeBit(false) // tokenDeployed
         .storeUint(config.campaignStatus, 8)
-        
+
         .storeCoins(config.stage1Target)
         .storeUint(config.stage1Rate, 32)
         .storeUint(config.stage1Bonus, 32)
         .storeCoins(config.stage2Target)
         .storeUint(config.stage2Rate, 32)
         .storeUint(config.stage3Rate, 32)
-        
+
         .storeRef(codesCell)
         .storeRef(dictsCell)
         .storeRef(addressesCell)
@@ -157,6 +159,30 @@ export class LaunchCampaign implements Contract {
         });
     }
 
+    async sendMintBatch(provider: ContractProvider, via: Sender, value: bigint, limit: number) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(0x777, 32) // OP_MINT_BATCH
+                .storeUint(0, 64)
+                .storeUint(limit, 8)
+                .endCell(),
+        });
+    }
+
+    async sendSetPlatformFeeRate(provider: ContractProvider, via: Sender, value: bigint, opts: { platformFeeRate: number }) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(10, 32) // OP_SET_PLATFORM_FEE_RATE
+                .storeUint(0, 64)
+                .storeUint(opts.platformFeeRate, 16)
+                .endCell(),
+        });
+    }
+
     async getCampaignData(provider: ContractProvider) {
         const { stack } = await provider.get('getCampaignData', []);
         return {
@@ -173,6 +199,7 @@ export class LaunchCampaign implements Contract {
             proposalCount: stack.readNumber(),
             remainingGovernanceFunds: stack.readBigNumber(),
             totalSqrtWeight: stack.readBigNumber(),
+            platformFeeRate: stack.readNumber(),
         };
     }
 

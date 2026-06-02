@@ -16,26 +16,18 @@
 
 ---
 
-## 一、链上验证（TonCenter RPC 恢复后执行）
+## 一、链上验证
 
-目前 TonCenter 测试网节点不稳定（`LITE_SERVER_NOTREADY`），等恢复后验证：
+当前 testnet VC master 为 `UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf`。
 
-### 任务 1.1：验证 VC 总供应链上数据
+### 任务 1.1：验证 VC 标准接口、余额、metadata、TonAPI 索引
 
 ```bash
-cd /Users/yudeyou/Desktop/VC/contracts && node -e "
-const {TonClient,Address}=require('@ton/ton');
-(async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
-  const r=await c.runMethod(Address.parse('UQDwO6ai0zr0UVekU-NIqI_eCTKCICrkt2zGMnAzNJrk58dO'),'getJettonData');
-  console.log('Total Supply:', r.stack.readBigNumber().toString());
-  console.log('Mintable:', r.stack.readBigNumber().toString());
-  console.log('Admin:', r.stack.readAddressOpt()?.toString({bounceable:false})||'(burned)');
-})();
-"
+cd /Users/yudeyou/Desktop/VC/contracts
+npm run verify:vc-jetton
 ```
 
-预期输出：`Total Supply: 900000000`（900M），`Mintable: -1`（true），`Admin: (burned)`。
+当前预期：`totalSupplyVC=980010002`，`standardGetters.*=true`，`tonapi.accountBalancesContainsCurrentMaster=true`。测试网 admin 当前未撤销：`adminRevoked=false`。
 
 ### 任务 1.2：验证 Launch Campaign 55% 触发
 
@@ -47,7 +39,7 @@ const {TonClient,Address}=require('@ton/ton');
 cd /Users/yudeyou/Desktop/VC/contracts && node -e "
 const {TonClient,Address}=require('@ton/ton');
 (async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
+  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC', apiKey: process.env.TONCENTER_API_KEY});
   const r=await c.runMethod(Address.parse('UQDbbI9HYci2ClRsSKhchBywAqRhBAQKfiYsAP5v-swi4aHi'),'getCampaignData');
   console.log('Raised:', Number(r.stack.readBigNumber())/1e9,'TON');
   r.stack.readBigNumber();r.stack.readBigNumber();r.stack.readBigNumber();
@@ -168,85 +160,16 @@ fetch(`/api/v1/automation/rules/${ruleId}`, {
 **3. 逐步迁移，逐文件验证**
 每次只改 1 个合约，改完立刻 `acton build` 验证通过 → 提交 git → 再改下一个。
 
-### 官方文档
+### Acton 迁移状态
 
-- Acton 安装：https://ton-blockchain.github.io/acton/docs/installation
-- 快速开始：https://ton-blockchain.github.io/acton/docs/quickstart
-- API 参考：https://ton-blockchain.github.io/acton/docs/reference
-- GitHub：https://github.com/ton-blockchain/acton
+已完成。当前 `Acton.toml` 只保留 active 合约与 launch 合约；`EarlySubscription` 和 `Strategic` 已从 build/wrappers/tests/scripts/source 中移除。
 
-### 任务 4.1：安装 Acton
-
-```bash
-curl -LsSf https://github.com/ton-blockchain/acton/releases/latest/download/acton-installer.sh | sh
-acton --version
-```
-
-### 任务 4.2：初始化
+验证命令：
 
 ```bash
 cd /Users/yudeyou/Desktop/VC/contracts
-acton init
+npm run premainnet:check
 ```
-
-生成 `Acton.toml`。**不要删除任何现有文件。**
-
-### 任务 4.3：逐文件迁移
-
-**顺序**（从简单到复杂）：
-
-```
-1. token_launcher.tolk     (49 行，最简单)
-2. strategic.tolk           (61 行)
-3. project_token.tolk       (102 行)
-4. project_token_wallet.tolk (122 行)
-5. vc_jetton.tolk           (117 行)
-6. early_subscription.tolk  (114 行)
-7. fund.tolk                (155 行)
-8. launch_fee.tolk          (148 行)
-9. vesting.tolk             (130 行)
-10. launch_campaign.tolk    (364 行，最后改)
-```
-
-### 每个文件需要的修改模式
-
-```tolk
-// 顶部添加 compat helpers（放在 import 语句后）
-fun cellHashCompat(c: cell): int asm "HASHCU";
-fun addressIsNone(a: slice): bool asm "ISNULL";
-fun sendMsg(msg: cell, mode: int): void asm "SENDRAWMSG";
-fun nowTs(): int asm "NOW";
-fun eqBits(a: slice, b: slice): bool asm "SDEQ";
-fun bounced(f: int): bool asm "1 PUSHINT AND";
-```
-
-然后替换调用：
-```
-getContractData()  → contract.getData()
-setContractData(   → contract.setData(
-getMyAddress()     → contract.getAddress()
-get                → get fun
-cellHash(          → cellHashCompat(
-sendMessage(       → sendMsg(
-now()              → nowTs()
-isSliceBitsEqual(  → eqBits(
-isMessageBounced(  → bounced(
-addressIsNone(     → addressIsNone(
-```
-
-`.assertEndOfSlice()` → 保持不变，Tolk 原生支持
-
-### 任务 4.4：验证
-
-```bash
-# 每改完一个文件
-acton build
-
-# 全部改完后
-npm test
-```
-
-**预期**：`acton build` 无错误，`npm test` 5/5 通过。
 
 ---
 
@@ -286,10 +209,21 @@ npx wrangler pages deploy dist --project-name vibecoder --branch main
 |---|------|------|
 | 6.1 | 安全审计 | 合约代码 + 前端 + Worker |
 | 6.2 | VC Jetton 主网部署 | 用主网助记词重新部署 |
-| 6.3 | Fund/Strategic/EarlySub/LaunchFee 主网部署 | |
+| 6.3 | Fund/VCRewardPool/EarlyFundraising/LaunchFee 主网部署 | 不再部署 Strategic/EarlySub |
 | 6.4 | Token Launcher 主网部署 | |
 | 6.5 | 合约地址更新主网 D1 | |
 | 6.6 | 法务合规审查 | |
+
+---
+
+## 七、交易所充值入金与邀请奖励机制
+
+| # | 任务 | 说明 |
+|---|------|------|
+| 7.1 | 后端 D1 初始化入金任务 | 在 `bounty_tasks` 表中插入币安、OKX、Bitget 注册及充值任务（类型：`EXCHANGE_REG`，奖励 1,000 $VC） |
+| 7.2 | 前端新建 OnRampPage | 创建 `src/pages/OnRampPage.tsx`，展示三大交易所专属卡片、邀请码、C2C 入金保姆级指南和任务截图提交入口 |
+| 7.3 | 侧边栏/导航栏关联 | 在 Sidebar / Header 中添加充值入金向导链接，引导缺少 TON/USDT 的用户快速入金 |
+| 7.4 | 后端审核接口完善 | 在 Worker 中完善 `EXCHANGE_REG` 类型任务的 UID 和截图的审核，通过后原子增发 1,000 $VC 奖励 |
 
 ---
 

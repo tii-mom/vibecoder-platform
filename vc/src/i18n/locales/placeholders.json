@@ -1,0 +1,894 @@
+[
+  {
+    "key": "projectNotFound",
+    "zh": "未找到项目实例"
+  },
+  {
+    "key": "projectRecycledDesc",
+    "zh": "该代币或星火项目可能由于本地存储生命周期已被回收。"
+  },
+  {
+    "key": "backToExplore",
+    "zh": "返回探索大厅"
+  },
+  {
+    "key": "actionAdSponsorship",
+    "zh": "收取广告赞助"
+  },
+  {
+    "key": "actionHighFreqProfit",
+    "zh": "高频博弈获利流"
+  },
+  {
+    "key": "actionAllocationPayout",
+    "zh": "分配划拨"
+  },
+  {
+    "key": "actionDexRoyalties",
+    "zh": "DEX 推理调用版税"
+  },
+  {
+    "key": "statusConfirmed",
+    "zh": "已确认"
+  },
+  {
+    "key": "statusSettled",
+    "zh": "已结算分配"
+  },
+  {
+    "key": "referrerExperienceActivated",
+    "zh": "🎉 您收到来自 <strong>{referrer}</strong> 的推荐！已在您的沙盒会话中激活 <strong>15 TON 首次共建体验金</strong>。"
+  },
+  {
+    "key": "groupSparkInviteHeader",
+    "zh": "👥 拼单共建邀请 (GROUP SPARK INVITE)"
+  },
+  {
+    "key": "groupSparkInviteDesc",
+    "zh": "您的好友 <strong>{creator}</strong> 邀请您加入拼单战队共同支持星火！拼单进度: <strong>{current}/{target} TON</strong>。"
+  },
+  {
+    "key": "joinTeamBtn",
+    "zh": "加入拼单小组"
+  },
+  {
+    "key": "supportSoloBtn",
+    "zh": "独自支持"
+  },
+  {
+    "key": "backToExploreFeed",
+    "zh": "返回项目探索Feed列表"
+  },
+  {
+    "key": "multisigCreator",
+    "zh": "多签发布人:"
+  },
+  {
+    "key": "officialWebsite",
+    "zh": "官方网站"
+  },
+  {
+    "key": "onchainVerification",
+    "zh": "链上验证："
+  },
+  {
+    "key": "editProject",
+    "zh": "编辑项目"
+  },
+  {
+    "key": "tabOverview",
+    "zh": "Overview (项目介绍)"
+  },
+  {
+    "key": "tabSpark",
+    "zh": "Spark (星火/里程碑)"
+  },
+  {
+    "key": "tabProjectHealth",
+    "zh": "Project Health (健康度)"
+  },
+  {
+    "key": "colConfirmTime",
+    "zh": "确认时间"
+  },
+  {
+    "key": "expectedPayoutPerformanceTooltip",
+    "zh": "预期分配表现及变动报告 (Tooltip)"
+  },
+  {
+    "key": "allocationPercent",
+    "zh": "分配: {percent}%"
+  },
+  {
+    "key": "expectedPayoutReportTitle",
+    "zh": "预计预期分配结算报表"
+  },
+  {
+    "key": "expectedPayoutReportDesc",
+    "zh": "该期交割对应合伙资产在当前自治算力表现与模拟累积利润评估下的实时对冲预期分配表现："
+  },
+  {
+    "key": "expectedPayoutPerformance",
+    "zh": "预计预期分配表现:"
+  },
+  {
+    "key": "accumulatedAgentProfit",
+    "zh": "智能体累积利润:"
+  },
+  {
+    "key": "sparkAchievementProgress",
+    "zh": "星火达成进度:"
+  },
+  {
+    "key": "estimatedPayoutAmount",
+    "zh": "对应到手估算:"
+  },
+  {
+    "key": "creatorTeamHistoryTitle",
+    "zh": "自治开发者团队成员构成和往期实绩"
+  },
+  {
+    "key": "assuranceModeLabel",
+    "zh": "保障模式:"
+  },
+  {
+    "key": "assuranceModeStakedDesc",
+    "zh": "该项目开发者已向多签共建金库质押了约 10,000 $VC。在里程碑完成审计并通过之前，共建款将锁在冷托管合约中，由平台和支持者联合掌控，平台手续费仅扣除 5%。"
+  },
+  {
+    "key": "assuranceModeUnstakedDesc",
+    "zh": "该项目采用 Unstaked 自由释放模式，平台手续费提档至 15%，无开发者预质押担保，请支持者注意合理控制资金比例。"
+  },
+  {
+    "key": "milestoneTimelineTitle",
+    "zh": "星火释放里程碑时间线 (Milestone Timeline)"
+  },
+  {
+    "key": "statusLocked",
+    "zh": "锁定未解锁"
+  },
+  {
+    "key": "statusUnlocked",
+    "zh": "已解锁并释放资金"
+  },
+  {
+    "key": "statusReviewing",
+    "zh": "已提交，AI 审核中"
+  },
+  {
+    "key": "statusChallengeExpired",
+    "zh": "挑战期已过 (待解锁)"
+  },
+  {
+    "key": "statusAiPassed",
+    "zh": "AI 审查通过 (挑战期中)"
+  },
+  {
+    "key": "statusDisputed",
+    "zh": "遭到挑战争议，DAO 仲裁中"
+  },
+  {
+    "key": "initialRelease",
+    "zh": "初始释放: {ratio}%"
+  },
+  {
+    "key": "unlockConditionLabel",
+    "zh": "解锁前置说明:"
+  },
+  {
+    "key": "deliverableLabel",
+    "zh": "交付物:"
+  },
+  {
+    "key": "challengeDeadline",
+    "zh": "挑战窗口截止: {time}"
+  },
+  {
+    "key": "challengeDeadlinePassed",
+    "zh": "(已截止)"
+  },
+  {
+    "key": "deliverablePlaceholder",
+    "zh": "输入 GitHub 仓库或交付物 URL (https://...)"
+  },
+  {
+    "key": "submitBtn",
+    "zh": "提交"
+  },
+  {
+    "key": "cancelBtn",
+    "zh": "取消"
+  },
+  {
+    "key": "submitMilestoneDeliverable",
+    "zh": "提交里程碑交付物"
+  },
+  {
+    "key": "challengeReasonPlaceholder",
+    "zh": "请输入您挑战申诉的具体理由..."
+  },
+  {
+    "key": "submitChallengeDao",
+    "zh": "提交挑战 (DAO仲裁)"
+  },
+  {
+    "key": "initiateChallenge",
+    "zh": "发起争议申诉挑战"
+  },
+  {
+    "key": "unlockAndReleaseFunds",
+    "zh": "解锁并划拨款项"
+  },
+  {
+    "key": "releasingFunds",
+    "zh": "正在划拨..."
+  },
+  {
+    "key": "supportProjectImmediate",
+    "zh": "立即参与支持"
+  },
+  {
+    "key": "healthDashboardTitle",
+    "zh": "项目运营与健康看板"
+  },
+  {
+    "key": "currentStageMiddle",
+    "zh": "⚡ 当前阶段：Stage 2 中段"
+  },
+  {
+    "key": "goalReachedCheck",
+    "zh": "55% 阈值已达成 ✅"
+  },
+  {
+    "key": "statusDeployedAllocated",
+    "zh": "已部署 · 已分配"
+  },
+  {
+    "key": "governanceEscrowLocked",
+    "zh": "治理合约托管中"
+  },
+  {
+    "key": "fundingDistributionTitle",
+    "zh": "30/{gov}/{project}/{fee} 资金流向分布"
+  },
+  {
+    "key": "fundingDistributionTeam",
+    "zh": "团队运营"
+  },
+  {
+    "key": "fundingDistributionGov",
+    "zh": "治理锁定"
+  },
+  {
+    "key": "fundingDistributionCreator",
+    "zh": "项目方支配"
+  },
+  {
+    "key": "fundingDistributionFee",
+    "zh": "平台费"
+  },
+  {
+    "key": "fundingDistributionRatio",
+    "zh": "占比"
+  },
+  {
+    "key": "teamOpsImmediateTitle",
+    "zh": "团队运营 (30% Immediate)"
+  },
+  {
+    "key": "teamOpsImmediateDesc",
+    "zh": "Launch 成功后立即释放，无需投票"
+  },
+  {
+    "key": "teamOpsReleased",
+    "zh": "已释放"
+  },
+  {
+    "key": "govEscrowLockedTitle",
+    "zh": "治理托管 ({ratio}% Gov Locked)"
+  },
+  {
+    "key": "govEscrowLockedDesc",
+    "zh": "锁定在治理合约，提款需平方根投票通过"
+  },
+  {
+    "key": "govEscrowLockedStatus",
+    "zh": "托管锁定中"
+  },
+  {
+    "key": "creatorControlTitle",
+    "zh": "项目方支配 (18% Project)"
+  },
+  {
+    "key": "creatorControlDesc",
+    "zh": "建池子、运营、开发等自主支配"
+  },
+  {
+    "key": "creatorControlStatus",
+    "zh": "可自由支配"
+  },
+  {
+    "key": "platformFeeTitle",
+    "zh": "平台费用 ({ratio}% Fee)"
+  },
+  {
+    "key": "platformFeeDesc",
+    "zh": "VibeCoder 平台服务费，进入 Fund 金库"
+  },
+  {
+    "key": "platformFeeStatus",
+    "zh": "已收取"
+  },
+  {
+    "key": "unlockStatus",
+    "zh": "解锁状态"
+  },
+  {
+    "key": "statusRequiresVote",
+    "zh": "需投票 (代币未达150%)"
+  },
+  {
+    "key": "activeUsers",
+    "zh": "活跃用户数"
+  },
+  {
+    "key": "activeUsersGrowth",
+    "zh": "+12% (本月环比增长)"
+  },
+  {
+    "key": "tokenMarketPrice",
+    "zh": "代币市场价"
+  },
+  {
+    "key": "deliveredMilestonesCount",
+    "zh": "已交付里程碑"
+  },
+  {
+    "key": "milestonesRatio",
+    "zh": "●●●●○ 4/5 已完成"
+  },
+  {
+    "key": "governanceProposalsTitle",
+    "zh": "🗳 治理提案投票 (Pending Vote Proposals)"
+  },
+  {
+    "key": "noPendingProposals",
+    "zh": "当前没有待表决的提款提案。当开发者为项目申请二次提款时，会在此处触发共建人投票通知。"
+  },
+  {
+    "key": "pendingWithdrawalRequest",
+    "zh": "待表决 提款申请"
+  },
+  {
+    "key": "proposalId",
+    "zh": "编号: {id}"
+  },
+  {
+    "key": "withdrawalAmountLabel",
+    "zh": "申请提现："
+  },
+  {
+    "key": "withdrawalPurposeLabel",
+    "zh": "提款用途描述:"
+  },
+  {
+    "key": "remainingTimeLabel",
+    "zh": "⏰ 剩余时间: {hours}小时"
+  },
+  {
+    "key": "voteYesPercent",
+    "zh": "支持占比: {percent}% (权重 {weight})"
+  },
+  {
+    "key": "voteNoPercent",
+    "zh": "反对占比: {percent}% (权重 {weight})"
+  },
+  {
+    "key": "governanceVoteStats",
+    "zh": "当前表决人数：{yes} 同意 / {no} 拒绝。投票权重根据持股代币数的平方根（Square Root）计算。"
+  },
+  {
+    "key": "yourHolding",
+    "zh": "您的持仓:"
+  },
+  {
+    "key": "yourVoteWeight",
+    "zh": "您的平方根投票权重:"
+  },
+  {
+    "key": "cannotVoteNoTokens",
+    "zh": "⚠️ 您未持仓该代币，无法参与治理投票。"
+  },
+  {
+    "key": "youVoted",
+    "zh": "您已完成对此提案的投票"
+  },
+  {
+    "key": "voteApprove",
+    "zh": "✅ 同意"
+  },
+  {
+    "key": "voteReject",
+    "zh": "❌ 拒绝"
+  },
+  {
+    "key": "loadingUnlockData",
+    "zh": "加载解锁数据..."
+  },
+  {
+    "key": "roundUnlocked",
+    "zh": "轮次已解锁"
+  },
+  {
+    "key": "teamUnlocked",
+    "zh": "团队已解锁"
+  },
+  {
+    "key": "priceIncreasePerRound",
+    "zh": "涨幅/轮"
+  },
+  {
+    "key": "maintenanceDuration",
+    "zh": "维持时间"
+  },
+  {
+    "key": "tenRoundsProgress",
+    "zh": "10 轮解锁进度"
+  },
+  {
+    "key": "roundUnlockProgress",
+    "zh": "第 {round} 轮 · {locked}% 解锁"
+  },
+  {
+    "key": "priceThresholdTrigger",
+    "zh": "触发价 ≥ {price} TON"
+  },
+  {
+    "key": "maintenanceHours",
+    "zh": "维持中: {hours}h/24h"
+  },
+  {
+    "key": "statusRoundReleased",
+    "zh": "✅ 已释放"
+  },
+  {
+    "key": "statusRoundWaiting",
+    "zh": "⏳ 等待"
+  },
+  {
+    "key": "statusRoundLocked",
+    "zh": "🔒 锁仓中"
+  },
+  {
+    "key": "opsTokenPool",
+    "zh": "运营代币池"
+  },
+  {
+    "key": "opsUsed",
+    "zh": "已使用"
+  },
+  {
+    "key": "opsApplicationLog",
+    "zh": "申请记录"
+  },
+  {
+    "key": "applyOpsBudgetTitle",
+    "zh": "团队申请运营预算 (Apply for Operations Budget)"
+  },
+  {
+    "key": "opsAmountPlaceholder",
+    "zh": "金额 (%)"
+  },
+  {
+    "key": "opsPurposePlaceholder",
+    "zh": "用途说明 (描述需要申请的运营代币用途)"
+  },
+  {
+    "key": "submitOpsApplication",
+    "zh": "提交申请"
+  },
+  {
+    "key": "opsApplicationSuccess",
+    "zh": "✅ 申请提交成功，请在历史列表中进行投票！"
+  },
+  {
+    "key": "opsApplicationHistoryTitle",
+    "zh": "申请历史 (Application Log)"
+  },
+  {
+    "key": "noOpsRecords",
+    "zh": "暂无运营预算申请记录。"
+  },
+  {
+    "key": "opsStatusPassed",
+    "zh": "已通过"
+  },
+  {
+    "key": "opsStatusRejected",
+    "zh": "已拒绝"
+  },
+  {
+    "key": "opsStatusVoting",
+    "zh": "投票中"
+  },
+  {
+    "key": "opsPoolPercentage",
+    "zh": "{amount}% 运营代币池"
+  },
+  {
+    "key": "yourGovVoteWeight",
+    "zh": "您的平方根投票权重:"
+  },
+  {
+    "key": "cannotVoteNoTokensGov",
+    "zh": "⚠️ 未持仓该代币，无法参与治理投票"
+  },
+  {
+    "key": "opsVoted",
+    "zh": "已完成投票"
+  },
+  {
+    "key": "opsVoteApprove",
+    "zh": "同意"
+  },
+  {
+    "key": "opsVoteReject",
+    "zh": "拒绝"
+  },
+  {
+    "key": "governanceHistoryTitle",
+    "zh": "项目治理历史提案公簿"
+  },
+  {
+    "key": "noGovernanceHistory",
+    "zh": "暂无历史提案结算记录。"
+  },
+  {
+    "key": "govProposalPassed",
+    "zh": "✓ 提款通过"
+  },
+  {
+    "key": "govProposalRejected",
+    "zh": "✕ 提案否决"
+  },
+  {
+    "key": "withdrawalFundsLabel",
+    "zh": "资金提款："
+  },
+  {
+    "key": "withdrawalPurposeHistoryLabel",
+    "zh": "申请用途："
+  },
+  {
+    "key": "finalYesWeightPercent",
+    "zh": "最终赞成权重占比"
+  },
+  {
+    "key": "initiateWithdrawalTitle",
+    "zh": "项目创世提款提议发起端"
+  },
+  {
+    "key": "withdrawalProposalSuccess",
+    "zh": "🎉 提款提案已发起成功！已记入治理公账，支持者现在可使用平方根投票对其进行公决。"
+  },
+  {
+    "key": "withdrawTonAmountLabel",
+    "zh": "申请提现 TON 金额 (TON AMOUNT)"
+  },
+  {
+    "key": "withdrawTonAmountPlaceholder",
+    "zh": "例如：200"
+  },
+  {
+    "key": "availableGovBalance",
+    "zh": "当前可用治理锁定余额"
+  },
+  {
+    "key": "withdrawalPurposePlaceholder",
+    "zh": "提现具体开销用途说明 (WITHDRAWAL PURPOSE)"
+  },
+  {
+    "key": "withdrawalPurposeDetailedPlaceholder",
+    "zh": "详细描述本次提款的用途，例如：租赁GPU算力、用于推特数据抓取模块研发、服务器流量扩容..."
+  },
+  {
+    "key": "submitWithdrawalProposal",
+    "zh": "提交并公示提款提案"
+  },
+  {
+    "key": "exitTokenBurnTitle",
+    "zh": "合规退出与代币销毁机制"
+  },
+  {
+    "key": "exitWindowRemaining",
+    "zh": "退出窗口：剩余 {days} 天"
+  },
+  {
+    "key": "exitWindowDesc",
+    "zh": "项目成功星火建币后 30 - 90 天为退出赎回窗口期"
+  },
+  {
+    "key": "exitConditionChecklist",
+    "zh": "合规退出触发条件校验清单"
+  },
+  {
+    "key": "exitConditionCodeSilence",
+    "zh": "① 连续 14 天项目没有任何代码/周报更新"
+  },
+  {
+    "key": "exitConditionTriggered",
+    "zh": "已触发"
+  },
+  {
+    "key": "exitConditionPriceDrop",
+    "zh": "② 代币交易价连续 7 天跌破星火发行价的 50%"
+  },
+  {
+    "key": "exitConditionNotTriggered",
+    "zh": "未触发"
+  },
+  {
+    "key": "exitConditionNote",
+    "zh": "💡 说明：满足以上任意一条校验状态即可执行硬退出。当前项目代码静默期已超限，退出判定生效。"
+  },
+  {
+    "key": "exitRefundCalculationTitle",
+    "zh": "退出赎回结算测算"
+  },
+  {
+    "key": "tokensToBeBurned",
+    "zh": "将被销毁的代币:"
+  },
+  {
+    "key": "refundCoefficient",
+    "zh": "折合赎回系数:"
+  },
+  {
+    "key": "refundableTon",
+    "zh": "可退回的 TON 资金:"
+  },
+  {
+    "key": "refundingFunds",
+    "zh": "正在赎回资金并退款..."
+  },
+  {
+    "key": "confirmExitBurn",
+    "zh": "确认退出并销毁所持代币"
+  },
+  {
+    "key": "cannotRefundNoSpark",
+    "zh": "您未参与本项目的星火共建，故无份额可赎回。"
+  },
+  {
+    "key": "verifiableAutonomousAudit",
+    "zh": "可验证自治审计"
+  },
+  {
+    "key": "sandboxTrialTitle",
+    "zh": "72小时代码试运行与决策加速沙盒"
+  },
+  {
+    "key": "sandboxTrialDesc",
+    "zh": "模拟智能体前 72 小时的链上运行状态、收入模式与自动分配划拨机制。默认折叠，可展开进行仿真加速。"
+  },
+  {
+    "key": "expandSandbox",
+    "zh": "展开沙箱模拟器 (Expand)"
+  },
+  {
+    "key": "collapseSandbox",
+    "zh": "收起沙箱模拟器 (Collapse)"
+  },
+  {
+    "key": "sandboxConsoleTitle",
+    "zh": "72小时代码试运行与决策加速沙盒 (72H Sandbox Console)"
+  },
+  {
+    "key": "sandboxEvolutionTitle",
+    "zh": "项目仿真编译与链上状态演进器"
+  },
+  {
+    "key": "sandboxHour0",
+    "zh": "0H (编译/AST检查)"
+  },
+  {
+    "key": "sandboxHour24",
+    "zh": "24H (沙盒侧链部署)"
+  },
+  {
+    "key": "sandboxHour48",
+    "zh": "48H (自治算力审计)"
+  },
+  {
+    "key": "sandboxHour72",
+    "zh": "72H (解锁自动派发)"
+  },
+  {
+    "key": "fastForward12H",
+    "zh": "🏃‍♂️ 加速 12 小时 (+12H)"
+  },
+  {
+    "key": "fastForward24H",
+    "zh": "🚀 加速 24 小时 (+24H)"
+  },
+  {
+    "key": "fastForward72H",
+    "zh": "⚡ 一键完成 72H 循环"
+  },
+  {
+    "key": "resetSimulation",
+    "zh": "🔄 状态完全重置 (Reset)"
+  },
+  {
+    "key": "sandboxLogsTitle",
+    "zh": "实时沙箱审计日志流 (EMULATED TELEMETRY LOGSTREAM)"
+  },
+  {
+    "key": "sandboxSimulatorTip",
+    "zh": "💡 <strong>提示:</strong> 该测试沙盘基于 72H 自动星火共建规则，当您快进至特定小时后，系统将自动验证和拨付相对应的星火共建阶段。触发的里程碑可在 <strong>“Spark”</strong> 标签页实时核实，其产生的已分配份额记录也将在您的 <strong>“我的持仓控制面板” (Portfolio)</strong> 自动汇总。"
+  },
+  {
+    "key": "forumTitle",
+    "zh": "开发者与持有人共识论坛"
+  },
+  {
+    "key": "publishPerspectiveLabel",
+    "zh": "发表你的观点或提问"
+  },
+  {
+    "key": "forumPlaceholderConnected",
+    "zh": "请发表理性言论，向开发者提出技术或多签治理疑问..."
+  },
+  {
+    "key": "forumPlaceholderDisconnected",
+    "zh": "请先连接钱包授权后参与发帖研讨..."
+  },
+  {
+    "key": "perspectiveBroadcastSuccess",
+    "zh": "观点广播成功！正在全分布式节点中同步..."
+  },
+  {
+    "key": "forumDisclaimer",
+    "zh": "发言需要遵守 TON 测试沙盒协议。"
+  },
+  {
+    "key": "publishComment",
+    "zh": "发布评论"
+  },
+  {
+    "key": "noForumPerspectives",
+    "zh": "目前尚无探讨观点，快连接钱包来抢占 SF 吧！"
+  },
+  {
+    "key": "genesisBackerTitle",
+    "zh": "👑 创世星火支持者 (Genesis Backer)"
+  },
+  {
+    "key": "firstSparkPerson",
+    "zh": "首位星火人："
+  },
+  {
+    "key": "toBeFilled",
+    "zh": "虚位以待！"
+  },
+  {
+    "key": "firstSparkPersonTip",
+    "zh": "参与支持该项目，成为首位创世星火支持者，即可在个人中心点亮专属勋章！"
+  },
+  {
+    "key": "squadCoBuildingTitle",
+    "zh": "👥 组队集火 Squad ({count})"
+  },
+  {
+    "key": "initiateSquad",
+    "zh": "+ 发起集火"
+  },
+  {
+    "key": "targetMembersCount",
+    "zh": "目标人数 (人)"
+  },
+  {
+    "key": "targetAmountTon",
+    "zh": "目标金额 (TON)"
+  },
+  {
+    "key": "squadCreating",
+    "zh": "创建中..."
+  },
+  {
+    "key": "confirmInitiateSquad",
+    "zh": "确认发起集火队"
+  },
+  {
+    "key": "lockedSquad",
+    "zh": "已锁定集火队: {id}"
+  },
+  {
+    "key": "clearSquad",
+    "zh": "清除"
+  },
+  {
+    "key": "noActiveSquads",
+    "zh": "暂无活跃集火小队。你可以点击上方按钮发起首个集火小组，邀请好友参与！"
+  },
+  {
+    "key": "squadStatusSuccess",
+    "zh": "已达标 (SUCCESS)"
+  },
+  {
+    "key": "squadStatusActive",
+    "zh": "集火中 (ACTIVE)"
+  },
+  {
+    "key": "squadMembersProgress",
+    "zh": "人数: {current}/{target} 人"
+  },
+  {
+    "key": "squadAmountProgress",
+    "zh": "金额: {current}/{target} TON"
+  },
+  {
+    "key": "copiedBtn",
+    "zh": "已复制"
+  },
+  {
+    "key": "copyBtn",
+    "zh": "复制"
+  },
+  {
+    "key": "editProjectTitle",
+    "zh": "修改和完善星火项目信息"
+  },
+  {
+    "key": "projectTitleLabel",
+    "zh": "项目显示标题"
+  },
+  {
+    "key": "agentArchitectureDesc",
+    "zh": "智能体架构与功能介绍"
+  },
+  {
+    "key": "projectCategoryLabel",
+    "zh": "项目分类"
+  },
+  {
+    "key": "officialWebsiteLink",
+    "zh": "官方网站链接"
+  },
+  {
+    "key": "githubRepoLink",
+    "zh": "GitHub 开源仓库链接"
+  },
+  {
+    "key": "creatorTeamBackground",
+    "zh": "发起人与团队背景"
+  },
+  {
+    "key": "creatorTeamPlaceholder",
+    "zh": "开发小组背景说明"
+  },
+  {
+    "key": "supporterExtraPerks",
+    "zh": "支持者额外专属福利与权益说明 (Perks)"
+  },
+  {
+    "key": "supporterExtraPerksPlaceholder",
+    "zh": "描述除了代币以外给支持者的额外福利（如：赠送终身会员、专属周边、服务折扣等，由项目方自主说明）"
+  },
+  {
+    "key": "saveChangesSync",
+    "zh": "保存修改并同步"
+  },
+  {
+    "key": "rollbackSimulationStage",
+    "zh": "↩️ 模拟阶段回滚至第 {hour} 小时。"
+  },
+  {
+    "key": "stepTitle",
+    "zh": "发起全新 AI 智能体 Launch 筹款"
+  },
+  {
+    "key": "nameLabel",
+    "zh": "项目/智能体名称"
+  }
+]

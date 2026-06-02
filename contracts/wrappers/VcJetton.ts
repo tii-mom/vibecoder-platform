@@ -68,7 +68,13 @@ export class VcJetton implements Contract {
     }
 
     async getJettonData(provider: ContractProvider) {
-        const { stack } = await provider.get('getJettonData', []);
+        let result;
+        try {
+            result = await provider.get('get_jetton_data', []);
+        } catch {
+            result = await provider.get('getJettonData', []);
+        }
+        const { stack } = result;
         return {
             totalSupply: stack.readBigNumber(),
             mintable: stack.readBigNumber(),
@@ -79,9 +85,14 @@ export class VcJetton implements Contract {
     }
 
     async getWalletAddress(provider: ContractProvider, ownerAddress: Address) {
-        const { stack } = await provider.get('getWalletAddress', [
-            { type: 'slice', cell: beginCell().storeAddress(ownerAddress).endCell() }
-        ]);
+        const args = [{ type: 'slice' as const, cell: beginCell().storeAddress(ownerAddress).endCell() }];
+        let result;
+        try {
+            result = await provider.get('get_wallet_address', args);
+        } catch {
+            result = await provider.get('getWalletAddress', args);
+        }
+        const { stack } = result;
         return stack.readAddress();
     }
 }

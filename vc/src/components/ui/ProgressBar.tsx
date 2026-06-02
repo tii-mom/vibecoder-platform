@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../../hooks/useTranslation';
 
 interface ProgressBarProps {
   progress: number; // 0 to 100 or higher
@@ -11,8 +12,9 @@ export function ProgressBar({
   showLabel = false,
   className = ''
 }: ProgressBarProps) {
+  const { t } = useTranslation();
   const clampedProgress = Math.max(0, Math.min(100, progress));
-  
+
   // Custom Color Indicator depending on progress
   let progressColor = 'bg-[#635BFF]'; // default purple
   if (clampedProgress < 30) {
@@ -33,7 +35,7 @@ export function ProgressBar({
       </div>
       {showLabel && (
         <div className="flex justify-between items-center text-[10px] text-gray-400 font-mono">
-          <span>进度</span>
+          <span>{t('common.progress')}</span>
           <span className="font-bold text-white">{progress.toFixed(1)}%</span>
         </div>
       )}

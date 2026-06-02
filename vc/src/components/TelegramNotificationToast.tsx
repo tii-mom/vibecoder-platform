@@ -2,8 +2,10 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore, SidebarNotification } from '../store/notificationStore';
 import { X, Send, Check } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function TelegramNotificationToast() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const notifications = useNotificationStore((state) => state.notifications);
   const markAsRead = useNotificationStore((state) => state.markAsRead);
@@ -19,7 +21,7 @@ export default function TelegramNotificationToast() {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
-      
+
       // Chime 1: A5 (880 Hz)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
@@ -30,7 +32,7 @@ export default function TelegramNotificationToast() {
       gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
       osc1.start();
       osc1.stop(ctx.currentTime + 0.18);
-      
+
       // Chime 2: E6 (1320 Hz) with a 70ms delay
       setTimeout(() => {
         const osc2 = ctx.createOscillator();
@@ -124,9 +126,9 @@ export default function TelegramNotificationToast() {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleAction}
-      className={`fixed bottom-20 md:bottom-6 right-4 md:right-6 max-w-sm w-[calc(100vw-2rem)] md:w-80 z-[9999] bg-[#0E1621] border border-[#24303F] rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] p-3.5 transition-all duration-300 transform select-none hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
-        visible 
-          ? 'opacity-100 translate-x-0 pointer-events-auto' 
+      className={`fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:w-80 z-[9999] bg-[#0E1621] border border-[#24303F] rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] p-3.5 transition-all duration-300 transform select-none hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
+        visible
+          ? 'opacity-100 translate-x-0 pointer-events-auto'
           : 'opacity-0 translate-x-12 pointer-events-none'
       }`}
     >
@@ -166,8 +168,8 @@ export default function TelegramNotificationToast() {
           </p>
 
           <div className="pt-1.5 flex items-center justify-between text-[9px] font-mono text-gray-500">
-            <span>点击进行 Proof 核验 »</span>
-            <span>刚刚</span>
+            <span>{t('common.clickVerifyProof')}</span>
+            <span>{t('common.justNow')}</span>
           </div>
         </div>
       </div>

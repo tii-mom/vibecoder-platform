@@ -1,36 +1,57 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bot, Cpu, GitBranch, ArrowRight, CheckCircle2, AlertTriangle, Terminal, Code2, Play } from 'lucide-react';
+import { Bot, Cpu, GitBranch, ArrowRight, CheckCircle2, Terminal, Code2, Play } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { useAgentStore } from '../store/agentStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function StudioPage() {
   const navigate = useNavigate();
   const { isConnected, walletAddress, connectWallet } = useUserStore();
   const { addAgent } = useAgentStore();
+  const { t } = useTranslation();
 
   const [name, setName] = useState('');
   const [ticker, setTicker] = useState('');
   const [category, setCategory] = useState<'数据分析' | '交易工具' | '社交' | '监控' | '基础设施' | '创作工具' | 'DeFi'>('交易工具');
   const [desc, setDesc] = useState('');
-  const [caps, setCaps] = useState<string>('舆情情感分析, 链上合约策略');
-  const [revModel, setRevModel] = useState('50% 按代发金库自动每日派单，20% 回购');
+  const [caps, setCaps] = useState<string>('');
+  const [revModel, setRevModel] = useState('');
   const [model, setModel] = useState('Gemini 2.5 Flash');
   const [github, setGithub] = useState('');
-  
+
   // Terminal simulator states
   const [compiling, setCompiling] = useState(false);
   const [terminalLogs, setTerminalLogs] = useState<string[]>([]);
   const [compiledAddress, setCompiledAddress] = useState('');
   const [compileSuccess, setCompileSuccess] = useState(false);
 
+  // Set localized defaults after translation hook is available
+  useEffect(() => {
+    setCaps(t('studio.capsPlaceholder'));
+    setRevModel(t('studio.revenueModelDefault'));
+  }, [t]);
+
   const handleWalletFallback = () => {
     connectWallet();
   };
 
+  const translateCategory = (cat: string) => {
+    switch (cat) {
+      case '数据分析': return t('launch.categoryData');
+      case '交易工具': return t('launch.categoryTrading');
+      case '社交': return t('launch.categorySocial');
+      case '监控': return t('launch.categoryMonitor');
+      case '基础设施': return t('launch.categoryInfra');
+      case '创作工具': return t('launch.categoryCreation');
+      case 'DeFi': return 'DeFi';
+      default: return cat;
+    }
+  };
+
   const executeCompile = () => {
     if (!name || !ticker || !desc) {
-      alert("请完整填写 Agent 核心名称、代币缩写与描述信息。");
+      alert(t('studio.alertFillForm'));
       return;
     }
 
@@ -40,14 +61,14 @@ export default function StudioPage() {
     setCompiledAddress('');
 
     const logs = [
-      `[09:00:01] ⚡ 启动 VibeCoder 远端安全编译沙箱...`,
-      `[09:00:02] 📦 正在拉取存储库: ${github || 'VibeCoder/default-agent-runtime'}`,
-      `[09:00:03] 🔍 寻找基准编译工具链并进行静态审查...`,
-      `[09:00:04] 🔄 正在微调编译依赖：解析 ${model} 指令集套件`,
-      `[09:00:05] ⚡ 正在编译 TON/FunC 底层智能钱包收支托管合约...`,
-      `[09:00:06] 🛠️ 生成 ABI 签名以及分配地址路由通道代码...`,
-      `[09:00:07] 🐳 代码审计：合约状态机检查完毕。零溢出风险。`,
-      `[09:00:08] 🎉 部署阶段：已自动向 TON 生态多签网络注册充能`
+      t('studio.logSandboxStart'),
+      t('studio.logRepository').replace('{repo}', github || 'VibeCoder/default-agent-runtime'),
+      t('studio.logStaticReview'),
+      t('studio.logFineTuning').replace('{model}', model),
+      t('studio.logCompilingContracts'),
+      t('studio.logGeneratingAbi'),
+      t('studio.logAuditPassed'),
+      t('studio.logRegisteredEco')
     ];
 
     let currentLogIndex = 0;
@@ -76,7 +97,7 @@ export default function StudioPage() {
       walletAddress: compiledAddress,
       status: 'funding', // Created in studio -> moves to spark config
       category,
-      capabilities: capabilitiesArray.length ? capabilitiesArray : ["链上全自治运行"],
+      capabilities: capabilitiesArray.length ? capabilitiesArray : [t('studio.defaultCapFallback')],
       performance: {
         roi: 0,
         tvl: 0
@@ -93,16 +114,16 @@ export default function StudioPage() {
   // If unauthorized state
   if (!isConnected) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center space-y-6 animate-in fade-in duration-200">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#635BFF] to-sky-400 p-0.5 flex items-center justify-center mx-auto shadow-xl shadow-[#635BFF]/10">
           <div className="w-full h-full bg-[#090A13] rounded-[14px] flex items-center justify-center">
             <Bot size={28} className="text-[#635BFF]" />
           </div>
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">授权当前工作区</h2>
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">{t('studio.authTitle')}</h2>
           <p className="text-xs sm:text-sm text-gray-400 max-w-md mx-auto leading-relaxed">
-            创建及编译 AI 机器人智能合约需要接入你的 TON 区块链地址。请先连接你的钱包。
+            {t('studio.authDesc')}
           </p>
         </div>
         <div className="pt-2">
@@ -110,7 +131,7 @@ export default function StudioPage() {
             onClick={handleWalletFallback}
             className="px-6 py-2.5 bg-[#635BFF] hover:bg-[#5048E5] text-white rounded-full text-xs sm:text-sm font-semibold shadow-lg shadow-[#635BFF]/20 transition cursor-pointer"
           >
-            Connect TON Wallet
+            {t('studio.authCTA')}
           </button>
         </div>
       </div>
@@ -118,14 +139,14 @@ export default function StudioPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 text-left">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 text-left select-none animate-in fade-in duration-200">
       <div className="border-b border-[#1E2140] pb-5">
         <div className="flex items-center gap-2">
           <span className="p-1 px-1.5 bg-[#635BFF]/10 rounded border border-[#635BFF]/30 text-xs font-mono font-bold text-[#837BFF]">STAGE 1</span>
-          <h1 className="text-2xl font-black text-white tracking-tight">Agent Studio</h1>
+          <h1 className="text-2xl font-black text-white tracking-tight">{t('studio.pageTitle')}</h1>
         </div>
         <p className="text-xs text-gray-400 mt-1">
-          配置你的大模型交互指令集，对代码进行静态评估并生成能在 TON 区块链底层进行自动分配与结算的智能钱包。
+          {t('studio.pageDesc')}
         </p>
       </div>
 
@@ -135,26 +156,26 @@ export default function StudioPage() {
           <div className="border-b border-[#1C203E] pb-3">
             <h3 className="text-sm font-bold text-gray-200 tracking-tight flex items-center gap-2">
               <Code2 size={16} className="text-[#635BFF]" />
-              <span>基本信息与参数设定</span>
+              <span>{t('studio.basicInfoTitle')}</span>
             </h3>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5 text-left">
-              <label className="text-xs text-gray-400 font-semibold font-sans">机器人名称 (Agent Name) *</label>
+              <label className="text-xs text-gray-400 font-semibold font-sans">{t('studio.agentNameLabel')}</label>
               <input
                 type="text"
-                placeholder="例如 TrendBot Pro"
+                placeholder={t('studio.agentNamePlaceholder')}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="w-full bg-[#121429] border border-[#24284D] focus:border-[#635BFF] outline-none rounded-xl px-3 py-2 text-xs transition"
               />
             </div>
             <div className="space-y-1.5 text-left">
-              <label className="text-xs text-gray-400 font-semibold">代币交易缩写 (Ticker) *</label>
+              <label className="text-xs text-gray-400 font-semibold">{t('studio.tickerLabel')}</label>
               <input
                 type="text"
-                placeholder="例如 TBP"
+                placeholder={t('studio.tickerPlaceholder')}
                 value={ticker}
                 onChange={(e) => setTicker(e.target.value)}
                 maxLength={6}
@@ -165,23 +186,23 @@ export default function StudioPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5 text-left">
-              <label className="text-xs text-gray-400 font-semibold">首选分类 (Category)</label>
+              <label className="text-xs text-gray-400 font-semibold">{t('studio.categoryLabel')}</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as any)}
                 className="w-full bg-[#121429] border border-[#24284D] focus:border-[#635BFF] outline-none rounded-xl px-3 py-2 text-xs text-gray-300 transition cursor-pointer"
               >
-                <option value="数据分析">数据分析 (Data Analyst)</option>
-                <option value="交易工具">交易工具 (Trading Strategy)</option>
-                <option value="社交">社交 (Social Content)</option>
-                <option value="监控">监控 (Auditing/Guard)</option>
-                <option value="基础设施">基础设施 (Infrastructure Node)</option>
-                <option value="创作工具">创作工具 (Bot Generator)</option>
-                <option value="DeFi">DeFi (Pool Router)</option>
+                <option value="数据分析">{translateCategory('数据分析')}</option>
+                <option value="交易工具">{translateCategory('交易工具')}</option>
+                <option value="社交">{translateCategory('社交')}</option>
+                <option value="监控">{translateCategory('监控')}</option>
+                <option value="基础设施">{translateCategory('基础设施')}</option>
+                <option value="创作工具">{translateCategory('创作工具')}</option>
+                <option value="DeFi">DeFi</option>
               </select>
             </div>
             <div className="space-y-1.5 text-left">
-              <label className="text-xs text-gray-400 font-semibold">大模型架构 (Model Architecture)</label>
+              <label className="text-xs text-gray-400 font-semibold">{t('studio.modelArchLabel')}</label>
               <select
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -190,15 +211,15 @@ export default function StudioPage() {
                 <option value="Gemini 2.5 Flash">Gemini 2.5 Flash</option>
                 <option value="DeepSeek V3 / R1">DeepSeek V3 / R1</option>
                 <option value="Llama 3 70B">Llama 3 70B (Anthropic Adapter)</option>
-                <option value="Solis FunC Custom VM">Solis FunC 专有虚拟机</option>
+                <option value="Solis FunC Custom VM">Solis FunC Custom VM</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-xs text-gray-400 font-semibold">机器人功能概述 (Description) *</label>
+            <label className="text-xs text-gray-400 font-semibold">{t('studio.descLabel')}</label>
             <textarea
-              placeholder="请详细描述该 Agent 功能机制，例如在什么池子里高频量化策略、服务接口收费比例，以提供星火共建参考..."
+              placeholder={t('studio.descPlaceholder')}
               value={desc}
               onChange={(e) => setDesc(e.target.value)}
               rows={3}
@@ -207,10 +228,10 @@ export default function StudioPage() {
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-xs text-gray-400 font-semibold">功能特性标签Capabilities（英文逗号分割）</label>
+            <label className="text-xs text-gray-400 font-semibold">{t('studio.capsLabel')}</label>
             <input
               type="text"
-              placeholder="舆情情感分析, 多协议跨池对冲, 闪电清算预警"
+              placeholder={t('studio.capsPlaceholder')}
               value={caps}
               onChange={(e) => setCaps(e.target.value)}
               className="w-full bg-[#121429] border border-[#24284D] focus:border-[#635BFF] outline-none rounded-xl px-3 py-2 text-xs transition"
@@ -218,10 +239,10 @@ export default function StudioPage() {
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-xs text-gray-400 font-semibold">金库结算分配策略 (Revenue Sharing Model)</label>
+            <label className="text-xs text-gray-400 font-semibold">{t('studio.revenueModelLabel')}</label>
             <input
               type="text"
-              placeholder="例如：60% 派发给持股人，30% 转为二次算力升级，10% 归属开发团队"
+              placeholder={t('studio.revenueModelPlaceholder')}
               value={revModel}
               onChange={(e) => setRevModel(e.target.value)}
               className="w-full bg-[#121429] border border-[#24284D] focus:border-[#635BFF] outline-none rounded-xl px-3 py-2 text-xs transition"
@@ -229,12 +250,12 @@ export default function StudioPage() {
           </div>
 
           <div className="space-y-1.5 text-left">
-            <label className="text-xs text-gray-400 font-semibold">源代码库 GitHub 地址 (代码需开源透明)</label>
+            <label className="text-xs text-gray-400 font-semibold">{t('studio.githubLabel')}</label>
             <div className="relative">
               <GitBranch size={13} className="absolute left-3.5 top-3.5 text-gray-500" />
               <input
                 type="text"
-                placeholder="https://github.com/username/your-agent"
+                placeholder={t('studio.githubPlaceholder')}
                 value={github}
                 onChange={(e) => setGithub(e.target.value)}
                 className="w-full bg-[#121429] border border-[#24284D] focus:border-[#635BFF] outline-none rounded-xl pl-8 pr-3 py-2.5 text-xs transition font-mono"
@@ -246,10 +267,10 @@ export default function StudioPage() {
             <button
               onClick={executeCompile}
               disabled={compiling}
-              className="w-full py-2.5 bg-gradient-to-r from-[#635BFF] to-[#867EFF] disabled:from-[#2e2a5fc5] disabled:to-[#1a1b2e] disabled:text-gray-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-[#635BFF]/10 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 bg-gradient-to-r from-[#635BFF] to-[#867EFF] disabled:from-[#2e2a5fc5] disabled:to-[#1a1b2e] disabled:text-gray-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-[#635BFF]/10 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer font-sans"
             >
               <Play size={13} />
-              <span>{compiling ? '正在安全静态编译...' : '编译代码并进行虚拟节点链上部署'}</span>
+              <span>{compiling ? t('studio.compilingCTA') : t('studio.compileCTA')}</span>
             </button>
           </div>
         </div>
@@ -272,18 +293,18 @@ export default function StudioPage() {
             {terminalLogs.length === 0 ? (
               <div className="text-gray-500 flex flex-col items-center justify-center h-full gap-2 font-sans">
                 <Cpu size={24} className="text-gray-700 animate-pulse" />
-                <p>等待填参就绪编译...</p>
+                <p>{t('studio.waitingText')}</p>
               </div>
             ) : (
               terminalLogs.map((log, i) => (
-                <div key={i} className="leading-relaxed border-l-2 border-[#1E4334] pl-2 animate-in fade-in slide-in-from-left-2 duration-100">
+                <div key={i} className="leading-relaxed border-l-2 border-[#1E4334] pl-2 animate-in fade-in slide-in-from-left-2 duration-100 font-mono">
                   {log}
                 </div>
               ))
             )}
 
             {compiling && (
-              <div className="text-sky-400 mt-2 flex items-center gap-1.5 animate-pulse">
+              <div className="text-sky-400 mt-2 flex items-center gap-1.5 animate-pulse font-mono">
                 <span>⚡ COMPILING RUST/FunC CONTAINER MODULES...</span>
               </div>
             )}
@@ -291,23 +312,23 @@ export default function StudioPage() {
 
           {/* Compile complete notification */}
           {compileSuccess && compiledAddress && (
-            <div className="p-4 bg-[#0F221B]/90 border-t border-[#1F4133] animate-in slide-in-from-bottom duration-200 text-left space-y-3">
+            <div className="p-4 bg-[#0F221B]/90 border-t border-[#1F4133] animate-in slide-in-from-bottom duration-200 text-left space-y-3 font-sans">
               <div className="flex items-start gap-2.5">
                 <CheckCircle2 size={16} className="text-[#3FCF8E] shrink-0 mt-0.5" />
                 <div className="min-w-0">
-                  <h4 className="text-xs font-bold text-white">沙箱网络虚拟托管成功!</h4>
-                  <p className="text-[10px] text-gray-400 mt-0.5">你的 Agent 代入合约已在 TON 链生成了独立安全的底层冷金库：</p>
+                  <h4 className="text-xs font-bold text-white">{t('studio.successTitle')}</h4>
+                  <p className="text-[10px] text-gray-400 mt-0.5">{t('studio.successDesc')}</p>
                   <p className="text-[10px] text-[#3FCF8E] font-mono select-all truncate mt-1 bg-[#091510] p-1 rounded border border-[#234B3B]/40">
                     {compiledAddress}
                   </p>
                 </div>
               </div>
-              
+
               <button
                 onClick={handlePublishAndCofund}
                 className="w-full py-2 bg-[#3FCF8E] hover:bg-[#32B87D] text-black rounded-xl text-xs font-bold transition flex items-center justify-center gap-1 cursor-pointer"
               >
-                <span>下一步：发起星火共建流动性</span>
+                <span>{t('studio.nextCTA')}</span>
                 <ArrowRight size={13} />
               </button>
             </div>

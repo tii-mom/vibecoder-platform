@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Terminal, Code, Cpu, ShieldAlert, Sparkles, CheckSquare, 
-  Search, BookOpen, AlertCircle, RefreshCw, Key, CreditCard, 
-  Check, Copy, Database, Layers, PlayCircle, Plus, Trash2, Zap, HelpCircle 
+import {
+  Terminal, Code, Cpu, ShieldAlert, Sparkles, CheckSquare,
+  Search, BookOpen, AlertCircle, RefreshCw, Key, CreditCard,
+  Check, Copy, Database, Layers, PlayCircle, Plus, Trash2, Zap, HelpCircle
 } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
 import { Button } from '../components/ui/Button';
@@ -11,9 +11,11 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/C
 import { Badge } from '../components/ui/Badge';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function DevHubPage() {
   const { isConnected, profile, connectWallet, updateProfile } = useUserStore();
+  const { t, language } = useTranslation();
 
   const handleWalletFallback = () => {
     connectWallet();
@@ -78,7 +80,7 @@ export default function DevHubPage() {
     }
 
     if (profile.balanceTON < calculatedCostTON) {
-      setRentMsg(`⚠️ 租用失败: 您当前可支配 TON 额度为 ${profile.balanceTON}，无法支付 ${calculatedCostTON} TON 算力账单。`);
+      setRentMsg(t('devhub.rentFailed', { bal: profile.balanceTON, cost: calculatedCostTON }));
       return;
     }
 
@@ -90,31 +92,43 @@ export default function DevHubPage() {
         balanceTON: Number((profile.balanceTON - calculatedCostTON).toFixed(2))
       });
       setComputeCredits((prev) => prev + Number(rentHours) * 10);
-      setRentMsg(`🎉 租用成功! 已为您的控制台接入 ${selectedGpuMeta.name} 运行池，扣减 ${calculatedCostTON} TON 并已充值 ${Number(rentHours) * 10} 计算点数。`);
+      setRentMsg(t('devhub.rentSuccess', { gpu: selectedGpuMeta.name, cost: calculatedCostTON, credits: Number(rentHours) * 10 }));
       setIsRenting(false);
     }, 1800);
   };
 
   // --- MODELS STATE ---
   const modelsList = [
-    { name: 'Gemini 2.5 Flash', rate: '0.0001 TON / 1K Tokens', status: '流畅' },
-    { name: 'DeepSeek V3 (Chat)', rate: '0.00015 TON / 1K Tokens', status: '流畅' },
-    { name: 'Claude 3.5 Sonnet', rate: '0.0012 TON / 1K Tokens', status: '流畅' },
-    { name: 'GPT-4o API', rate: '0.0008 TON / 1K Tokens', status: '流畅' }
+    { name: 'Gemini 2.5 Flash', rate: '0.0001 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+    { name: 'DeepSeek V3 (Chat)', rate: '0.00015 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+    { name: 'Claude 3.5 Sonnet', rate: '0.0012 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+    { name: 'GPT-4o API', rate: '0.0008 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' }
   ];
 
   // --- TEMPLATES STATE ---
   const templates = [
-    { title: '多链套利网格 Bot', desc: '内置 AMM 价格滑点追踪，捕获跨 Dex 价格异动。', type: '交易工具' },
-    { title: '全自主推文生成器', desc: '结合 NLP 模型，自驱动发帖排线并接入 Web3 赞助。', type: '社交创作' },
-    { title: '合约事件高频警报', desc: '多点备份追踪重放和流溢出漏洞静态预设。', type: '网络监控' }
+    {
+      title: language === 'zh' ? '多链套利网格 Bot' : language === 'ko' ? '멀티체인 차익거래 그리드 Bot' : 'Multi-chain Arbitrage Grid Bot',
+      desc: language === 'zh' ? '内置 AMM 价格滑点追踪，捕获跨 Dex 价格异动。' : language === 'ko' ? 'AMM 가격 슬리피지 모니터링 기능이 내장되어 Dex 간 가격 변동을 포착합니다.' : 'Built-in AMM slippage tracking to capture cross-DEX price anomalies.',
+      type: language === 'zh' ? '交易工具' : language === 'ko' ? '거래 도구' : 'Trading Tool'
+    },
+    {
+      title: language === 'zh' ? '全自主推文生成器' : language === 'ko' ? '완전 자율 트윗 생성기' : 'Autonomous Tweet Generator',
+      desc: language === 'zh' ? '结合 NLP 模型，自驱动发帖排线并接入 Web3 赞助。' : language === 'ko' ? 'NLP 모델을 결합하여 자율적으로 트윗을 발행하고 Web3 후원을 연동합니다.' : 'NLP-driven auto-tweeter with Web3 sponsorship integration.',
+      type: language === 'zh' ? '社交创作' : language === 'ko' ? '소셜 창작' : 'Social Creation'
+    },
+    {
+      title: language === 'zh' ? '合约事件高频警报' : language === 'ko' ? '고주파 계약 이벤트 알림' : 'High-Frequency Contract Event Alert',
+      desc: language === 'zh' ? '多点备份追踪重放和流溢出漏洞静态预设。' : language === 'ko' ? '다중 포인트 백업 추적 및 플로우 오버플로우 취약점 정적 사전 설정.' : 'Multi-point backup tracking and flow overflow vulnerability presets.',
+      type: language === 'zh' ? '网络监控' : language === 'ko' ? '네트워크 모니터링' : 'Network Monitoring'
+    }
   ];
 
   const [deploymentStatus, setDeploymentStatus] = useState<string | null>(null);
   const handleDeployTemplate = (title: string) => {
-    setDeploymentStatus(`正在为您的工作台初始化 ${title} 代码仓库...`);
+    setDeploymentStatus(t('devhub.initializingRepo', { title }));
     setTimeout(() => {
-      setDeploymentStatus(`🎉 ${title} 已经在您的 Agent Studio 面板下部署完成！您可以点击 Studio 查询、调试代码并发布共建。`);
+      setDeploymentStatus(t('devhub.templateDeployed', { title }));
     }, 2000);
   };
 
@@ -150,7 +164,7 @@ contract SimpleAICallback {
 ;; TON Block autonomous callback entry point
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
     if (in_msg_body.slice_empty?()) { return (); }
-    
+
     slice cs = in_msg_full.begin_parse();
     int flags = cs~load_uint(4);
     if (flags & 1) { return (); } ;; ignore bounced msg
@@ -179,18 +193,30 @@ contract SimpleAICallback {
         score: 98,
         warnings: 0,
         checks: [
-          { name: '防重放攻击 (Replay Attack Prevention)', status: 'PASS', desc: '使用了序列 nonce 与 msg seq_no 签名，防止重签名广播。' },
-          { name: '气体滑点溢出 (Gas Slippage Check)', status: 'PASS', desc: '循环结构深度低于 4，符合 FunC 单交易消费池上限。' },
-          { name: '冷金库分流溢出极值 (State Mutation Boundary)', status: 'PASS', desc: '存储单元 Cell 开关完全锁合，对特权函数调用了 (throw_unless) 校验。' }
+          {
+            name: language === 'zh' ? '防重放攻击 (Replay Attack Prevention)' : language === 'ko' ? '재전송 공격 방지 (Replay Attack Prevention)' : 'Replay Attack Prevention',
+            status: 'PASS',
+            desc: language === 'zh' ? '使用了序列 nonce 与 msg seq_no 签名，防止重签名广播。' : language === 'ko' ? '순차 nonce와 msg seq_no 서명을 사용하여 재서명 브로드캐스트를 방지합니다.' : 'Uses sequence nonce and msg seq_no signatures to prevent signature replay.'
+          },
+          {
+            name: language === 'zh' ? '气体滑点溢出 (Gas Slippage Check)' : language === 'ko' ? '가스 슬리피지 검사 (Gas Slippage Check)' : 'Gas Slippage Check',
+            status: 'PASS',
+            desc: language === 'zh' ? '循环结构深度低于 4，符合 FunC 单交易消费池上限。' : language === 'ko' ? '루프 구조 깊이가 4 미만으로, FunC 단일 트랜잭션 제한을 충족합니다.' : 'Loop depth is under 4, satisfying FunC single-transaction limit.'
+          },
+          {
+            name: language === 'zh' ? '冷金库分流溢出极值 (State Mutation Boundary)' : language === 'ko' ? '콜드 발트 분할 경계 검사 (State Mutation Boundary)' : 'State Mutation Boundary',
+            status: 'PASS',
+            desc: language === 'zh' ? '存储单元 Cell 开关完全锁合，对特权函数调用了 (throw_unless) 校验。' : language === 'ko' ? '스토리지 셀 스위치가 완전히 고정되었으며, 특권 함수에 대해 (throw_unless) 검증이 적용되었습니다.' : 'Storage cell switches are completely locked; privileged functions verified with (throw_unless).'
+          }
         ],
-        advice: '代扣税款分发比例逻辑合规。可以在部署 Studio 成功注册。'
+        advice: t('devhub.expertAdvice')
       });
     }, 1200);
   };
 
   return (
     <div className="space-y-10 text-left select-none">
-      
+
       {/* Upper header section */}
       <div className="border-b border-[#171A30] pb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
@@ -199,7 +225,7 @@ contract SimpleAICallback {
             <span>Developer Hub</span>
           </h1>
           <p className="text-sm text-gray-400 mt-2 leading-relaxed max-w-2xl">
-            提供 TON Wallet SDK 文档库、AI 模型中继 API 密钥管理以及 GPU 点数计算节点租赁控制台。
+            {t('devhub.docDesc')}
           </p>
         </div>
 
@@ -208,15 +234,15 @@ contract SimpleAICallback {
           <div className="flex items-center gap-2.5">
             <Zap className="text-[#FF9F1A] shrink-0" size={18} />
             <div>
-              <span className="text-[9px] text-gray-500 block uppercase font-mono tracking-wider font-semibold">COMPUTE CREDITS</span>
-              <span className="text-[13px] font-bold font-mono text-white">{computeCredits} 点</span>
+              <span className="text-[9px] text-gray-500 block uppercase font-mono tracking-wider font-semibold">{t('devhub.computeCredits')}</span>
+              <span className="text-[13px] font-bold font-mono text-white">{computeCredits} {t('devhub.creditsUnit')}</span>
             </div>
           </div>
           <div className="h-8 w-[1px] bg-[#171A30]" />
           <div className="flex items-center gap-2.5">
             <Code className="text-[#8B83FF] shrink-0" size={18} />
             <div>
-              <span className="text-[9px] text-gray-500 block uppercase font-mono tracking-wider font-semibold">VC COUPONS</span>
+              <span className="text-[9px] text-gray-500 block uppercase font-mono tracking-wider font-semibold">{t('devhub.vcCoupons')}</span>
               <span className="text-[13px] font-bold font-mono text-[#8B83FF]">{isConnected ? profile?.balanceVC : 0} VC</span>
             </div>
           </div>
@@ -225,7 +251,7 @@ contract SimpleAICallback {
 
       {/* CORE FOUR UTILITIES GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
-        
+
         {/* CARD 1: TON Wallet SDK (CORE) */}
         <Card className="flex flex-col justify-between p-6">
           <div className="space-y-3.5">
@@ -235,9 +261,9 @@ contract SimpleAICallback {
             </div>
 
             <div>
-              <h3 className="text-sm font-black text-white">TON Smart-Payment SDK</h3>
+              <h3 className="text-sm font-black text-white">{t('devhub.paymentSdkTitle')}</h3>
               <p className="text-[11px] text-gray-400 leading-relaxed mt-1">
-                让你的智能体或机器人一键接入合规链上支付和自动分账路由。Stripe 风格的开发逻辑，极少行数快速绑定主网收款地址。
+                {t('devhub.paymentSdkDesc')}
               </p>
             </div>
 
@@ -248,11 +274,11 @@ contract SimpleAICallback {
           </div>
 
           <div className="pt-6 flex gap-3">
-            <Link 
+            <Link
               to="/devhub/docs"
               className="px-4.5 py-2.5 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl shadow-lg shadow-[#635BFF]/10 transition flex-1 text-center"
             >
-              查看 SDK 文档 &rarr;
+              {t('devhub.viewSdkDoc')}
             </Link>
             <button
               onClick={() => {
@@ -262,7 +288,7 @@ contract SimpleAICallback {
               }}
               className="px-4.5 py-2.5 bg-slate-800 hover:bg-slate-705 text-gray-200 hover:text-white border border-slate-700/60 text-xs font-bold rounded-xl transition"
             >
-              获取 API Key
+              {t('devhub.getApiKey')}
             </button>
           </div>
         </Card>
@@ -274,21 +300,21 @@ contract SimpleAICallback {
               <Badge variant="warning">High Performance Compute</Badge>
               <span className="text-[10px] text-[#FF9F1A] font-mono flex items-center gap-1">
                 <Zap size={10} className="fill-warning border-none" />
-                <span>实时供应中</span>
+                <span>{t('devhub.gpuSupplyActive')}</span>
               </span>
             </div>
 
             <div>
-              <h3 className="text-sm font-black text-white">GPU 物理算力池租赁</h3>
+              <h3 className="text-sm font-black text-white">{t('devhub.gpuLeaseTitle')}</h3>
               <p className="text-[11px] text-gray-400 mt-1">
-                按需微调您的 AI 细分模型，提供稳定极低的 GPU 按时租赁。
+                {t('devhub.gpuLeaseDesc')}
               </p>
             </div>
 
             {/* Config options */}
             <div className="grid grid-cols-2 gap-3.5 pt-1.5 text-left">
               <div className="space-y-1">
-                <label className="text-[9.5px] text-gray-500 font-bold uppercase font-mono">GPU 模型选择</label>
+                <label className="text-[9.5px] text-gray-500 font-bold uppercase font-mono">{t('devhub.gpuSelect')}</label>
                 <select
                   value={selectedGpu}
                   onChange={(e) => setSelectedGpu(e.target.value)}
@@ -301,34 +327,34 @@ contract SimpleAICallback {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9.5px] text-gray-500 font-bold uppercase font-mono">租用时长选择</label>
+                <label className="text-[9.5px] text-gray-500 font-bold uppercase font-mono">{t('devhub.rentDurationSelect')}</label>
                 <select
                   value={rentHours}
                   onChange={(e) => setRentHours(e.target.value)}
                   className="w-full bg-[#121424] border border-[#22253B] text-gray-250 hover:text-white rounded-lg p-2 text-xs outline-none cursor-pointer font-bold animate-none"
                 >
-                  <option value="1">1 小时</option>
-                  <option value="12">12 小时</option>
-                  <option value="24">24 小时 (日租)</option>
-                  <option value="72">72 小时 (特惠三日)</option>
+                  <option value="1">{t('devhub.hours1')}</option>
+                  <option value="12">{t('devhub.hours12')}</option>
+                  <option value="24">{t('devhub.hours24')}</option>
+                  <option value="72">{t('devhub.hours72')}</option>
                 </select>
               </div>
             </div>
 
             {/* Simulated cost indicator */}
             <div className="flex justify-between items-center text-[10.5px] font-mono bg-[#07080F]/45 p-2 px-3 border border-slate-900 rounded-xl">
-              <span className="text-gray-500">结算费用成本预计:</span>
+              <span className="text-gray-500">{t('devhub.estCost')}</span>
               <span className="font-extrabold text-amber-500">{calculatedCostTON} TON</span>
             </div>
           </div>
 
           <div className="pt-4 flex flex-col gap-2">
-            <Button 
+            <Button
               onClick={handleRentGpu}
               loading={isRenting}
               className="bg-amber-500 hover:bg-amber-600 text-[#07080F] font-black w-full"
             >
-              {isRenting ? '结算合约扣款中...' : '提交租赁订单 (Rent Now)'}
+              {isRenting ? t('devhub.rentProcessing') : t('devhub.rentCTA')}
             </Button>
             {rentMsg && (
               <span className="text-[10px] text-gray-404 block pt-1 text-center font-bold font-sans">
@@ -347,9 +373,9 @@ contract SimpleAICallback {
             </div>
 
             <div>
-              <h3 className="text-sm font-black text-white">模型专属 API 中继</h3>
+              <h3 className="text-sm font-black text-white">{t('devhub.modelApiTitle')}</h3>
               <p className="text-[11px] text-gray-400 mt-1">
-                无需跨网关代理，一键汇聚头部自然语言大模型 API key。通过我们的代扣税账户实时划扣。
+                {t('devhub.modelApiDesc')}
               </p>
             </div>
 
@@ -367,14 +393,14 @@ contract SimpleAICallback {
           </div>
 
           <div className="pt-4">
-            <button 
+            <button
               onClick={() => {
                 if (apiKeys.some(k=>k.label === 'Unified API Key')) return;
                 setApiKeys([...apiKeys, { id: `key-api`, label: 'Unified API Key', prefix: 'vc_live_44aa_ArCh', createdAt: new Date().toISOString().split('T')[0] }]);
               }}
               className="w-full py-2.5 bg-slate-800 hover:bg-slate-705 border border-slate-700/60 text-gray-200 hover:text-white font-bold text-xs rounded-xl transition"
             >
-              一键配发 Unified API Key
+              {t('devhub.issueApiKey')}
             </button>
           </div>
         </Card>
@@ -388,9 +414,9 @@ contract SimpleAICallback {
             </div>
 
             <div>
-              <h3 className="text-sm font-black text-white">精选极客初始化魔板</h3>
+              <h3 className="text-sm font-black text-white">{t('devhub.starterTemplatesTitle')}</h3>
               <p className="text-[11px] text-gray-400 mt-1">
-                包含标准安全声明、自動分账以及 TON Connect 二维码拉起的全栈 Agent 网页/插件包代码。
+                {t('devhub.starterTemplatesDesc')}
               </p>
             </div>
 
@@ -430,8 +456,8 @@ contract SimpleAICallback {
           <div className="flex items-center gap-2.5 pb-2 border-b border-[#1C1F3F]">
             <Code size={18} className="text-[#635BFF]" />
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">Solidity ➔ FunC 合约一键编译转化</h3>
-              <p className="text-[10.5px] text-gray-400 font-medium">快速完成以太坊架构至 TON Telegram 原生智能合约的转换</p>
+              <h3 className="text-sm font-bold text-white tracking-tight">{t('devhub.solidityTranspilerTitle')}</h3>
+              <p className="text-[10.5px] text-gray-400 font-medium">{t('devhub.solidityTranspilerDesc')}</p>
             </div>
           </div>
 
@@ -452,7 +478,7 @@ contract SimpleAICallback {
               className="px-5 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white rounded-xl text-xs font-bold shadow-md shadow-[#635BFF]/10 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
             >
               {transpiling ? <RefreshCw size={13} className="animate-spin" /> : <Cpu size={13} />}
-              <span>{transpiling ? '正在解析 AST 语义中...' : '开始自动化翻译成 FunC'}</span>
+              <span>{transpiling ? t('devhub.astParsing') : t('devhub.transpileCTA')}</span>
             </button>
           </div>
 
@@ -474,13 +500,13 @@ contract SimpleAICallback {
           <div className="flex items-center gap-2.5 pb-2 border-b border-[#1C1F3F]">
             <Terminal size={18} className="text-sky-400" />
             <div>
-              <h3 className="text-sm font-bold text-white tracking-tight">智能合约静态安全审计舱</h3>
-              <p className="text-[10.5px] text-gray-400 font-medium">深度扫描合约安全逻辑漏洞，预测防重放与 APY 指标</p>
+              <h3 className="text-sm font-bold text-white tracking-tight">{t('devhub.secAuditTitle')}</h3>
+              <p className="text-[10.5px] text-gray-400 font-medium">{t('devhub.secAuditDesc')}</p>
             </div>
           </div>
 
           <p className="text-xs text-gray-400 leading-normal">
-            在 Studio 发布早期共建新项目前，你可以使用安全扫描仪快速对你已经持有的代码进行多向诊断，确保在测试沙盒和正式分账时不遭到女巫爆破。
+            {t('devhub.secAuditTip')}
           </p>
 
           <div className="pt-2 flex justify-start">
@@ -490,14 +516,14 @@ contract SimpleAICallback {
               className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 font-bold text-[#07080F] rounded-xl text-xs shadow-md shadow-sky-500/10 active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
             >
               <Search size={14} />
-              <span>{auditing ? '正在触发静态沙箱溢出扫描...' : '开始漏洞与合规审计'}</span>
+              <span>{auditing ? t('devhub.auditProcessing') : t('devhub.auditCTA')}</span>
             </button>
           </div>
 
           {auditReport && (
             <div className="space-y-3 p-4 bg-[#0F1722]/80 border border-sky-900/40 rounded-xl animate-in zoom-in-95">
               <div className="flex items-center justify-between border-b border-sky-950 pb-2 border-none">
-                <span className="text-xs font-bold text-white">安全指数 (Security Auditing Score)</span>
+                <span className="text-xs font-bold text-white">{t('devhub.secIndex')}</span>
                 <span className="bg-sky-950 text-sky-400 font-mono font-bold text-xs px-2 py-0.5 rounded">
                   {auditReport.score} / 100 [MAX SAFE]
                 </span>
@@ -520,7 +546,7 @@ contract SimpleAICallback {
               </div>
 
               <div className="pt-2 border-t border-[#1C1E3F] text-[10.5px] text-gray-400 leading-normal bg-[#090F16] p-2 rounded-lg">
-                <span className="font-semibold text-sky-400 block pb-0.5">专家会诊报告：</span>
+                <span className="font-semibold text-sky-400 block pb-0.5">{t('devhub.auditExpertReport')}</span>
                 {auditReport.advice}
               </div>
             </div>
@@ -534,16 +560,16 @@ contract SimpleAICallback {
           <div>
             <CardTitle className="text-sm font-black text-white flex items-center gap-2">
               <Key size={16} className="text-[#635BFF]" />
-              <span>我的 API 证书密钥保管箱 (Developer API Keys)</span>
+              <span>{t('devhub.keyVaultTitle')}</span>
             </CardTitle>
-            <CardDescription>用于对 SDK 调用执行去中心化中继授权。所有 Key 均保存在本地，随时可以一键撤销安全授权。</CardDescription>
+            <CardDescription>{t('devhub.keyVaultDesc')}</CardDescription>
           </div>
 
           {/* Create new Key form block */}
           <div className="flex gap-2.5 items-center">
             <input
               type="text"
-              placeholder="命名新密钥..."
+              placeholder={t('devhub.keyPlaceholder')}
               value={newKeyLabel}
               onChange={(e) => setNewKeyLabel(e.target.value)}
               className="bg-[#121424] border border-[#22253B] focus:border-[#635BFF] text-white rounded-xl px-3 py-1.5 text-xs outline-none max-w-[150px] font-semibold"
@@ -553,7 +579,7 @@ contract SimpleAICallback {
               className="px-3 py-1.5 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1 cursor-pointer"
             >
               <Plus size={13} />
-              <span>创建密钥</span>
+              <span>{t('devhub.createKeyCTA')}</span>
             </button>
           </div>
         </div>
@@ -562,10 +588,10 @@ contract SimpleAICallback {
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-[#121620]/85 border-b border-[#21243C] text-gray-400 font-mono text-[10px] uppercase">
-                <th className="p-4 pl-5">密钥标签</th>
-                <th className="p-4">公认前缀 (Secret Prefix)</th>
-                <th className="p-4">创建日期</th>
-                <th className="p-4 pr-5 text-right">操作管理</th>
+                <th className="p-4 pl-5">{t('devhub.colKeyLabel')}</th>
+                <th className="p-4">{t('devhub.colKeyPrefix')}</th>
+                <th className="p-4">{t('devhub.colKeyDate')}</th>
+                <th className="p-4 pr-5 text-right">{t('devhub.colKeyActions')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/40 font-mono">
@@ -592,7 +618,7 @@ contract SimpleAICallback {
                       title="Delete Key"
                     >
                       <Trash2 size={12} />
-                      <span className="text-[10px] font-sans">撤销</span>
+                      <span className="text-[10px] font-sans">{t('devhub.revokeAction')}</span>
                     </button>
                   </td>
                 </tr>
@@ -601,7 +627,7 @@ contract SimpleAICallback {
               {apiKeys.length === 0 && (
                 <tr>
                   <td colSpan={4} className="p-8 text-center text-gray-500 font-sans">
-                    还没有任何可用的 API 凭据。请在右上方命名并点击创建。
+                    {t('devhub.noKeysDesc')}
                   </td>
                 </tr>
               )}

@@ -116,8 +116,10 @@ export const useAgentStore = create<AgentState>((set, get) => {
     if (typeof window === 'undefined') return mockAgents;
     const stored = localStorage.getItem('vc_agents');
     if (!stored) {
-      localStorage.setItem('vc_agents', JSON.stringify(mockAgents));
-      return mockAgents;
+      if (import.meta.env.DEV) {
+        localStorage.setItem('vc_agents', JSON.stringify(mockAgents));
+      }
+      return import.meta.env.DEV ? mockAgents : [];
     }
     return JSON.parse(stored);
   };
@@ -131,7 +133,7 @@ export const useAgentStore = create<AgentState>((set, get) => {
         id,
         createdAt: new Date().toISOString()
       };
-      
+
       set((state) => {
         const nextAgents = [...state.agents, newAgent];
         if (typeof window !== 'undefined') {

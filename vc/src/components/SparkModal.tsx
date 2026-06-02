@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Zap, Users, Sparkles, AlertCircle } from 'lucide-react';
 import { useSparkStore } from '../store/sparkStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SparkModalProps {
   project: any;
@@ -21,13 +22,12 @@ export default function SparkModal({
   updateProfile,
   investInProject
 }: SparkModalProps) {
+  const { t } = useTranslation();
   const [amountInput, setAmountInput] = useState<string>('10');
   const [mode, setMode] = useState<'solo' | 'team'>('solo');
   const [errorMsg, setErrorMsg] = useState<string>('');
 
-  const trialBalance = profile?.trialBalance ?? 0;
-  const isTrialEligible = profile && !profile.hasUsedTrial && trialBalance > 0;
-  const totalAvailable = (profile?.balanceTON || 0) + trialBalance;
+  const totalAvailable = profile?.balanceTON || 0;
 
   const handleQuickSelect = (val: number) => {
     setAmountInput(val.toString());
@@ -39,33 +39,30 @@ export default function SparkModal({
     setErrorMsg('');
 
     if (!profile) {
-      setErrorMsg('请先连接您的 TON 钱包。');
+      setErrorMsg(t('detail.connectWalletFirst'));
       return;
     }
 
     let finalAmount = Number(amountInput);
     if (isNaN(finalAmount) || finalAmount <= 0) {
-      setErrorMsg('请输入有效的共建支持金额。');
+      setErrorMsg(t('detail.enterValidAmount'));
       return;
     }
 
     if (mode === 'solo' && finalAmount < project.minInvestment) {
-      setErrorMsg(`起投额为 ${project.minInvestment} TON。`);
+      setErrorMsg(t('detail.minSoloAmount', { amount: project.minInvestment }));
       return;
     }
 
     if (mode === 'team' && finalAmount < 5) {
-      setErrorMsg('拼团起购额最少为 5 TON。');
+      setErrorMsg(t('detail.minTeamAmount'));
       return;
     }
 
-    // Clean trial balance logic: trial funds are used first, then real balance
-    const currentTrialBalance = profile.trialBalance ?? 0;
-    const trialUsed = Math.min(finalAmount, currentTrialBalance);
-    const realCost = finalAmount - trialUsed;
+    const realCost = finalAmount;
 
     if (realCost > profile.balanceTON) {
-      setErrorMsg(`余额不足。需要额外支付 ${realCost.toFixed(1)} TON，当前可用余额: ${profile.balanceTON} TON。`);
+      setErrorMsg(t('detail.insufficientBalanceDetails', { cost: realCost.toFixed(1), balance: profile.balanceTON }));
       return;
     }
 
@@ -75,15 +72,15 @@ export default function SparkModal({
       if (teamId) {
         const success = useSparkStore.getState().joinTeamSpark(teamId, profile.walletAddress, finalAmount);
         if (!success) {
-          setErrorMsg('加入拼单失败，该拼单可能已结束或已满额。');
+          setErrorMsg(t('detail.joinTeamFailed'));
           return;
         }
         finalTeamId = teamId;
       } else {
         const newTeam = useSparkStore.getState().createTeamSpark(
-          project.id, 
-          profile.walletAddress, 
-          profile.username, 
+          project.id,
+          profile.walletAddress,
+          profile.username,
           20, // default target is 20 TON
           finalAmount
         );
@@ -92,29 +89,94 @@ export default function SparkModal({
     } else {
       const isInvested = investInProject(project.id, finalAmount, profile.walletAddress);
       if (!isInvested) {
-        setErrorMsg('交易广播失败，请重试。');
+        setErrorMsg(t('detail.broadcastFailed'));
         return;
       }
     }
 
     updateProfile({
       balanceTON: Number((profile.balanceTON - realCost).toFixed(2)),
-      trialBalance: Number((currentTrialBalance - trialUsed).toFixed(2)),
-      hasUsedTrial: trialUsed > 0 ? true : profile.hasUsedTrial,
-      hasGasConsumption: realCost > 0 ? true : (profile.hasGasConsumption || false)
+      hasGasConsumption: true
     });
-    
+
     onSuccess(finalAmount, finalTeamId);
+  };
+
+  const [starsLoading, setStarsLoading] = useState(false);
+  const handleStarsPay = async () => {
+    setErrorMsg('');
+    setStarsLoading(true);
+
+    let finalAmount = Number(amountInput);
+    if (isNaN(finalAmount) || finalAmount <= 0) {
+      setErrorMsg(t('detail.enterValidAmount'));
+      setStarsLoading(false);
+      return;
+    }
+
+    const starsAmount = Math.ceil(finalAmount / 0.15);
+    const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
+
+    try {
+      // 1. Pre-create the invoice order (authenticated)
+      const jwt = localStorage.getItem('vc_session_jwt') || '';
+      const invoiceRes = await fetch(`${API_BASE}/api/v1/payment/stars-invoice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`
+        },
+        body: JSON.stringify({
+          launchId: project.id,
+          starsAmount
+        })
+      });
+
+      if (!invoiceRes.ok) {
+        const err = await invoiceRes.json() as any;
+        throw new Error(err.error || t('detail.starsInvoiceFailed'));
+      }
+
+      const invoiceData = await invoiceRes.json() as any;
+      const checkoutId = invoiceData.id;
+
+      // 2. Call callback (simulating Telegram webhook trigger)
+      const res = await fetch(`${API_BASE}/api/v1/payment/stars-callback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Telegram-Bot-Api-Secret-Token': '' // Must be configured server-side; frontend does not hold secrets
+        },
+        body: JSON.stringify({
+          id: checkoutId
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json() as any;
+        throw new Error(err.error || t('detail.starsCallbackFailed'));
+      }
+
+      updateProfile({
+        hasGasConsumption: false
+      });
+
+      onSuccess(finalAmount, undefined);
+    } catch (e: any) {
+      setErrorMsg(e.message || t('detail.starsFailed'));
+    } finally {
+      setStarsLoading(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
-      <div 
+      <div
         className="w-full max-w-md bg-[#0A0C16]/95 border border-[#1E2241] rounded-3xl p-6 relative shadow-2xl space-y-5 animate-in zoom-in-95 duration-200 text-left"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1.5 hover:bg-[#1E2241] text-gray-400 hover:text-white rounded-xl transition cursor-pointer"
         >
@@ -124,10 +186,10 @@ export default function SparkModal({
         {/* Title Header */}
         <div className="space-y-1.5 pr-8">
           <span className="text-[10px] font-mono text-[#8C84FF] tracking-wider block font-bold uppercase">
-            ✦ Spark Project backer terminal
+            {t('detail.sparkTerminal')}
           </span>
           <h2 className="text-lg font-black text-white leading-snug">
-            支持共建 {project.agentName} (${project.agentTicker})
+            {t('detail.sparkSupport', { name: project.agentName, ticker: project.agentTicker })}
           </h2>
           <p className="text-xs text-gray-400 leading-relaxed truncate">
             {project.title}
@@ -137,19 +199,19 @@ export default function SparkModal({
         {/* Three-Stage Pricing Display */}
         <div className="bg-[#121428] border border-[#21254F] rounded-2xl p-4 space-y-2.5">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] text-gray-500 font-mono tracking-wider">PRICING TIERS</span>
+            <span className="text-[10px] text-gray-500 font-mono tracking-wider">{t('detail.pricingTiers')}</span>
             <span className="p-0.5 px-2 bg-[#635BFF]/10 text-[#8B83FF] border border-[#635BFF]/25 rounded text-[8.5px] font-black animate-pulse">
-              🔥 Stage 1 早鸟 (Early Bird)
+              {t('detail.stageEarly')}
             </span>
           </div>
 
           <div className="space-y-1 text-left">
             <div className="text-xs font-black text-white">
-              1 TON = <span className="text-[#8C84FF] font-black">100</span> ${project.agentTicker} 代币 <span className="text-emerald-450 font-bold text-[10px]">+10% 额外奖励</span>
+              1 TON = <span className="text-[#8C84FF] font-black">100</span> ${project.agentTicker} {t('detail.tokensReward')} <span className="text-emerald-450 font-bold text-[10px]">{t('detail.extraReward')}</span>
             </div>
             <div className="flex items-center justify-between text-[9.5px] text-gray-400">
-              <span>已筹额度: {project.raisedAmount} TON</span>
-              <span>目标额度: {project.goalAmount} TON</span>
+              <span>{t('detail.raisedAmount', { amount: project.raisedAmount })}</span>
+              <span>{t('detail.goalAmount', { amount: project.goalAmount })}</span>
             </div>
             {/* Progress bar for Stage 1 */}
             <div className="h-1.5 w-full bg-[#05060F] rounded-full overflow-hidden">
@@ -161,12 +223,12 @@ export default function SparkModal({
           <div className="border-t border-[#1C1E3C]/60 pt-2 mt-1">
             <details className="group">
               <summary className="text-[9.5px] text-gray-400 hover:text-white font-bold cursor-pointer list-none flex items-center justify-between">
-                <span>🔍 下一阶段定价预览 (Next Stages)</span>
+                <span>{t('detail.nextStages')}</span>
                 <span className="text-gray-500 group-open:rotate-180 transition-transform">&darr;</span>
               </summary>
               <div className="mt-2 space-y-1.5 text-[9.5px] text-gray-400 font-sans border-l border-[#21254F] pl-2.5 ml-1">
-                <div>• <strong className="text-gray-300">Stage 2 中段</strong>：1 TON = 80 代币 (目标 {project.goalAmount * 2} TON)</div>
-                <div>• <strong className="text-gray-300">Stage 3 末段</strong>：1 TON = 60 代币 (目标 {project.goalAmount * 5} TON)</div>
+                <div>• <strong className="text-gray-300">{t('detail.stageMiddle')}</strong>：{t('detail.stagePreview', { rate: 80, goal: project.goalAmount * 2 })}</div>
+                <div>• <strong className="text-gray-300">{t('detail.stageLate')}</strong>：{t('detail.stagePreview', { rate: 60, goal: project.goalAmount * 5 })}</div>
               </div>
             </details>
           </div>
@@ -178,33 +240,33 @@ export default function SparkModal({
             type="button"
             onClick={() => setMode('solo')}
             className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              mode === 'solo' 
-                ? 'bg-[#1C1A3F] text-white border border-[#3C3A86]/20' 
+              mode === 'solo'
+                ? 'bg-[#1C1A3F] text-white border border-[#3C3A86]/20'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
             <Zap size={13} className={mode === 'solo' ? 'text-yellow-400' : 'text-gray-400'} />
-            <span>直接独立支持</span>
+            <span>{t('detail.supportSolo')}</span>
           </button>
           <button
             type="button"
             onClick={() => setMode('team')}
             className={`py-2 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
-              mode === 'team' 
-                ? 'bg-[#1C1A3F] text-white border border-[#3C3A86]/20' 
+              mode === 'team'
+                ? 'bg-[#1C1A3F] text-white border border-[#3C3A86]/20'
                 : 'text-gray-400 hover:text-white'
             }`}
           >
             <Users size={13} className={mode === 'team' ? 'text-sky-400' : 'text-gray-400'} />
-            <span>极客拼单共建</span>
+            <span>{t('detail.supportTeam')}</span>
           </button>
         </div>
 
         {/* Input box */}
         <div className="space-y-2">
           <div className="flex justify-between items-center text-[11px] text-gray-400">
-            <span>支持共建数额 (TON)</span>
-            <span>可用余额: {totalAvailable} TON{trialBalance > 0 ? ` (含体验金 ${trialBalance})` : ''}</span>
+            <span>{t('detail.amountLabel')}</span>
+            <span>{t('detail.availableBalance', { amount: totalAvailable })}</span>
           </div>
           <div className="relative flex items-center">
             <input
@@ -214,7 +276,7 @@ export default function SparkModal({
                 setAmountInput(e.target.value);
                 setErrorMsg('');
               }}
-              placeholder={`起额: ${mode === 'solo' ? project.minInvestment : '5'}`}
+              placeholder={t('detail.minAmount', { amount: mode === 'solo' ? project.minInvestment : '5' })}
               className="w-full bg-[#121429] border border-[#21254F] focus:border-[#635BFF] py-3 px-4 pr-16 text-sm text-white rounded-2xl outline-none font-mono"
             />
             <span className="absolute right-4 text-xs font-bold text-gray-400 font-mono">TON</span>
@@ -228,8 +290,8 @@ export default function SparkModal({
                 type="button"
                 onClick={() => handleQuickSelect(val)}
                 className={`py-1.5 bg-[#121428]/40 hover:bg-[#1C1E38]/80 border text-[11px] font-mono font-bold rounded-xl transition cursor-pointer ${
-                  Number(amountInput) === val 
-                    ? 'border-[#635BFF] text-white bg-[#635BFF]/10' 
+                  Number(amountInput) === val
+                    ? 'border-[#635BFF] text-white bg-[#635BFF]/10'
                     : 'border-[#191D3C] text-gray-400 hover:text-white'
                 }`}
               >
@@ -239,20 +301,7 @@ export default function SparkModal({
           </div>
         </div>
 
-        {/* Trial fund banner */}
-        {isTrialEligible && (
-          <div className="bg-amber-500/5 border border-amber-500/20 p-3 rounded-2xl flex items-start gap-2.5">
-            <Sparkles size={16} className="text-amber-400 shrink-0 mt-0.5 animate-pulse" />
-            <div className="space-y-0.5">
-              <span className="text-[10px] font-black text-amber-400 block uppercase font-mono tracking-wider">
-                🎁 首次体验：使用 {trialBalance} TON 共建体验金
-              </span>
-              <p className="text-[9.5px] text-gray-450 leading-relaxed">
-                平台已为您自动垫付首笔 <strong>{trialBalance} TON</strong> 共建体验金，结算分配解锁门槛为持仓实存资产 ≥ 5 TON 且完成一次链上交互。
-              </p>
-            </div>
-          </div>
-        )}
+
 
         {/* Error Message */}
         {errorMsg && (
@@ -267,12 +316,21 @@ export default function SparkModal({
           onClick={handleConfirm}
           className="w-full py-3 bg-[#10B981] hover:bg-[#059669] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#10B981]/10 active:scale-98 transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#34D399]/20"
         >
-          <span>✦ 确认发送星火共建资金</span>
+          <span>{t('detail.confirmSpark')}</span>
+        </button>
+
+        {/* Stars Payment Button */}
+        <button
+          onClick={handleStarsPay}
+          disabled={starsLoading}
+          className="w-full py-3 bg-[#FFB500] hover:bg-[#D49600] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#FFB500]/10 active:scale-98 transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#FFD066]/20 disabled:opacity-50"
+        >
+          <span>⭐ {starsLoading ? t('detail.starsProcessing') : t('detail.payWithStars', { amount: Math.ceil(Number(amountInput) / 0.15 || 0) })}</span>
         </button>
 
         {/* Risk Disclaimer */}
         <p className="text-[9px] text-gray-550 leading-normal text-center font-sans">
-          此动作仅为 VibeCoder 沙箱测试环境模拟，不代表真实主网主权代币扣拨。
+          {t('detail.sandboxDisclaimer')}
         </p>
       </div>
     </div>

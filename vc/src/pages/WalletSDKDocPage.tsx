@@ -1,32 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ArrowLeft, Terminal, Code2, BookOpen, Sparkles, Check, 
-  Copy, Play, ShieldAlert, Cpu, Heart, CheckCircle2 
+import {
+  ArrowLeft, Terminal, Code2, BookOpen, Sparkles, Check,
+  Copy, Play, ShieldAlert, Cpu, Heart, CheckCircle2
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function WalletSDKDocPage() {
+  const { t, language, setLanguage } = useTranslation();
   const [activeSection, setActiveSection] = useState('quickstart');
   const [copiedSnippetId, setCopiedSnippetId] = useState<string | null>(null);
-  const [sandboxLog, setSandboxLog] = useState<string[]>(['// 点击上方 “运行沙箱 API” 会在此展示调试返回...']);
+  const [sandboxLog, setSandboxLog] = useState<string[]>([]);
   const [isRunningSandbox, setIsRunningSandbox] = useState(false);
 
+  // Sync default sandbox log when language changes
+  useEffect(() => {
+    setSandboxLog([t('walletSDKDoc.sandboxDefaultLog')]);
+  }, [language]);
+
   const sections = [
-    { id: 'quickstart', label: '快速开始 Quickstart' },
-    { id: 'installation', label: 'SDK 安装 Installation' },
-    { id: 'receive-payments', label: '1. 自动收款 Collect Pay' },
-    { id: 'yield-routing', label: '2. 自动分账 Yield Routing' },
-    { id: 'proof-of-state', label: '3. 链上存证 State Attestation' },
-    { id: 'users-wallet', label: '4. 用户钱包 Users Wallet' },
-    { id: 'launch-tokens', label: '5. 发行代币 Launch Tokens' },
-    { id: 'api-reference', label: 'API 参考 API Reference' }
+    { id: 'quickstart', label: t('walletSDKDoc.sections.quickstart.label') },
+    { id: 'installation', label: t('walletSDKDoc.sections.installation.label') },
+    { id: 'receive-payments', label: t('walletSDKDoc.sections.receivePayments.label') },
+    { id: 'yield-routing', label: t('walletSDKDoc.sections.yieldRouting.label') },
+    { id: 'proof-of-state', label: t('walletSDKDoc.sections.proofOfState.label') },
+    { id: 'users-wallet', label: t('walletSDKDoc.sections.usersWallet.label') },
+    { id: 'launch-tokens', label: t('walletSDKDoc.sections.launchTokens.label') },
+    { id: 'api-reference', label: t('walletSDKDoc.sections.apiReference.label') }
   ];
 
   const codeSnippets: Record<string, { desc: string, js: string, response: string }> = {
     quickstart: {
-      desc: "VibeCoder SDK 可以通过一行命令在您的 AI 智能体程序或 React 程序中接入 TON 链上安全支付担保。您只需要初始化 SDK 并在回调中传递交易要求即可。",
+      desc: t('walletSDKDoc.sections.quickstart.desc'),
       js: `import { TONWalletSDK } from '@vibecoder/sdk';
 
 // 初始化 VibeCoder SDK 控制器
@@ -41,7 +48,7 @@ console.log("TON SDK initialized!");`,
 [INFO] Secure API authorization level: verified`
     },
     installation: {
-      desc: "开发环境最少需要 Node 18+ 环境。可以通过 npm, yarn, 或 pnpm 快速拉取。我们会自带 FunC 静态编译器依赖包。",
+      desc: t('walletSDKDoc.sections.installation.desc'),
       js: `# 使用 npm 安装 VibeCoder 原生 SDK 模块
 npm install @vibecoder/sdk --save
 
@@ -52,10 +59,10 @@ added 14 packages, audited 125 packages in 1.45s
 [SUCCESS] SDK installation complete!`
     },
     'receive-payments': {
-      desc: "通过一行简单的 createRequest，拉起标准弹窗、生成二维码，支持用户通过手机端 Tonkeeper, Telegram Wallet 完成资产划付。",
+      desc: t('walletSDKDoc.sections.receivePayments.desc'),
       js: `// 发起 TON 链上自动收款
 const payment = await sdk.payments.createRequest({
-  toAddress: "EQD4_OmniLabs_6ef8", 
+  toAddress: "EQD4_OmniLabs_6ef8",
   amountTON: 5.5,                      // 收款金额 5.5 TON
   memo: "OmniSocial Influencer 升级点数",
   onSuccess: (tx) => {
@@ -70,7 +77,7 @@ const payment = await sdk.payments.createRequest({
 }`
     },
     'yield-routing': {
-      desc: "支持每日产生的 AI 冠名或赞助收入直接划还给代币持有合伙人。支持按代币比例计算自动分账，并广播给中继池执行退佣。",
+      desc: t('walletSDKDoc.sections.yieldRouting.desc'),
       js: `// 精准分账：向持有特定 $OSA 的前 100 名用户派发赞助收入
 const payoutResult = await sdk.yield.distribute({
   tokenId: "tok-osa",
@@ -89,7 +96,7 @@ console.log("派发成功，流水账单: ", payoutResult.payoutId);`,
 }`
     },
     'proof-of-state': {
-      desc: "利用链上合约存证您的 AI 代码哈希或模型指纹，让任何人或购买者可通过虚拟机直接解密、验证并执行模型安全合规性证明。",
+      desc: t('walletSDKDoc.sections.proofOfState.desc'),
       js: `// 对特定的 fine-tuned 模型发布哈希指纹存证
 const proof = await sdk.proof.register({
   modelName: "OmniSocial-LLM-V2",
@@ -105,7 +112,7 @@ const proof = await sdk.proof.register({
 }`
     },
     'users-wallet': {
-      desc: "在浏览器或 Telegram Mini App (TMA) 中接入 TON Connect。让用户不需要离开您的应用，即可查看其原生钱包余额与身份凭证。",
+      desc: t('walletSDKDoc.sections.usersWallet.desc'),
       js: `// 极简 React hooks 接入
 const { wallet, connected, sendTransaction } = useTONConnect();
 
@@ -117,7 +124,7 @@ if (connected) {
 [INFO] walletProvider: Tonkeeper`
     },
     'launch-tokens': {
-      desc: "对于成功的星火项目，可以通过该 SDK 执行一键流动性种子 AMM 池划转。这将自动化部署 bonding curve 并自动上市二级发售大厅。",
+      desc: t('walletSDKDoc.sections.launchTokens.desc'),
       js: `// 一键上市部署 bonding curve 联合曲线
 const launchResult = await sdk.tokens.launchBondingCurve({
   projectId: "spark-1",
@@ -134,7 +141,7 @@ const launchResult = await sdk.tokens.launchBondingCurve({
 }`
     },
     'api-reference': {
-      desc: "完整的 API 控制台参数以及类型描述。可以通过 TypeScript 类型系统直接联想方法及入参。",
+      desc: t('walletSDKDoc.sections.apiReference.desc'),
       js: `interface SDKConfiguration {
   apiKey: string;
   network: 'mainnet' | 'testnet';
@@ -150,12 +157,12 @@ export declare class TONWalletSDK {
   proof: ProofAttestor;
   tokens: TokenIssuer;
 }`,
-      response: `[DECLARATIONS] Loaded TypeScript definitions successfully. 
+      response: `[DECLARATIONS] Loaded TypeScript definitions successfully.
 All functions are fully guarded by Rust core compiling under WebAssembly.`
     }
   };
 
-  const currentSnip = codeSnippets[activeSection];
+  const currentSnip = codeSnippets[activeSection] || codeSnippets.quickstart;
 
   const handleCopySnippet = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -165,7 +172,6 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
     }, 2000);
   };
 
-  // Run the sandbox simulation live and update logging window
   const handleRunSandbox = () => {
     setIsRunningSandbox(true);
     setSandboxLog((prev) => [...prev, `[INIT] Ready to run Sandbox call for: "${activeSection}"...`]);
@@ -186,39 +192,56 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 select-none text-left animate-in fade-in duration-200">
-      
+
       {/* Upper Stripe title */}
-      <div className="border-b border-stripe-[#212544] pb-5 flex items-center gap-3">
-        <Link 
-          to="/devhub" 
-          className="p-2 bg-[#121620] hover:bg-[#1E2235] rounded-xl border border-slate-800 text-gray-400 hover:text-white transition"
-          title="返回 Dev Hub 主页"
-        >
-          <ArrowLeft size={16} />
-        </Link>
-        <div>
-          <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
-            <Code2 className="text-[#635BFF]" size={22} />
-            <span>TON Smart-Payment SDK 文档柜</span>
-          </h1>
-          <p className="text-xs text-gray-400 mt-0.5">
-            Stripe 风格极简一体代币收款、多层分账及安全代码链上指纹凭证。
-          </p>
+      <div className="border-b border-stripe-[#212544] pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Link
+            to="/devhub"
+            className="p-2 bg-[#121620] hover:bg-[#1E2235] rounded-xl border border-slate-800 text-gray-400 hover:text-white transition"
+            title={t('walletSDKDoc.backToDevHub')}
+          >
+            <ArrowLeft size={16} />
+          </Link>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
+              <Code2 className="text-[#635BFF]" size={22} />
+              <span>{t('walletSDKDoc.title')}</span>
+            </h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {t('walletSDKDoc.description')}
+            </p>
+          </div>
+        </div>
+
+        {/* Language selector */}
+        <div className="flex items-center gap-2 self-end sm:self-center">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value as any)}
+            className="bg-[#121620] border border-slate-800 text-gray-300 rounded-xl px-3 py-1.5 text-xs outline-none cursor-pointer hover:border-slate-700 hover:text-white transition font-bold"
+          >
+            <option value="zh">简体中文</option>
+            <option value="en">English</option>
+            <option value="ko">한국어</option>
+          </select>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-5">
-        
+
         {/* Left Side index directories */}
         <div className="lg:col-span-3 space-y-2 bg-[#0C0E1D] p-3 rounded-2xl border border-slate-800/80">
-          <span className="text-[10px] text-gray-500 font-mono tracking-wider block px-2.5 pb-1">DOCUMENTATION DIRECTORY</span>
+          <span className="text-[10px] text-gray-500 font-mono tracking-wider block px-2.5 pb-1">
+            {t('walletSDKDoc.docDirectory')}
+          </span>
           <div className="space-y-1">
             {sections.map((sec) => (
               <button
                 key={sec.id}
                 onClick={() => {
                   setActiveSection(sec.id);
-                  setSandboxLog(['// 点击上方 “运行沙箱 API” 会在此展示调试返回...']);
+                  setSandboxLog([t('walletSDKDoc.sandboxDefaultLog')]);
                 }}
                 className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all relative cursor-pointer flex items-center justify-between ${
                   activeSection === sec.id
@@ -235,18 +258,18 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
           </div>
 
           <div className="pt-4 border-t border-slate-800/40 mt-4 px-2.5 text-[10px] text-gray-500">
-            Current SDK Stable version:{' '}
+            {t('walletSDKDoc.stableVersion')}{' '}
             <strong className="text-gray-300 font-mono">v1.2.4</strong>
           </div>
         </div>
 
         {/* Right side documentation body and code panel split */}
         <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-12 gap-5 leading-relaxed items-start">
-          
+
           {/* Main textual explainer */}
           <div className="md:col-span-7 bg-[#121620] border border-[#22253B] rounded-2xl p-6 space-y-5">
             <div className="space-y-1.5">
-              <Badge variant="purple">SDK MODULE / REFERENCE</Badge>
+              <Badge variant="purple">{t('walletSDKDoc.sdkModuleReference')}</Badge>
               <h2 className="text-base sm:text-lg font-black text-white tracking-tight">
                 {sections.find(s => s.id === activeSection)?.label}
               </h2>
@@ -257,18 +280,20 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
             </p>
 
             <div className="pt-4 border-t border-slate-800/50 space-y-3.5 text-xs text-gray-400">
-              <span className="font-extrabold text-white block">📖 功能安全和最佳实践说明：</span>
+              <span className="font-extrabold text-white block">
+                {t('walletSDKDoc.safetyPracticeTitle')}
+              </span>
               <ul className="list-disc pl-4 space-y-2 leading-relaxed">
-                <li>集成后每次交易无需在智能体端存固私钥，所有的 cryptographic 签名请求都在用户安全的独立 Tonkeeper 虚拟机沙箱执行。</li>
-                <li>分账及中继器已通过 <strong>CodeVibe Auditor</strong> 多路流重放漏洞检测。验证契约可在 Dev Hub 执行二次审计。</li>
-                <li>分账及支付接口包含内置防割锁，在对应星火生命周期触发自动解签，保障普通质押合伙人的最高资产安全性。</li>
+                <li>{t('walletSDKDoc.safetyPractice1')}</li>
+                <li dangerouslySetInnerHTML={{ __html: t('walletSDKDoc.safetyPractice2') }} />
+                <li>{t('walletSDKDoc.safetyPractice3')}</li>
               </ul>
             </div>
           </div>
 
           {/* Right side snippet blocks and sandbox output client */}
           <div className="md:col-span-5 space-y-5">
-            
+
             {/* Syntax snippet window */}
             <div className="bg-[#05060C] border border-[#191D3C] rounded-2xl overflow-hidden shadow-2xl">
               <div className="p-3 px-4.5 bg-[#0C0E1D] border-b border-[#191D3C] flex items-center justify-between">
@@ -281,7 +306,7 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
                   className="p-1 rounded text-gray-500 hover:text-white hover:bg-slate-800/50 transition cursor-pointer"
                   title="Copy snippet"
                 >
-                  {copiedSnippetId === activeSection ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                  {copiedSnippetId === activeSection ? <Check size={12} className="text-emerald-450" /> : <Copy size={12} />}
                 </button>
               </div>
 
@@ -295,14 +320,14 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
             <div className="bg-[#0A0C16] border border-[#1D213F] rounded-2xl p-4.5 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-gray-404 font-mono font-bold block">ONLINE SANDBOX TESTER</span>
-                <Button 
+                <Button
                   onClick={handleRunSandbox}
                   loading={isRunningSandbox}
                   size="sm"
                   className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black text-[10px] py-1 px-3"
                 >
                   <Play size={10} className="mr-1 mt-0.5 fill-black" />
-                  运行沙箱 API Test
+                  {t('walletSDKDoc.runSandboxBtn')}
                 </Button>
               </div>
 
@@ -326,10 +351,10 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
           <div className="text-left">
             <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
               <Cpu size={16} className="text-[#8B83FF]" />
-              <span>Section 6: TON 机器人收款、分账与自动化 SDK 性能矩阵</span>
+              <span>{t('walletSDKDoc.section6Title')}</span>
             </h3>
             <p className="text-[11px] text-gray-400 mt-0.5">
-              原生兼容 Tonkeeper / Telegram Wallet / WebAssembly 虚拟机底层加密特性一览。
+              {t('walletSDKDoc.section6Desc')}
             </p>
           </div>
           <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full font-mono font-bold tracking-wider self-start sm:self-auto border border-emerald-500/20">
@@ -341,49 +366,49 @@ All functions are fully guarded by Rust core compiling under WebAssembly.`
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[#212446] text-gray-500 font-mono text-[10px] uppercase">
-                <th className="py-3 px-4">核心接口类型</th>
-                <th className="py-3 px-4">执行函数 & 静态调用</th>
-                <th className="py-3 px-4">链上执行逻辑 / 担保级别</th>
-                <th className="py-3 px-4">结算延迟 / Gas 消耗</th>
-                <th className="py-3 px-4">风控安全审查等级</th>
+                <th className="py-3 px-4">{t('walletSDKDoc.tableHeaders.type')}</th>
+                <th className="py-3 px-4">{t('walletSDKDoc.tableHeaders.func')}</th>
+                <th className="py-3 px-4">{t('walletSDKDoc.tableHeaders.logic')}</th>
+                <th className="py-3 px-4">{t('walletSDKDoc.tableHeaders.gas')}</th>
+                <th className="py-3 px-4">{t('walletSDKDoc.tableHeaders.safety')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#181A32]/60 text-gray-300">
               {[
                 {
-                  type: "① 收款与代付",
+                  type: t('walletSDKDoc.tableRows.payments.type'),
                   func: "sdk.payments.createRequest()",
-                  logic: "支持标准 Memo + 用户独立 App 钱包，兼容多代币 TON / $VC 资产划拨。",
-                  gas: "即时确认 / ≤ 0.02 TON",
-                  safety: "SECURE (双向非对称加密签名)"
+                  logic: t('walletSDKDoc.tableRows.payments.logic'),
+                  gas: t('walletSDKDoc.tableRows.payments.gas'),
+                  safety: t('walletSDKDoc.tableRows.payments.safety')
                 },
                 {
-                  type: "② 渐进式里程碑划账",
+                  type: t('walletSDKDoc.tableRows.yield.type'),
                   func: "sdk.yield.distribute()",
-                  logic: "支持 4 阶段配置参数，由 3 独多签卫士验证解锁，执行 20% 自动复利注入。",
-                  gas: "3s / ≤ 0.05 TON",
-                  safety: "GUARANTEED (多签节点验证)"
+                  logic: t('walletSDKDoc.tableRows.yield.logic'),
+                  gas: t('walletSDKDoc.tableRows.yield.gas'),
+                  safety: t('walletSDKDoc.tableRows.yield.safety')
                 },
                 {
-                  type: "③ 链上存证 & 代码核查",
+                  type: t('walletSDKDoc.tableRows.proof.type'),
                   func: "sdk.proof.register()",
-                  logic: "加密存储精调大模型指纹 (Weights) & 安全网关接入，静态 AST 校验自动报告。",
-                  gas: "12s / ≤ 0.08 TON",
-                  safety: "AUDITED (静态控制流校验)"
+                  logic: t('walletSDKDoc.tableRows.proof.logic'),
+                  gas: t('walletSDKDoc.tableRows.proof.gas'),
+                  safety: t('walletSDKDoc.tableRows.proof.safety')
                 },
                 {
-                  type: "④ 开发者保底与退款",
+                  type: t('walletSDKDoc.tableRows.assurance.type'),
                   func: "sdk.assurance.execLiquidate()",
-                  logic: "支持 Staked 模式下 10k $VC 实盘抵押惩扣。遇意外由多签卫士退还至持股人。",
-                  gas: "即时锁定 / ≤ 0.01 TON",
-                  safety: "MILITARY-GRADE (底仓强制锁仓)"
+                  logic: t('walletSDKDoc.tableRows.assurance.logic'),
+                  gas: t('walletSDKDoc.tableRows.assurance.gas'),
+                  safety: t('walletSDKDoc.tableRows.assurance.safety')
                 },
                 {
-                  type: "⑤ 用户账号与二级 AMM 发行",
+                  type: t('walletSDKDoc.tableRows.tokens.type'),
                   func: "sdk.tokens.launchBondingCurve()",
-                  logic: "无缝对接 TON Connect。达标后自动发布智能联合曲线 AMM 二级交易大厅。",
-                  gas: "5s / ≤ 0.15 TON",
-                  safety: "VERIFIED (Bonding Curve)"
+                  logic: t('walletSDKDoc.tableRows.tokens.logic'),
+                  gas: t('walletSDKDoc.tableRows.tokens.gas'),
+                  safety: t('walletSDKDoc.tableRows.tokens.safety')
                 }
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-[#121427]/40 transition-colors">

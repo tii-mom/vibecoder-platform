@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  ChevronRight, 
+import { NavLink, useNavigate } from 'react-router-dom';
+import {
+  ChevronRight,
   ChevronLeft,
   Info,
   Bell,
@@ -13,6 +13,7 @@ import { useUserStore } from '../store/userStore';
 import { useSparkStore } from '../store/sparkStore';
 import { TONService } from '../services/ton';
 import { useNotificationStore } from '../store/notificationStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Custom minimalist luxury high-fidelity SVG icons
 const CompassIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
@@ -88,19 +89,43 @@ const GiftIcon = ({ className, size = 16 }: { className?: string; size?: number 
   </svg>
 );
 
+const CreditCardIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+  </svg>
+);
+
+const TrophyIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+    <path d="M12 2a6 6 0 0 1 6 6v3a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
+  </svg>
+);
+
+const PieIcon = ({ className, size = 16 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
+    <path d="M22 12A10 10 0 0 0 12 2v10z" />
+  </svg>
+);
+
 export default function Sidebar() {
+  const { t } = useTranslation();
   const [collapsed, setCollapsed] = useState(false);
   const { walletAddress, isConnected } = useUserStore();
   const { projects } = useSparkStore();
   const navigate = useNavigate();
-  const location = useLocation();
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    markAllAsRead, 
-    clearAll, 
-    simulateMilestoneEvent 
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+    simulateMilestoneEvent
   } = useNotificationStore();
 
   const [isAlertsOpen, setIsAlertsOpen] = useState(false);
@@ -127,34 +152,38 @@ export default function Sidebar() {
   const sortedNotifications = [...notifications].sort((a, b) => {
     const aInPortfolio = portfolioTickers.has(a.ticker);
     const bInPortfolio = portfolioTickers.has(b.ticker);
-    
+
     const aPriority = aInPortfolio && !a.isRead;
     const bPriority = bInPortfolio && !b.isRead;
-    
+
     if (aPriority && !bPriority) return -1;
     if (!aPriority && bPriority) return 1;
-    
+
     if (!a.isRead && b.isRead) return -1;
     if (a.isRead && !b.isRead) return 1;
-    
+
     if (aInPortfolio && !bInPortfolio) return -1;
     if (!aInPortfolio && bInPortfolio) return 1;
-    
+
     return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
   });
 
   const menuItems = [
-    { name: '探索发现', path: '/feed', icon: CompassIcon, tooltip: '全屏竖滑 AI 智能体星火共建探索流' },
-    { name: 'Launch', path: '/launch', icon: CoinsIcon, tooltip: '早期 Agent 联合星火共建（里程碑防割）' },
-    { name: 'AI 共建助手', path: '/copilot', icon: SparklesIcon, tooltip: '自动化代码评估评分、风控分级与托管认配' },
-    { name: '我的持仓', path: '/portfolio', icon: FolderIcon, tooltip: '管理你支持的 AI 资产、分配记录与共建明细', showBadge: true },
-    { name: '赏金市场', path: '/bounty', icon: CoinsIcon, tooltip: '完成任务赚 VC 和代币奖励' },
-    { name: '特权与邀请', path: '/invite', icon: GiftIcon, tooltip: '查看你的星火共建邀请链路与解锁的生态特权' },
-    { name: '设置中心', path: '/settings', icon: SettingsIcon, tooltip: '自定义网关与秘钥管理' },
+    { name: t('sidebar.explore'), path: '/feed', icon: CompassIcon, tooltip: t('sidebar.exploreTooltip') },
+    { name: t('sidebar.launch'), path: '/launch', icon: CoinsIcon, tooltip: t('sidebar.launchTooltip') },
+    { name: t('sidebar.secondaryMarket'), path: '/launchpad', icon: RocketIcon, tooltip: t('sidebar.secondaryMarketTooltip') },
+    { name: t('sidebar.fund'), path: '/fund', icon: PieIcon, tooltip: t('sidebar.fundTooltip') },
+    { name: t('sidebar.leaderboard'), path: '/leaderboard', icon: TrophyIcon, tooltip: t('sidebar.leaderboardTooltip') },
+    { name: t('sidebar.copilot'), path: '/copilot', icon: SparklesIcon, tooltip: t('sidebar.copilotTooltip') },
+    { name: t('sidebar.portfolio'), path: '/portfolio', icon: FolderIcon, tooltip: t('sidebar.portfolioTooltip'), showBadge: true },
+    { name: t('sidebar.onramp'), path: '/onramp', icon: CreditCardIcon, tooltip: t('sidebar.onrampTooltip') },
+    { name: t('sidebar.bounty'), path: '/bounty', icon: CoinsIcon, tooltip: t('sidebar.bountyTooltip') },
+    { name: t('sidebar.invite'), path: '/invite', icon: GiftIcon, tooltip: t('sidebar.inviteTooltip') },
+    { name: t('sidebar.settings'), path: '/settings', icon: SettingsIcon, tooltip: t('sidebar.settingsTooltip') },
   ];
 
   return (
-    <aside 
+    <aside
       className={`hidden md:flex flex-col h-full bg-[#05060B] border-r border-[#131626] transition-all duration-300 relative select-none shrink-0 ${collapsed ? 'w-16' : 'w-60'}`}
     >
       {/* Collapse Toggle trigger */}
@@ -168,47 +197,50 @@ export default function Sidebar() {
       {/* Main navigation menu items */}
       <nav className="flex-1 py-8 px-3 space-y-2 overflow-y-auto">
         <span className={`text-[10px] text-gray-500/80 font-mono tracking-widest block px-2.5 mb-3 transition-opacity ${collapsed ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-          WORKSPACE CONSOLE
+          {t('sidebar.workspaceConsole')}
         </span>
 
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname.startsWith(item.path);
 
           return (
             <NavLink
               key={item.path}
               to={item.path}
               title={collapsed ? item.name : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative ${
-                isActive 
-                  ? 'bg-[#121429] text-white border-l-2 border-[#8B83FF] pl-2.5 font-bold tracking-tight shadow-sm shadow-[#8B83FF]/5' 
-                  : 'text-gray-400/60 hover:text-gray-200 hover:bg-[#111326]/65'
+              className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium transition-all group relative duration-200 ${
+                isActive
+                  ? 'bg-gradient-to-r from-[#1C1B47]/80 to-[#0C0E1A]/85 text-white border-l-2 border-[#635BFF] pl-2.5 font-bold tracking-tight shadow-[0_4px_20px_rgba(99,91,255,0.15)] backdrop-blur-md'
+                  : 'text-gray-400/80 hover:text-white hover:bg-[#161830]/40 hover:translate-x-0.5'
               }`}
             >
-              <Icon size={16} className={`shrink-0 transition-transform ${isActive ? 'text-[#8B83FF] scale-105' : 'text-gray-550 group-hover:text-gray-200'}`} />
-              
-              {!collapsed && (
-                <div className="flex-1 flex items-center justify-between min-w-0">
-                  <span className="truncate">{item.name}</span>
-                  {item.showBadge && unreadCount > 0 && (
-                    <span className="bg-rose-550/90 text-white font-mono text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
-                      {unreadCount}
-                    </span>
+              {({ isActive }) => (
+                <>
+                  <Icon size={16} className={`shrink-0 transition-all duration-300 ${isActive ? 'text-[#8B83FF] scale-110 drop-shadow-[0_0_8px_rgba(139,131,255,0.5)]' : 'text-gray-500 group-hover:text-gray-200 group-hover:scale-105'}`} />
+
+                  {!collapsed && (
+                    <div className="flex-1 flex items-center justify-between min-w-0">
+                      <span className="truncate">{item.name}</span>
+                      {item.showBadge && unreadCount > 0 && (
+                        <span className="bg-rose-550/90 text-white font-mono text-[9px] px-1.5 py-0.2 rounded-full font-black animate-pulse">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {/* Collapsed Badge overlay helper */}
-              {collapsed && item.showBadge && unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse border border-[#0C101A]" />
-              )}
+                  {/* Collapsed Badge overlay helper */}
+                  {collapsed && item.showBadge && unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 animate-pulse border border-[#0C101A]" />
+                  )}
 
-              {/* Collapsed Tooltip helper */}
-              {collapsed && (
-                <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#090A13] border border-[#232646] text-[11px] text-gray-200 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
-                  {item.name} {item.showBadge && unreadCount > 0 ? `(${unreadCount} 条新动态)` : ''}
-                </div>
+                  {/* Collapsed Tooltip helper */}
+                  {collapsed && (
+                    <div className="absolute left-full ml-2 px-2.5 py-1.5 bg-[#0A0C16]/95 backdrop-blur-md border border-[#232646]/80 text-[11px] text-gray-200 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-2xl">
+                      {item.name} {item.showBadge && unreadCount > 0 ? `(${unreadCount} ${t('sidebar.unreadBadge')})` : ''}
+                    </div>
+                  )}
+                </>
               )}
             </NavLink>
           );
@@ -222,7 +254,7 @@ export default function Sidebar() {
             <div className="flex items-center justify-between">
               <span className="text-[10px] text-gray-500 font-mono tracking-wider flex items-center gap-1.5 uppercase font-bold">
                 <Bell size={10} className={unreadCount > 0 ? "text-amber-500 animate-bounce" : "text-gray-500"} />
-                <span>星火雷达 (ALERT HUB)</span>
+                <span>{t('sidebar.alertHub')}</span>
                 {unreadCount > 0 && (
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
                 )}
@@ -230,7 +262,7 @@ export default function Sidebar() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={simulateMilestoneEvent}
-                  title="模拟最新星火推进动态"
+                  title={t('sidebar.clickSimulate')}
                   className="p-1 hover:bg-[#1C1F3D] rounded border border-[#242749]/40 text-sky-400 hover:text-sky-300 transition cursor-pointer"
                 >
                   <Play size={10} />
@@ -238,7 +270,7 @@ export default function Sidebar() {
                 {notifications.length > 0 && (
                   <button
                     onClick={clearAll}
-                    title="清空记录"
+                    title={t('sidebar.clearAlerts')}
                     className="p-1 hover:bg-[#1C1F3D] rounded border border-[#242749]/40 text-gray-500 hover:text-gray-300 transition cursor-pointer"
                   >
                     <Trash2 size={10} />
@@ -251,8 +283,10 @@ export default function Sidebar() {
             <div className="max-h-36 overflow-y-auto space-y-1.5 scrollbar-thin pr-1">
               {sortedNotifications.length === 0 ? (
                 <div className="text-[10px] text-gray-600 font-sans py-3 text-center border border-dashed border-slate-900 rounded-lg leading-relaxed">
-                  暂无最新星火推进消息<br />
-                  <span className="text-[9px] text-gray-700">点击 ▷ 按钮手动发起仿真</span>
+                  {t('sidebar.noAlerts')}<br />
+                  <span className="text-[9px] text-gray-700">
+                    {t('sidebar.clickSimulate')}
+                  </span>
                 </div>
               ) : (
                 sortedNotifications.slice(0, 3).map((notif) => {
@@ -263,7 +297,7 @@ export default function Sidebar() {
                       onClick={() => markAsRead(notif.id)}
                       className={`p-2 rounded-lg border text-[10px] cursor-pointer transition relative overflow-hidden text-left ${
                         notif.isRead
-                          ? isPortfolioAsset 
+                          ? isPortfolioAsset
                             ? 'bg-amber-955/5 border-amber-950/20 text-gray-400'
                             : 'bg-slate-950/20 border-slate-900/60 text-gray-405'
                           : isPortfolioAsset
@@ -283,7 +317,7 @@ export default function Sidebar() {
                           <span className="truncate max-w-[110px]">{notif.title}</span>
                         </div>
                         {isPortfolioAsset && (
-                          <span className="text-[8.5px] text-[#FFA825] font-black shrink-0">💼 已持仓</span>
+                          <span className="text-[8.5px] text-[#FFA825] font-black shrink-0">{t('sidebar.activePortfolio')}</span>
                         )}
                       </div>
                       <p className="text-[9.5px] text-gray-400 leading-normal mt-1 line-clamp-2">{notif.description}</p>
@@ -294,7 +328,7 @@ export default function Sidebar() {
                           <span>+{notif.amountVC} $VC</span>
                         </div>
                       )}
-                      
+
                       {/* Direct Navigation Link to Proof Tab */}
                       <button
                         onClick={(e) => {
@@ -308,7 +342,7 @@ export default function Sidebar() {
                             : 'bg-indigo-500/10 hover:bg-[#635BFF]/25 text-[#A699FF] border-indigo-500/25'
                         }`}
                       >
-                        <span>验证 Proof 沙盒 &raquo;</span>
+                        <span>{t('sidebar.verifyProof')}</span>
                       </button>
                     </div>
                   );
@@ -321,7 +355,7 @@ export default function Sidebar() {
                 onClick={markAllAsRead}
                 className="w-full py-1 text-[9.5px] text-indigo-400 bg-indigo-950/10 border border-indigo-900/20 rounded hover:bg-indigo-950/20 text-center transition font-semibold cursor-pointer"
               >
-                全部标为已读 ({unreadCount})
+                {t('sidebar.markAllAsRead')} ({unreadCount})
               </button>
             )}
           </div>
@@ -331,7 +365,7 @@ export default function Sidebar() {
             <button
               onClick={() => setIsAlertsOpen(!isAlertsOpen)}
               className="p-2 bg-[#121424] hover:bg-[#1E213D] border border-[#23274A] rounded-xl text-gray-400 hover:text-white transition relative cursor-pointer"
-              title="实时星火星光雷达"
+              title={t('sidebar.alertHub')}
             >
               <Bell size={13} className={unreadCount > 0 ? "text-amber-500 animate-pulse" : ""} />
               {unreadCount > 0 && (
@@ -343,7 +377,7 @@ export default function Sidebar() {
             <button
               onClick={simulateMilestoneEvent}
               className="p-1 hover:bg-[#1C1F3D] rounded border border-slate-900 text-sky-400 hover:text-sky-300 transition text-[8px] cursor-pointer"
-              title="自动模拟一笔星火"
+              title={t('sidebar.clickSimulate')}
             >
               <Play size={8} />
             </button>
@@ -354,17 +388,17 @@ export default function Sidebar() {
                 <div className="flex items-center justify-between border-b border-[#1E213E] pb-2">
                   <span className="text-xs font-black text-white flex items-center gap-1.5">
                     <Bell size={12} className="text-amber-500" />
-                    <span>星火公簿实时雷达</span>
+                    <span>{t('sidebar.alertHub')}</span>
                   </span>
                   <div className="flex items-center gap-1.5">
-                    <button onClick={clearAll} className="text-[10px] text-gray-500 hover:text-gray-300">清空</button>
+                    <button onClick={clearAll} className="text-[10px] text-gray-500 hover:text-gray-300">{t('sidebar.clearAlerts')}</button>
                     <button onClick={() => setIsAlertsOpen(false)} className="text-[10px] text-gray-400 hover:text-white">✕</button>
                   </div>
                 </div>
 
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                   {sortedNotifications.length === 0 ? (
-                    <p className="text-[10px] text-gray-500 text-center py-4">暂无星火更新记录，点击左侧 [▷] 手动触发模拟。</p>
+                    <p className="text-[10px] text-gray-500 text-center py-4">{t('sidebar.noAlerts')}</p>
                   ) : (
                     sortedNotifications.map((notif) => {
                       const isPortfolioAsset = portfolioTickers.has(notif.ticker);
@@ -372,24 +406,24 @@ export default function Sidebar() {
                         <div
                           key={notif.id}
                           onClick={() => markAsRead(notif.id)}
-                          className={`p-2 rounded-xl border text-[10px] cursor-pointer transition ${
-                            notif.isRead 
+                          className={`p-2 rounded-xl border text-[10px] cursor-pointer transition relative overflow-hidden text-left ${
+                            notif.isRead
                               ? isPortfolioAsset
-                                ? 'bg-amber-955/5 border-amber-950/20 text-gray-400 font-semibold'
-                                : 'bg-slate-950/20 border-slate-900/40 text-gray-500' 
+                                ? 'bg-amber-955/5 border-amber-950/20 text-gray-400'
+                                : 'bg-slate-950/20 border-slate-900/60 text-gray-450'
                               : isPortfolioAsset
-                                ? 'bg-[#1D172A] border-[#92400E] text-white hover:border-[#D97706]'
-                                : 'bg-[#121528] border-[#2A2E55] text-white'
+                                ? 'bg-[#1D172A] border-[#92400E] text-white hover:border-[#D97706] shadow-md shadow-amber-955/40'
+                                : 'bg-[#121528] border-[#2A2E55] text-white hover:border-[#3E437C] shadow shadow-indigo-950/30'
                           }`}
                         >
                           <div className="font-bold flex items-center justify-between gap-1.5 flex-wrap">
                             <span>{notif.title}</span>
                             {isPortfolioAsset && (
-                              <span className="text-[8.5px] text-[#FFA825] font-black shrink-0">💼 持仓</span>
+                              <span className="text-[8.5px] text-[#FFA825] font-black shrink-0">💼 {t('sidebar.activePortfolio')}</span>
                             )}
                           </div>
                           <p className="text-[9.5px] text-gray-400 mt-0.5 leading-relaxed">{notif.description}</p>
-                          
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -402,7 +436,7 @@ export default function Sidebar() {
                                 : 'bg-[#635BFF]/10 hover:bg-[#635BFF]/20 text-[#A699FF] border-[#635BFF]/20'
                             }`}
                           >
-                            <span>验证 Proof &raquo;</span>
+                            <span>{t('sidebar.verifyProof')}</span>
                           </button>
                         </div>
                       );
@@ -415,7 +449,7 @@ export default function Sidebar() {
                     onClick={markAllAsRead}
                     className="w-full py-1.5 bg-[#635BFF] hover:bg-[#5048E5] text-white text-[10px] rounded-lg text-center font-bold"
                   >
-                    全部标为已读 ({unreadCount})
+                    {t('sidebar.markAllAsRead')} ({unreadCount})
                   </button>
                 )}
               </div>
@@ -431,8 +465,8 @@ export default function Sidebar() {
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
             {!collapsed ? (
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] text-gray-400 block font-mono">WALLET CONNECTED</span>
-                <span className="text-[10.5px] text-gray-500 block truncate font-mono">
+                <span className="text-[10px] text-gray-400 block font-mono">{t('sidebar.walletConnected')}</span>
+                <span className="text-[10.5px] text-gray-550 block truncate font-mono">
                   {TONService.shortenAddress(walletAddress || "")}
                 </span>
               </div>
@@ -444,7 +478,7 @@ export default function Sidebar() {
           <div className="flex items-center gap-2 text-gray-500">
             <Info size={14} className="shrink-0" />
             {!collapsed && (
-              <span className="text-[10px] font-mono leading-tight">UNAUTHORIZED WORKSPACE</span>
+              <span className="text-[10px] font-mono leading-tight">{t('sidebar.unauthorizedWorkspace')}</span>
             )}
           </div>
         )}

@@ -1,12 +1,12 @@
 [package]
-name = "my-acton-project"
+name = "vibecoder-contracts"
 description = "A TON blockchain project"
 version = "0.1.0"
 license = "MIT"
 
-[contracts.early_subscription]
-display-name = "Early Subscription"
-src = "contracts/platform/token-system/early-subscription/early_subscription.tolk"
+[contracts.early_fundraising]
+display-name = "Early Fundraising"
+src = "contracts/platform/token-system/early-fundraising/early_fundraising.tolk"
 depends = []
 
 [contracts.fund]
@@ -34,11 +34,6 @@ display-name = "Project Token Wallet"
 src = "contracts/launch/project-token/project_token_wallet.tolk"
 depends = []
 
-[contracts.strategic]
-display-name = "Strategic"
-src = "contracts/platform/token-system/strategic/strategic.tolk"
-depends = []
-
 [contracts.token_launcher]
 display-name = "Token Launcher"
 src = "contracts/platform/infra/token-launcher/token_launcher.tolk"
@@ -47,6 +42,11 @@ depends = []
 [contracts.vc_jetton]
 display-name = "Vc Jetton"
 src = "contracts/platform/token-system/vc-jetton/vc_jetton.tolk"
+depends = []
+
+[contracts.vc_reward_pool]
+display-name = "VC Reward Pool"
+src = "contracts/platform/token-system/vc-reward-pool/vc_reward_pool.tolk"
 depends = []
 
 [contracts.vesting]

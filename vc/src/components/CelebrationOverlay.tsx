@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface CelebrationOverlayProps {
   projectName: string;
@@ -12,6 +13,7 @@ export default function CelebrationOverlay({
   amount,
   onComplete
 }: CelebrationOverlayProps) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function CelebrationOverlay({
         c.rotate((this.rotation * Math.PI) / 180);
         c.globalAlpha = this.opacity;
         c.fillStyle = this.color;
-        
+
         // Randomly draw squares or circles
         if (this.size % 2 === 0) {
           c.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
@@ -155,7 +157,7 @@ export default function CelebrationOverlay({
             ✦ Spark round success!
           </h1>
           <p className="text-sm text-gray-300 max-w-sm mx-auto font-sans leading-relaxed">
-            您已成功为 <span className="text-[#8C84FF] font-extrabold">{projectName}</span> 注入支持了 <span className="text-emerald-400 font-extrabold">{amount} TON</span>。
+            {t('celebration.successDesc', { projectName, amount })}
           </p>
         </div>
         <div className="inline-block px-3 py-1 bg-[#10B981]/15 border border-[#10B981]/25 rounded-full text-[10px] font-mono font-bold text-[#10B981] tracking-wider uppercase animate-pulse">

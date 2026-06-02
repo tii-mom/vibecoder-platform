@@ -5,16 +5,31 @@ export type LaunchFeeConfig = {
     vcMasterAddress: Address;
     vcWalletCode: Cell;
     myVcWalletAddress: Address;
+    fundAddress: Address;
+    deploymentFee: bigint;
+    antiSpamStake: bigint;
 };
 
 export function launchFeeConfigToCell(config: LaunchFeeConfig): Cell {
+    const c1 = beginCell()
+        .storeDict(null) // empty creatorProjects
+        .storeDict(null) // empty projectStakes
+        .storeDict(null) // empty pendingRefunds
+        .endCell();
+
+    const c2 = beginCell()
+        .storeAddress(config.myVcWalletAddress)
+        .storeAddress(config.fundAddress)
+        .storeCoins(config.deploymentFee)
+        .storeCoins(config.antiSpamStake)
+        .endCell();
+
     return beginCell()
         .storeAddress(config.adminAddress)
         .storeAddress(config.vcMasterAddress)
         .storeRef(config.vcWalletCode)
-        .storeAddress(config.myVcWalletAddress)
-        .storeDict(null) // empty creatorProjects
-        .storeDict(null) // empty projectStakes
+        .storeRef(c1)
+        .storeRef(c2)
         .endCell();
 }
 
@@ -63,14 +78,28 @@ export class LaunchFee implements Contract {
         });
     }
 
-    async sendRefundStake(provider: ContractProvider, via: Sender, value: bigint, projectAddress: Address) {
+    async sendRefundStake(provider: ContractProvider, via: Sender, value: bigint, projectAddress: Address, queryId: bigint = 0n) {
         await provider.internal(via, {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell()
                 .storeUint(3, 32)
-                .storeUint(0, 64)
+                .storeUint(queryId, 64)
                 .storeAddress(projectAddress)
+                .endCell(),
+        });
+    }
+
+    async sendSetParams(provider: ContractProvider, via: Sender, value: bigint, opts: { deploymentFee: bigint, antiSpamStake: bigint, fundAddress: Address }) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(4, 32) // OP_SET_PARAMS
+                .storeUint(0, 64)
+                .storeCoins(opts.deploymentFee)
+                .storeCoins(opts.antiSpamStake)
+                .storeAddress(opts.fundAddress)
                 .endCell(),
         });
     }
@@ -81,6 +110,9 @@ export class LaunchFee implements Contract {
             adminAddress: stack.readAddress(),
             vcMasterAddress: stack.readAddress(),
             myVcWalletAddress: stack.readAddress(),
+            fundAddress: stack.readAddress(),
+            deploymentFee: stack.readBigNumber(),
+            antiSpamStake: stack.readBigNumber(),
         };
     }
 

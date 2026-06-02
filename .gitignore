@@ -3,8 +3,17 @@ dist/
 build/
 .env
 .env.local
+**/.env
+**/.env.local
+worker/.dev.vars
 .DS_Store
 *.log
+test_output.txt
+logs/
+scratch/
+.config/
+tools/SkillOpt/
+signer/.wrangler/
 .acton/
 playwright-report/
 test-results/

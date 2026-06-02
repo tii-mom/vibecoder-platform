@@ -1,0 +1,877 @@
+FILE: vc/src/pages/BountyPage.tsx (29 matches)
+  Line 27: { id: 'b1', creatorName: 'OmniSocial', creatorTier: 0, creatorType: 'PROJECT', taskType: 'FOLLOW_X', title: '关注 @OmniSocial 官方 X 账号', reward: '2 VC', rewardToken: 'VC', totalSlots: 200, completedSlots: 87, url: 'https://x.com/omnisocial' },
+  Line 28: { id: 'b2', creatorName: 'CodeVibe', creatorTier: 0, creatorType: 'PROJECT', taskType: 'JOIN_TG', title: '加入 CodeVibe Telegram 开发者社区', reward: '3 VC', rewardToken: 'VC', totalSlots: 150, completedSlots: 42, url: 'https://t.me/codevibe' },
+  Line 29: { id: 'b3', creatorName: 'TON Dogs', creatorTier: 1, creatorType: 'EXTERNAL_TON', taskType: 'RETWEET', title: '转发 TON Dogs NFT 官宣推文', reward: '50 $TDOG', rewardToken: '$TDOG', totalSlots: 500, completedSlots: 234, chain: 'TON', url: 'https://x.com/tondogs' },
+  Line 30: { id: 'b4', creatorName: 'MetaGame', creatorTier: 2, creatorType: 'EXTERNAL_OTHER', taskType: 'JOIN_DISCORD', title: '加入 MetaGame Discord 并验证', reward: '100 $META', rewardToken: '$META', totalSlots: 300, completedSlots: 45, chain: 'BSC', url: 'https://discord.gg/metagame' },
+  Line 31: { id: 'b5', creatorName: 'TrendBot', creatorTier: 0, creatorType: 'PROJECT', taskType: 'SPARK', title: 'Spark TrendBot 项目 ≥ 10 TON', reward: '5 VC', rewardToken: 'VC', totalSlots: 100, completedSlots: 23, url: '#/launch/spark-3' },
+  Line 36: creatorName: r.creator_id || '项目方',
+  Line 57: FOLLOW_X: language === 'zh' ? 'X 关注' : language === 'ko' ? 'X 팔로우' : 'Follow X',
+  Line 58: RETWEET: language === 'zh' ? 'X 转发' : language === 'ko' ? 'X 리트윗' : 'Retweet X',
+  Line 59: JOIN_TG: language === 'zh' ? 'TG 加群' : language === 'ko' ? 'TG 채널 가입' : 'Join Telegram',
+  Line 61: SPARK: language === 'zh' ? 'Spark 项目' : language === 'ko' ? '프로젝트 Spark' : 'Spark Project',
+  Line 62: INVITE: language === 'zh' ? '邀请好友' : language === 'ko' ? '친구 초대' : 'Invite Friends',
+  Line 71: creatorType: language === 'zh' ? '平台项目方' : language === 'ko' ? '플랫폼 프로젝트' : 'Platform Projects',
+  Line 72: title: language === 'zh' ? '关注 @OmniSocial 官方 X 账号' : language === 'ko' ? '@OmniSocial 공식 X 계정 팔로우' : 'Follow @OmniSocial Official X Account'
+  Line 78: creatorType: language === 'zh' ? '平台项目方' : language === 'ko' ? '플랫폼 프로젝트' : 'Platform Projects',
+  Line 79: title: language === 'zh' ? '加入 CodeVibe Telegram 开发者社区' : language === 'ko' ? 'CodeVibe 텔레그램 개발자 커뮤니티 가입' : 'Join CodeVibe Telegram Developer Community'
+  Line 85: creatorType: language === 'zh' ? 'TON 外部项目' : language === 'ko' ? 'TON 외부 프로젝트' : 'TON External Projects',
+  Line 86: title: language === 'zh' ? '转发 TON Dogs NFT 官宣推文' : language === 'ko' ? 'TON Dogs NFT 공식 발표 트윗 리트윗' : 'Retweet TON Dogs NFT Official Announcement Tweet'
+  Line 92: creatorType: language === 'zh' ? 'BSC 外部项目' : language === 'ko' ? 'BSC 외부 프로젝트' : 'BSC External Projects',
+  Line 93: title: language === 'zh' ? '加入 MetaGame Discord 并验证' : language === 'ko' ? 'MetaGame 디스코드 채널 가입 및 인증' : 'Join MetaGame Discord & Verify'
+  Line 99: creatorType: language === 'zh' ? '平台项目方' : language === 'ko' ? '플랫폼 프로젝트' : 'Platform Projects',
+  Line 100: title: language === 'zh' ? 'Spark TrendBot 项目 ≥ 10 TON' : language === 'ko' ? 'TrendBot 프로젝트에 10 TON 이상 Spark 기부' : 'Spark TrendBot Project ≥ 10 TON'
+  Line 105: ? (language === 'zh' ? '平台项目方' : language === 'ko' ? '플랫폼 프로젝트' : 'Platform Projects')
+  Line 106: : (language === 'zh' ? 'TON 外部项目' : language === 'ko' ? 'TON 외부 프로젝트' : 'TON External Projects');
+  Line 215: setSubmitError(t('bounty.errSubmitFailed', { msg: data.error || (language === 'zh' ? '请检查是否已完成或重复提交。' : language === 'ko' ? '완료 여부 또는 중복 제출을 확인하세요.' : 'please check if completed or duplicate.') }));
+  Line 218: setSubmitError(t('bounty.errSubmitFailed', { msg: language === 'zh' ? '验证超时或网络错误，请稍后重试。' : language === 'ko' ? '검증 시간 초과 또는 네트워크 오류가 발생했습니다. 나중에 다시 시도하세요.' : 'verification timeout or network error, please try again later.' }));
+  Line 379: if (tier === 0) return <span className="px-1.5 py-0.5 bg-[#635BFF]/20 text-[#635BFF] rounded text-[9px] font-bold">⭐ {language === 'zh' ? '平台' : language === 'ko' ? '플랫폼' : 'Platform'}</span>;
+  Line 381: return <span className="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-[9px] font-bold">⭐⭐⭐ {selectedTask?.chain || (language === 'zh' ? '外部' : language === 'ko' ? '외부' : 'External')}</span>;
+  Line 591: ? (language === 'zh' ? 'TON 外部项目 · 质押 10 万 VC' : language === 'ko' ? 'TON 외부 프로젝트 · 10만 VC 스테이킹' : 'TON External Project · Stake 100k VC')
+  Line 592: : (language === 'zh' ? `${selectedTask.chain || '外部'} 链项目 · 质押 50 万 VC` : language === 'ko' ? `${selectedTask.chain || '외부'} 체인 프로젝트 · 50만 VC 스테이킹` : `${selectedTask.chain || 'External'} Chain Project · Stake 500k VC`)}
+FILE: vc/src/pages/CopilotPage.tsx (54 matches)
+  Line 255: mode: language === 'zh' ? "Staked 开发者保底" : language === 'ko' ? "Staked 개발자 보증" : "Staked Dev Collateral",
+  Line 256: desc: language === 'zh' ? "社交分发自运行网红智能体" : language === 'ko' ? "소셜 배포 자율 실행 인플루언서 에이전트" : "Social distribution autonomous influencer agent",
+  Line 258: codeDensity: language === 'zh' ? "94% FunC 覆盖率，通过静态 AST 控制流验证" : language === 'ko' ? "94% FunC 커버리지, 정적 AST 제어 흐름 검증 통과" : "94% FunC coverage, passed static AST control flow verification",
+  Line 259: socialSignal: language === 'zh' ? "推特真实转评比 > 82%，自主响应密度良好" : language === 'ko' ? "트위터 실제 리트윗/댓글 비율 > 82%, 자율 응답 밀도 양호" : "Twitter genuine retweet/comment ratio > 82%, good autonomous response density",
+  Line 260: chainLiquidity: language === 'zh' ? "首期流动金储备由 10,000 $VC 质押保底 6 个月" : language === 'ko' ? "초기 유동성 예치금 10,000 $VC로 6개월간 보증" : "Initial liquidity collateralized by 10,050 $VC for 6 months",
+  Line 262: assessment: language === 'zh' ? "【强推】核心业务具有成熟的分配共建模型，开发组已质押保底，评分超过阈值，系统自动执行共建。" : language === 'ko' ? "【강력 추천】핵심 비즈니스가 성숙한 공동 구축 모델을 갖추고 있으며, 개발팀이 예치금을 보증했고 점수가 임계값을 초과하여 시스템이 자동으로 공동 구축을 실행합니다." : "[Strong Buy] The core business has a mature co-build model. The dev team has staked collateral. Since the score exceeds the threshold, the system automatically executes the co-build."
+  Line 270: mode: language === 'zh' ? "Staked 开发者保底" : language === 'ko' ? "Staked 개발자 보증" : "Staked Dev Collateral",
+  Line 271: desc: language === 'zh' ? "自动化 FunC 代码静态审计 Agent" : language === 'ko' ? "자동화된 FunC 코드 정적 감사 에이전트" : "Automated FunC code static audit Agent",
+  Line 273: codeDensity: language === 'zh' ? "静态规则库丰富，合约静态仿真测试完成度极高" : language === 'ko' ? "풍부한 정적 규칙 라이브러리, 계약 정적 시뮬레이션 테스트 완료도 매우 높음" : "Rich static rule library, high contract static simulation test completion rate",
+  Line 274: socialSignal: language === 'zh' ? "社群核心极客留存率 76%，专业口碑优秀" : language === 'ko' ? "커뮤니티 핵심 긱(Geek) 유지율 76%, 우수한 전문 평판" : "Community core geek retention rate 76%, excellent professional reputation",
+  Line 275: chainLiquidity: language === 'zh' ? "质押已就绪，里程碑由 3 个独立多签卫士节点核数" : language === 'ko' ? "예치 완료, 마일스톤은 3개의 독립적인 다중서명 수호자 노드에 의해 검증됨" : "Staking ready, milestones audited by 3 independent multisig guardian nodes",
+  Line 277: assessment: language === 'zh' ? "【推荐】需求硬核，符合 Staked 自锁仓保障，评分达标，系统自动执行建仓。" : language === 'ko' ? "【추천】필수적인 요구 사항이며 Staked 자가 잠금 보증 모델을 준수하고 점수가 기준을 충족하여 시스템이 자동 매수를 실행합니다." : "[Recommend] Hardcore demand, complies with Staked lockup assurance model. Score is up to standard, system automatically executes positioning."
+  Line 285: mode: language === 'zh' ? "Unstaked 自由退还模式" : language === 'ko' ? "Unstaked 자유 반환 모드" : "Unstaked Free Refund Mode",
+  Line 286: desc: language === 'zh' ? "一键快速发币高频抢跑土狗机器人" : language === 'ko' ? "클릭 한 번으로 빠른 토큰 발행 및 고주파 스나이핑 봇" : "One-click rapid token launch and high-frequency frontrunning bot",
+  Line 288: codeDensity: language === 'zh' ? "包含大量闭源外部 API 调用，具有未定义溢出风险" : language === 'ko' ? "많은 비공개 소스 외부 API 호출 포함, 정의되지 않은 오버플로 위험 있음" : "Contains many closed-source external API calls, with undefined overflow risks",
+  Line 289: socialSignal: language === 'zh' ? "社交账号存在明显刷粉 botting 痕迹，互动极假" : language === 'ko' ? "소셜 계정에 봇 사용 흔적이 뚜렷하며 상호작용이 매우 비정상적임" : "Social accounts show clear botting traces, interaction is highly artificial",
+  Line 290: chainLiquidity: language === 'zh' ? "无任何 $VC 质押押金，平台手续费 15%，退回无强制约束" : language === 'ko' ? "예치된 VC 예치금이 없으며 플랫폼 수수료는 15%이고 반환에 대한 강제적 제약이 없음" : "No VC deposit staked, platform fee 15%, refund has no binding constraints",
+  Line 292: assessment: language === 'zh' ? "【忽略】风险评级为 C，且属于 Unstaked 无锁仓保障模型，未达到最低 85 评分指标，Copilot 策略强制跳过防止回撤。" : language === 'ko' ? "【무시】리스크 등급이 C이며 Unstaked 잠금 보증이 없는 모델입니다. 최소 85점 기준에 미달하여 자산 보호를 위해 코파일럿 전략이 강제로 건너뜁니다." : "[Ignore] Risk rating is C and belongs to the Unstaked no lockup assurance model. Fails to meet the minimum 85 score threshold; Copilot strategy skips to prevent drawdown."
+  Line 300: action: language === 'zh' ? "二级 Launchpad 自动兑购完成" : language === 'ko' ? "2차 Launchpad 자동 매수 완료" : "Secondary Launchpad Auto-Purchase Completed",
+  Line 301: detail: language === 'zh' ? "自动检测 $TBP 已上市，划转 120 $VC 成功，自动获得 8,000 $TBP 分配到资产账户。" : language === 'ko' ? "$TBP 상장 자동 감지, 120 $VC 이체 성공, 8,000 $TBP가 자산 계정으로 자동 배분됨." : "Auto-detected $TBP listing, transferred 120 $VC successfully, automatically received 8,000 $TBP allocated to the asset account."
+  Line 305: action: language === 'zh' ? "自动触发 Spark Round 共建" : language === 'ko' ? "자동 Spark Round 공동 구축 트리거" : "Auto-Triggered Spark Round Co-Build",
+  Line 306: detail: language === 'zh' ? "判定 OmniSocial ($OSA) 评分 92 &ge; 85 分，且属于 AAA 级 Staked 模式。自动签名并划扣质押共建 500 $VC。" : language === 'ko' ? "OmniSocial ($OSA) 점수 92 >= 85점이며 AAA 등급 Staked 모드 판정. 자동 서명 및 공동 구축용 500 $VC 차감." : "Determined OmniSocial ($OSA) score 92 >= 85 and belongs to AAA-grade Staked mode. Auto-signed and deducted 500 $VC for co-build."
+  Line 310: action: language === 'zh' ? "扫描到新项目：PumpFun Agent Mock" : language === 'ko' ? "새 프로젝트 감지: PumpFun Agent Mock" : "Scanned New Project: PumpFun Agent Mock",
+  Line 311: detail: language === 'zh' ? "项目估值打分为 58 (C 级)。低于策略设置的评分 85 门槛，自动屏蔽，跳过该共建。" : language === 'ko' ? "프로젝트 가치 평가 점수 58점 (C 등급). 전략 설정된 85점 하한 미만으로 자동 필터링 및 공동 구축 건너뜀." : "Project valuation score is 58 (C grade). Below the strategy threshold of 85, automatically filtered and skipped."
+  Line 315: action: language === 'zh' ? "分配提取与自动共建" : language === 'ko' ? "배분금 수령 및 자동 공동 구축" : "Allocation Claim & Auto Co-Build",
+  Line 316: detail: language === 'zh' ? "自动查询已结付分配表现: +4.21 TON。已按照 80:20 策略，其中 20% 自动注入 Launchpad AMM 共建池。" : language === 'ko' ? "지급된 배분 실적 자동 조회: +4.21 TON. 80:20 전략에 따라 20%는 Launchpad AMM 공동 구축 풀에 자동으로 주입됨." : "Auto-queried settled distribution performance: +4.21 TON. Per 80:20 strategy, 20% is automatically injected into the Launchpad AMM pool."
+  Line 335: action: l.action === 'SPARK' ? (language === 'zh' ? '自动触发 Spark Round 共建' : language === 'ko' ? '자동 Spark Round 공동 구축 트리거' : 'Auto-Triggered Spark Round Co-Build') :
+  Line 336: l.action === 'VOTE' ? (language === 'zh' ? '自动投票决策' : language === 'ko' ? '자동 투표 의사 결정' : 'Auto Voting Decision') :
+  Line 337: l.action === 'EXIT' ? (language === 'zh' ? '自动退出保护触发' : language === 'ko' ? '자동 종료 보호 트리거' : 'Auto Exit Protection Triggered') :
+  Line 338: l.action === 'TRANSFER' ? (language === 'zh' ? '自动划拨交易完成' : language === 'ko' ? '자동 자산 이체 완료' : 'Auto Transfer Completed') : l.action,
+  Line 451: <span className="text-[#8B83FF] font-mono font-bold">&ge; {minScore} {language === 'zh' ? '分' : language === 'ko' ? '점' : 'pts'}</span>
+  Line 488: <option value="200">200 $VC ({language === 'zh' ? '稳健探索' : language === 'ko' ? '보수적 탐색' : 'Conservative'})</option>
+  Line 489: <option value="500">500 $VC ({language === 'zh' ? '推荐标准比例' : language === 'ko' ? '권장 표준 비율' : 'Recommended Standard'})</option>
+  Line 490: <option value="1000">1000 $VC ({language === 'zh' ? '深度参与' : language === 'ko' ? '깊은参与' : 'Deep Participation'})</option>
+  Line 565: <span className="text-[10px] text-gray-550">{language === 'zh' ? '大模型打分:' : language === 'ko' ? 'LLM 점수:' : 'LLM Score:'}</span>
+  Line 568: {proj.riskLevel} {language === 'zh' ? '级风险' : language === 'ko' ? '등급 리스크' : 'Risk Grade'}
+  Line 576: <span className="text-[9px] text-gray-500 block">{language === 'zh' ? '代码完整性:' : language === 'ko' ? '코드 무결성:' : 'Code Integrity:'}</span>
+  Line 580: <span className="text-[9px] text-gray-550 block">{language === 'zh' ? '社交信号检测:' : language === 'ko' ? '소셜 신호 감지:' : 'Social Signal Detection:'}</span>
+  Line 584: <span className="text-[9px] text-gray-550 block">{language === 'zh' ? '开发者保底质押:' : language === 'ko' ? '개발자 최소 예치:' : 'Dev Staked Collateral:'}</span>
+  Line 596: ? (language === 'zh' ? '● COMPLIANT (完全满足策略，自动建仓)' : language === 'ko' ? '● COMPLIANT (전략 만족, 자동 포지션 진입)' : '● COMPLIANT (Meets Strategy, Auto Position)')
+  Line 597: : (language === 'zh' ? '○ FILTERED OUT (不满足策略设定，已排除)' : language === 'ko' ? '○ FILTERED OUT (전략 미충족, 필터링됨)' : '○ FILTERED OUT (Filtered Out)')
+  Line 611: <span className="text-xs font-bold text-white">{language === 'zh' ? 'DeepSeek AI 实时分析' : language === 'ko' ? 'DeepSeek AI 실시간 분석' : 'DeepSeek AI Real-time Analysis'}</span>
+  Line 618: {aiLoading ? (language === 'zh' ? '分析中...' : language === 'ko' ? '분석 중...' : 'Analyzing...') : (language === 'zh' ? '分析首个项目' : language === 'ko' ? '첫 프로젝트 분석' : 'Analyze First Project')}
+  Line 628: }`}>{language === 'zh' ? '评分' : language === 'ko' ? '점수' : 'Score'} {aiResult.score}/100</span>
+  Line 633: <span className="text-emerald-400 font-bold">✅ {language === 'zh' ? '优势: ' : language === 'ko' ? '장점: ' : 'Strengths: '} </span>
+  Line 639: <span className="text-red-400 font-bold">⚠️ {language === 'zh' ? '风险: ' : language === 'ko' ? '리스크: ' : 'Risks: '} </span>
+  Line 707: <li><strong>高维套利抢先交易：</strong> 仅依据 Telegram 事件流或社群高频推文进行盲目套利尝试。</li>
+  Line 708: <li><strong>高代码暴露：</strong> 缺乏前置静态控制流安全校验，容易触发溢出或重入漏洞。</li>
+  Line 709: <li><strong>零保障退出：</strong> 在代币解锁或流动性解限周期中，缺乏多签保护与退出归还保障。</li>
+  Line 710: <li><strong>无再分配路径：</strong> 代币单向买卖损耗极高，无法在生态中自动执行分配复利轮动。</li>
+  Line 735: <li><strong>静态程序安全校验：</strong> 预扫描 FunC/Tact 代码文件，自主产生全维度控制流评分报告。</li>
+  Line 736: <li><strong>足额质押筛选：</strong> 智能评估开发者质押保底，自主对齐风险预算，自动触发划扣决策。</li>
+  Line 737: <li><strong>监督节点共识释放：</strong> 绑定链上分配审计网关，仅在满足节点合规释放阈值时安全释放资产。</li>
+  Line 738: <li><strong>智能复利轮动：</strong> 支持自动化多签分配分流，提取分配自动注入二代 Launchpad 流动池增收。</li>
+FILE: vc/src/pages/CreateLaunchPage.tsx (34 matches)
+  Line 40: const [disputeRules, setDisputeRules] = useState('未按时交付全额退款');
+  Line 44: const [category, setCategory] = useState<'数据分析' | '交易工具' | '社交' | '监控' | '基础设施' | '创作工具' | 'DeFi'>('数据分析');
+  Line 62: label: language === 'zh' ? '小功能 / 版本更新' : language === 'ko' ? '기능 및 버전 업데이트' : 'Features & Version Update',
+  Line 63: desc: language === 'zh' ? '用 Stars 预购、VC 积分或收入分成凭证。不创建新代币，适合插件、功能模块。' : language === 'ko' ? 'Stars 사전 구매, VC 포인트 또는 수익 공유 전표 사용. 신규 토큰 생성 없음, 플러그인 및 모듈에 적합.' : 'Pre-order with Stars, VC points, or revenue share credits. No new tokens created, suitable for plugins or modules.',
+  Line 69: label: language === 'zh' ? '项目方生态母币' : language === 'ko' ? '프로젝트 생태계 메인 토큰' : 'Ecosystem Main Token',
+  Line 70: desc: language === 'zh' ? '建立工作室长期品牌。母币代表生态权益，出让 20%-30% 给 Spark 用户。' : language === 'ko' ? '스튜디오의 장기 브랜드 구축. 메인 토큰은 생태계 권리를 나타내며 Spark 사용자에게 20%-30% 양도.' : 'Establish studio long-term brand. Main token represents ecosystem rights, offering 20%-30% to Spark users.',
+  Line 76: label: language === 'zh' ? '独立产品子币' : language === 'ko' ? '독립 제품 서브 토큰' : 'Product Sub-token',
+  Line 77: desc: language === 'zh' ? '独立 AI Agent / SaaS 产品发币。出让 30%-40% 给 Spark 用户。可绑定母币生态。' : language === 'ko' ? '독립된 AI 에이전트 / SaaS 제품 토큰 발행. Spark 사용자에게 30%-40% 양도, 메인 토큰 생태계 연동 가능.' : 'Independent AI Agent / SaaS product token launch. Offering 30%-40% to Spark users, can bind to parent token ecosystem.',
+  Line 84: { value: 'preorder', label: language === 'zh' ? '功能预购 (Pre-order)' : language === 'ko' ? '기능 사전 구매 (Pre-order)' : 'Feature Pre-order' },
+  Line 85: { value: 'revenue_share', label: language === 'zh' ? '收入分成凭证 (Revenue Share)' : language === 'ko' ? '수익 공유 증표 (Revenue Share)' : 'Revenue Share Voucher' },
+  Line 86: { value: 'usage_credits', label: language === 'zh' ? '使用额度积分 (Usage Credits)' : language === 'ko' ? '사용 한도 포인트 (Usage Credits)' : 'Usage Credits' },
+  Line 87: { value: 'early_access', label: language === 'zh' ? '抢先体验权 (Early Access)' : language === 'ko' ? '사전 체험 권한 (Early Access)' : 'Early Access' },
+  Line 88: { value: 'other', label: language === 'zh' ? '其他权益' : language === 'ko' ? '기타 권리 혜택' : 'Other Perks' },
+  Line 92: { value: '未按时交付全额退款', label: language === 'zh' ? '未按时交付全额退款' : language === 'ko' ? '미인도 시 전액 환불' : 'Full refund if not delivered on time' },
+  Line 93: { value: '交付后 7 天内可申诉退款', label: language === 'zh' ? '交付后 7 天内可申诉退款' : language === 'ko' ? '인도 후 7일 이내 환불 신청 가능' : 'Appeals for refund allowed within 7 days post-delivery' },
+  Line 94: { value: '交付后不可退款', label: language === 'zh' ? '交付后不可退款' : language === 'ko' ? '인도 후 환불 불가' : 'Non-refundable after delivery' },
+  Line 113: if (!projectName.trim()) { alert(language === 'zh' ? '请输入项目名称' : language === 'ko' ? '프로젝트 이름을 입력하세요.' : 'Please enter project name'); return; }
+  Line 114: if (!isNoToken && !tokenSymbol.trim()) { alert(language === 'zh' ? '请输入代币符号' : language === 'ko' ? '토큰 심볼을 입력하세요.' : 'Please enter token symbol'); return; }
+  Line 115: if (!description.trim()) { alert(language === 'zh' ? '请输入一句话描述' : language === 'ko' ? '한 줄 설명을 입력하세요.' : 'Please enter description'); return; }
+  Line 116: if (!goalAmount || isNaN(Number(goalAmount)) || Number(goalAmount) <= 0) { alert(language === 'zh' ? '请输入有效的筹资目标金额' : language === 'ko' ? '유효한 목표 모집 금액을 입력하세요.' : 'Please enter a valid funding target amount'); return; }
+  Line 118: if (!deliveryDate) { alert(language === 'zh' ? '请输入预计交付日期' : language === 'ko' ? '예상 인도일을 입력하세요.' : 'Please enter expected delivery date'); return; }
+  Line 119: if (!deliverableDesc.trim()) { alert(language === 'zh' ? '请输入交付物描述' : language === 'ko' ? '인도물 설명을 입력하세요.' : 'Please enter deliverable description'); return; }
+  Line 180: title: `${projectName}${isNoToken ? '' : ` ($${tokenSymbol.toUpperCase()})`} ${language === 'zh' ? '星火共建计划' : language === 'ko' ? 'Spark 공동 구축 계획' : 'Spark Co-Build Plan'}`,
+  Line 210: setApiError(data.error || (language === 'zh' ? '创建失败，请重试' : language === 'ko' ? '생성에 실패했습니다. 다시 시도해 주세요.' : 'Creation failed, please try again'));
+  Line 213: setApiError(err.message || (language === 'zh' ? '网络连接超时' : language === 'ko' ? '네트워크 연결이 타임아웃되었습니다.' : 'Network connection timeout'));
+  Line 256: {language === 'zh' ? `编号: ${createdProject?.projectCode} · 目标: ${goalAmount} TON · 类型: ${selectedType?.label}` : language === 'ko' ? `번호: ${createdProject?.projectCode} · 목표: ${goalAmount} TON · 유형: ${selectedType?.label}` : `Code: ${createdProject?.projectCode} · Target: ${goalAmount} TON · Type: ${selectedType?.label}`}
+  Line 435: <option value="数据分析">{language === 'zh' ? '数据分析' : language === 'ko' ? '데이터 분석' : 'Data Analysis'}</option>
+  Line 436: <option value="交易工具">{language === 'zh' ? '交易工具' : language === 'ko' ? '거래 도구' : 'Trading Tools'}</option>
+  Line 437: <option value="社交">{language === 'zh' ? '社交' : language === 'ko' ? '소셜' : 'Social'}</option>
+  Line 438: <option value="监控">{language === 'zh' ? '监控' : language === 'ko' ? '모니터링' : 'Monitoring'}</option>
+  Line 439: <option value="基础设施">{language === 'zh' ? '基础设施' : language === 'ko' ? '인프라' : 'Infrastructure'}</option>
+  Line 440: <option value="创作工具">{language === 'zh' ? '创作工具' : language === 'ko' ? '창작 도구' : 'Creation Tools'}</option>
+  Line 499: {isNoToken ? '' : `$${tokenSymbol.toUpperCase()} · `}{selectedType?.label} · {goalAmount} TON {language === 'zh' ? '目标' : language === 'ko' ? '목표' : 'Target'}
+  Line 563: <Sparkles size={12} /> {submitting ? (language === 'zh' ? '提交中...' : language === 'ko' ? '제출 중...' : 'Submitting...') : t('create.confirmBtn')}
+FILE: vc/src/pages/DevHubPage.tsx (19 matches)
+  Line 102: { name: 'Gemini 2.5 Flash', rate: '0.0001 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+  Line 103: { name: 'DeepSeek V3 (Chat)', rate: '0.00015 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+  Line 104: { name: 'Claude 3.5 Sonnet', rate: '0.0012 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' },
+  Line 105: { name: 'GPT-4o API', rate: '0.0008 TON / 1K Tokens', status: language === 'zh' ? '流畅' : language === 'ko' ? '원활' : 'Smooth' }
+  Line 111: title: language === 'zh' ? '多链套利网格 Bot' : language === 'ko' ? '멀티체인 차익거래 그리드 Bot' : 'Multi-chain Arbitrage Grid Bot',
+  Line 112: desc: language === 'zh' ? '内置 AMM 价格滑点追踪，捕获跨 Dex 价格异动。' : language === 'ko' ? 'AMM 가격 슬리피지 모니터링 기능이 내장되어 Dex 간 가격 변동을 포착합니다.' : 'Built-in AMM slippage tracking to capture cross-DEX price anomalies.',
+  Line 113: type: language === 'zh' ? '交易工具' : language === 'ko' ? '거래 도구' : 'Trading Tool'
+  Line 116: title: language === 'zh' ? '全自主推文生成器' : language === 'ko' ? '완전 자율 트윗 생성기' : 'Autonomous Tweet Generator',
+  Line 117: desc: language === 'zh' ? '结合 NLP 模型，自驱动发帖排线并接入 Web3 赞助。' : language === 'ko' ? 'NLP 모델을 결합하여 자율적으로 트윗을 발행하고 Web3 후원을 연동합니다.' : 'NLP-driven auto-tweeter with Web3 sponsorship integration.',
+  Line 118: type: language === 'zh' ? '社交创作' : language === 'ko' ? '소셜 창작' : 'Social Creation'
+  Line 121: title: language === 'zh' ? '合约事件高频警报' : language === 'ko' ? '고주파 계약 이벤트 알림' : 'High-Frequency Contract Event Alert',
+  Line 122: desc: language === 'zh' ? '多点备份追踪重放和流溢出漏洞静态预设。' : language === 'ko' ? '다중 포인트 백업 추적 및 플로우 오버플로우 취약점 정적 사전 설정.' : 'Multi-point backup tracking and flow overflow vulnerability presets.',
+  Line 123: type: language === 'zh' ? '网络监控' : language === 'ko' ? '네트워크 모니터링' : 'Network Monitoring'
+  Line 197: name: language === 'zh' ? '防重放攻击 (Replay Attack Prevention)' : language === 'ko' ? '재전송 공격 방지 (Replay Attack Prevention)' : 'Replay Attack Prevention',
+  Line 199: desc: language === 'zh' ? '使用了序列 nonce 与 msg seq_no 签名，防止重签名广播。' : language === 'ko' ? '순차 nonce와 msg seq_no 서명을 사용하여 재서명 브로드캐스트를 방지합니다.' : 'Uses sequence nonce and msg seq_no signatures to prevent signature replay.'
+  Line 202: name: language === 'zh' ? '气体滑点溢出 (Gas Slippage Check)' : language === 'ko' ? '가스 슬리피지 검사 (Gas Slippage Check)' : 'Gas Slippage Check',
+  Line 204: desc: language === 'zh' ? '循环结构深度低于 4，符合 FunC 单交易消费池上限。' : language === 'ko' ? '루프 구조 깊이가 4 미만으로, FunC 단일 트랜잭션 제한을 충족합니다.' : 'Loop depth is under 4, satisfying FunC single-transaction limit.'
+  Line 207: name: language === 'zh' ? '冷金库分流溢出极值 (State Mutation Boundary)' : language === 'ko' ? '콜드 발트 분할 경계 검사 (State Mutation Boundary)' : 'State Mutation Boundary',
+  Line 209: desc: language === 'zh' ? '存储单元 Cell 开关完全锁合，对特权函数调用了 (throw_unless) 校验。' : language === 'ko' ? '스토리지 셀 스위치가 완전히 고정되었으며, 특권 함수에 대해 (throw_unless) 검증이 적용되었습니다.' : 'Storage cell switches are completely locked; privileged functions verified with (throw_unless).'
+FILE: vc/src/pages/FeedPage.tsx (8 matches)
+  Line 33: case '全部': return t('launch.categoryAll');
+  Line 34: case '数据分析': return t('launch.categoryData');
+  Line 35: case '交易工具': return t('launch.categoryTrading');
+  Line 36: case '社交': return t('launch.categorySocial');
+  Line 37: case '监控': return t('launch.categoryMonitor');
+  Line 38: case '基础设施': return t('launch.categoryInfra');
+  Line 39: case '创作工具': return t('launch.categoryCreation');
+  Line 155: {translateCategory(activeProject.category) || translateCategory('数据分析')}
+FILE: vc/src/pages/FundPage.tsx (1 matches)
+  Line 569: {item.returnsToken > 0 ? `+${(item.returnsToken).toLocaleString()} $${item.returnedTokenTicker}` : (language === 'zh' ? '筹备锁定中' : language === 'ko' ? '준비 락업 중' : 'Preparing Lockup')}
+FILE: vc/src/pages/InvitePage.tsx (18 matches)
+  Line 61: { level: 1, requiredCount: 1, title: t('invite.creatorRules').includes('10') ? "解锁 Dev Hub 基础审计套件" : "Unlock Dev Hub Basic Auditing Suite", description: t('invite.creatorRules').includes('10') ? "一键分析智能合约 FunC 代码的安全缺陷与静态漏洞特征库。" : "One-click analysis of smart contract FunC code safety issues.", icon: Shield, reward: t('invite.creatorRules').includes('10') ? "免费使用 Dev Hub 静态检测" : "Free static code analysis on Dev Hub" },
+  Line 62: { level: 2, requiredCount: 3, title: t('invite.creatorRules').includes('10') ? "算力租赁 15% 永续折扣" : "15% Lifetime Discount on Compute", description: t('invite.creatorRules').includes('10') ? "在 Dev Hub 租用云端 GPU 物理节点算力账单时获得 85 折自动扣减特权。" : "Automatically get a 15% discount when leasing cloud GPU nodes on Dev Hub.", icon: Zap, reward: t('invite.creatorRules').includes('10') ? "算力账单 15% 自动豁免" : "15% automatically waived on compute bills" },
+  Line 63: { level: 3, requiredCount: 5, title: t('invite.creatorRules').includes('10') ? "Launchpad 创世纪早鸟通道" : "Launchpad Genesis Early-Bird Access", description: t('invite.creatorRules').includes('10') ? "允许比公募支持者提前 3 小时接入新上线 Launchpad 的 AI 智能体份额兑购。" : "Access primary Launchpad token sales 3 hours before public backers.", icon: Sparkles, reward: t('invite.creatorRules').includes('10') ? "早鸟锁定 3 小时优先权" : "Early-bird 3-hour locking priority" }
+  Line 75: title: t('invite.creatorRules').includes('10') ? "解锁 Dev Hub 基础审计套件" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Unlock Dev Hub Basic Auditing Suite" : "Dev Hub 기초 감사 패키지 해제",
+  Line 76: description: t('invite.creatorRules').includes('10') ? "一键分析智能合约 FunC 代码的安全缺陷与静态漏洞特征库。" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "One-click analysis of smart contract FunC code safety issues." : "클릭 한 번으로 스마트 계약 FunC 코드의 보안 결함 및 정적 취약점 라이브러리를 분석합니다.",
+  Line 77: reward: t('invite.creatorRules').includes('10') ? "免费使用 Dev Hub 静态检测" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Free static code analysis on Dev Hub" : "Dev Hub 정적 테스트 무료 사용"
+  Line 81: title: t('invite.creatorRules').includes('10') ? "算力租赁 15% 永续折扣" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "15% Lifetime Discount on Compute" : "컴퓨팅 임대 15% 영구 할인",
+  Line 82: description: t('invite.creatorRules').includes('10') ? "在 Dev Hub 租用云端 GPU 物理节点算力账单时获得 85 折自动扣减特权。" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Automatically get a 15% discount when leasing cloud GPU nodes on Dev Hub." : "Dev Hub에서 클라우드 GPU 물리 노드 컴퓨팅 성능 임대 시 15% 자동 할인 혜택을 제공합니다.",
+  Line 83: reward: t('invite.creatorRules').includes('10') ? "算力账单 15% 自动豁免" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "15% automatically waived on compute bills" : "컴퓨팅 청구서 15% 자동 면제"
+  Line 88: title: t('invite.creatorRules').includes('10') ? "Launchpad 创世纪早鸟通道" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Launchpad Genesis Early-Bird Access" : "Launchpad 제네시스 얼리버드 채널",
+  Line 89: description: t('invite.creatorRules').includes('10') ? "允许比公募支持者提前 3 小时接入新上线 Launchpad 的 AI 智能体份额兑购。" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Access primary Launchpad token sales 3 hours before public backers." : "새로 출시된 Launchpad의 AI 에이전트 지분 구매에 일반 후원자보다 3시간 더 일찍 참여할 수 있습니다.",
+  Line 90: reward: t('invite.creatorRules').includes('10') ? "早鸟锁定 3 小时优先权" : t('invite.creatorRules').includes('10') === false && t('invite.connectWalletUnlock').includes('TON') ? "Early-bird 3-hour locking priority" : "얼리버드 3시간 우선권 잠금"
+  Line 137: <span className="text-[10px] font-mono text-gray-500 font-bold uppercase tracking-wider block">累计获得 $VC 裂变分配</span>
+  Line 176: onClick={() => shareToTelegram(inviteLink, '我正在参与 VibeCoder 星火共建。邀请你共同孵化顶尖 AI 智能体，一同瓜分生态平台代币与额外奖励！')}
+  Line 253: {t('invite.creatorRules').includes('10') ? `邀请 ${p.requiredCount} 人` : t('invite.connectWalletUnlock').includes('TON') ? `Invite ${p.requiredCount} ${p.requiredCount > 1 ? 'people' : 'person'}` : `${p.requiredCount}명 초대`}
+  Line 297: <h4 className="text-xs font-bold text-white mt-1">{proj ? proj.agentName : '未知项目'} · {t('invite.squadGroup')}</h4>
+  Line 316: shareToTelegram(link, `我正在为项目发起 Squad 组队集火！还差几人点燃早鸟奖励。独立 Spark 资金，安全可退，达标全队白名单！`);
+  Line 349: <h4 className="text-xs font-bold text-white mt-1">{project ? project.agentName : '未知智能体'} {t('invite.teamGroup')} #{team.id.slice(-4)}</h4>
+FILE: vc/src/pages/LaunchDetail.tsx (281 matches)
+  Line 37: const [editCategory, setEditCategory] = useState<any>('数据分析');
+  Line 47: setEditCategory(project.category || '数据分析');
+  Line 196: category: p.category || '数据分析',
+  Line 239: alert("请输入交付物 URL！");
+  Line 244: alert("请先登录或连接钱包！");
+  Line 260: alert("里程碑交付物已成功提交！系统 AI 审查已通过，已启动 24 小时挑战期。");
+  Line 265: alert("提交失败: " + data.error);
+  Line 268: alert("提交出错: " + err.message);
+  Line 277: alert("请输入挑战理由！");
+  Line 282: alert("请先登录或连接钱包！");
+  Line 298: alert("已发起争议挑战！当前里程碑状态已变更为 DISPUTED，已提交 DAO 仲裁投票提案。");
+  Line 303: alert("挑战失败: " + data.error);
+  Line 306: alert("挑战出错: " + err.message);
+  Line 316: alert("请先登录或连接钱包！");
+  Line 330: alert("里程碑已解锁释放！等值资金已划拨拨付给项目开发者钱包。");
+  Line 333: alert("解锁失败: " + data.error);
+  Line 336: alert("解锁出错: " + err.message);
+  Line 374: alert("只有该项目的星火支持者（Backer）才能参与治理投票！");
+  Line 380: alert("您的投票权重为 0，无法参与投票。");
+  Line 396: setWithdrawError("仅限项目创建者发起提款提案。");
+  Line 402: setWithdrawError("请输入有效的提款金额！");
+  Line 414: setWithdrawError(`提款金额 (${amount} TON) 超出了当前治理锁定的可用余额 (${remainingGovFunds.toFixed(2)} TON)。`);
+  Line 419: setWithdrawError("请说明提款的具体用途（服务器扩容、代码优化等）！");
+  Line 436: setOpsError("仅限项目创建者发起运营代币申请。");
+  Line 442: setOpsError("请输入有效的预算百分比（0% ~ 10%）！");
+  Line 452: setOpsError(`申请失败：申请比例 (${percentage}%) 超出了运营代币池的可用额度 (${(10 - passedOpsPercentage).toFixed(2)}%)。`);
+  Line 457: setOpsError("请说明运营预算的具体用途！");
+  Line 473: alert("您未持有该项目的支持份额，无法申请退出。");
+  Line 477: if (!confirm("您确定要执行合规退出并销毁所持代币吗？此操作将立即赎回您相应比例的 TON 代币。")) {
+  Line 498: setExitMsg(`🎉 成功退款！已销毁 ${userTokens} $${project.agentTicker} 代币，赎回 ${refundableTON} TON 到您的钱包账户。`);
+  Line 538: setSwapErrText('请输入有效的数额（须大于 0）');
+  Line 548: setSwapErrText(`钱包 TON 余额不足，无法买入。当前可用: ${profile.balanceTON} TON。`);
+  Line 561: setSwapSuccessMsg(`Swap广播成功！消耗 ${val} TON，兑购到 ${boughtTokens} ${project.agentTicker}`);
+  Line 566: setSwapErrText(`可售出的 $${project.agentTicker} 余额不足。当前持有: ${tokenBalance}`);
+  Line 579: setSwapSuccessMsg(`Swap广播成功！卖出 ${val} ${project.agentTicker}，赎回 ${receivedTON} TON`);
+  Line 597: setErrorText('请输入有效的认缴金额（须大于 0 TON）');
+  Line 604: setErrorText(`认缴金额不能低于当前项目的起认额 ${project.minInvestment} TON`);
+  Line 608: setErrorText('团队拼团模式起认额不低于 5 TON。');
+  Line 613: setErrorText(`钱包 TON 余额不足。当前余额: ${profile.balanceTON} TON。您可以一键发放下方的新首投 15 TON 体验金！`);
+  Line 627: setErrorText('交易广播异常，请重试');
+  Line 739: <h2 className="text-lg font-black text-white">未找到项目实例</h2>
+  Line 741: 该代币或星火项目可能由于本地存储生命周期已被回收。
+  Line 747: 返回探索大厅
+  Line 796: { id: "tx-da2", action: "收取广告赞助", amount: "84.5 TON", from: "EQF1_sponsor_88", time: "2 小时前", status: "已确认" },
+  Line 797: { id: "tx-f1a", action: "高频博弈获利流", amount: "12.2 TON", from: "Ston.Fi Pool A", time: "5 小时前", status: "已确认" },
+  Line 798: { id: "tx-a09", action: "分配划拨", amount: "-198.0 TON", from: "OSA 分配多签账户", time: "1 天前", status: "已结算分配" },
+  Line 799: { id: "tx-bca", action: "DEX 推理调用版税", amount: "44.0 TON", from: "EQA2_api_caller", time: "1 天前", status: "已确认" }
+  Line 848: 🎉 您收到来自 <strong className="text-emerald-400 font-mono">{TONService.shortenAddress(refParam)}</strong> 的推荐！已在您的沙盒会话中激活 <strong>15 TON 首次共建体验金</strong>。
+  Line 859: <span className="text-[10px] font-mono text-amber-500 font-bold block uppercase tracking-wider">👥 拼单共建邀请 (GROUP SPARK INVITE)</span>
+  Line 861: 您的好友 <strong className="text-white font-mono">{invitedTeam.creatorName}</strong> 邀请您加入拼单战队共同支持星火！拼单进度: <strong className="text-white font-mono">{invitedTeam.currentAmount}/{invitedTeam.targetAmount} TON</strong>。
+  Line 876: 加入拼单小组
+  Line 882: 独自支持
+  Line 895: <span>返回项目探索Feed列表</span>
+  Line 918: 多签发布人: {project.creatorAddress}
+  Line 928: <span>官方网站</span>
+  Line 943: 链上验证：
+  Line 959: <span>编辑项目</span>
+  Line 979: Overview (项目介绍)
+  Line 987: Spark (星火/里程碑)
+  Line 995: Project Health (健康度)
+  Line 1004: Vesting (解锁)
+  Line 1013: Operations (运营)
+  Line 1022: Governance (治理/退出)
+  Line 1030: Proof (链上存证)
+  Line 1050: <span>智能体设计与架构阐述</span>
+  Line 1058: <span>🎁 支持者专属福利与额外权益 (Project Perks & Welfare)</span>
+  Line 1068: <span>开发团队与星火发起人背景 (Team & Creator Background)</span>
+  Line 1079: <span>🌐 项目社群撮合连接 (Community Matching Hub)</span>
+  Line 1082: 本平台仅作为星火筹建撮合通道，项目方已绑定外部官方社区。建议支持者与开发者在外部社群建立高频交流通道。
+  Line 1094: <span>加入项目官方 Telegram 群 / 外部频道</span>
+  Line 1098: 项目方暂未绑定 Telegram 社群链接。
+  Line 1110: <span className="text-[10.5px] font-bold text-gray-200 block">微信/其他社群群聊二维码</span>
+  Line 1112: 长按或微信扫码，进入该项目成员组建的外部星火沟通大群。
+  Line 1118: 项目方暂未上传交流群二维码。
+  Line 1127: <span>📢 项目最新官方通告 (Announcements)</span>
+  Line 1145: 暂无官方通告。项目方将在此同步最新的周报和研发报告。
+  Line 1155: ⌛ 里程碑链上交付圆环雷达 (Milestones Completion Radial Radar)
+  Line 1175: formatter={(value: any, name: string, props: any) => [`${value}% 已交付`, props.payload.name]}
+  Line 1213: <h4 className="text-xs font-bold text-gray-200">系统沙盒运行截图 / 模拟器演示</h4>
+  Line 1220: <span className="text-[10.5px] font-bold text-gray-200 block">AST 树自动化翻译模块</span>
+  Line 1221: <span className="text-[9px] text-gray-500">FunC V2 沙盒底层编译器就绪</span>
+  Line 1229: <span className="text-[10.5px] font-bold text-gray-200 block">AMM 联合曲线定价回测</span>
+  Line 1230: <span className="text-[9px] text-gray-500">滑点机制损耗低于百分之零点一</span>
+  Line 1236: {/* 智能体真实多签交割和共建账本 */}
+  Line 1241: <span>智能体多签共建账本 (Multi-Sig Co-building Ledger)</span>
+  Line 1251: <th className="p-3 pl-4">交易行动</th>
+  Line 1252: <th className="p-3">交割资产描述</th>
+  Line 1253: <th className="p-3">多签来源</th>
+  Line 1254: <th className="p-3">确认时间</th>
+  Line 1255: <th className="p-3 pr-4 text-center">预期分配表现及变动报告 (Tooltip)</th>
+  Line 1284: <span>分配: {dynamicROI}%</span>
+  Line 1291: <span className="font-semibold text-white uppercase tracking-wider text-[10px]">预计预期分配结算报表</span>
+  Line 1295: 该期交割对应合伙资产在当前自治算力表现与模拟累积利润评估下的实时对冲预期分配表现：
+  Line 1298: <span>预计预期分配表现:</span>
+  Line 1303: <span>智能体累积利润:</span>
+  Line 1307: <span>星火达成进度:</span>
+  Line 1312: <span>对应到手估算:</span>
+  Line 1334: <span>自治开发者团队成员构成和往期实绩</span>
+  Line 1337: {project.teamDesc || "VibeCoder 自治开发者联盟团队。该团队核心研发团队具备 5 年以上的链上高频开发经历，由数位区块链智能合约科学家共同创立并维护。已经过多签安全沙盒全链路校验。"}
+  Line 1351: 保障模式: {project.assuranceMode === 'staked' ? 'Creator Assurance (Staked)' : 'Unstaked (无保障)'}
+  Line 1356: ? '该项目开发者已向多签共建金库质押了约 10,000 $VC。在里程碑完成审计并通过之前，共建款将锁在冷托管合约中，由平台和支持者联合掌控，平台手续费仅扣除 5%。'
+  Line 1357: : '该项目采用 Unstaked 自由释放模式，平台手续费提档至 15%，无开发者预质押担保，请支持者注意合理控制资金比例。'}
+  Line 1363: <h3 className="text-xs font-bold text-white border-b border-[#21244E] pb-2">星火释放里程碑时间线 (Milestone Timeline)</h3>
+  Line 1377: let statusText = '锁定未解锁';
+  Line 1382: statusText = '已解锁并释放资金';
+  Line 1386: statusText = '已提交，AI 审核中';
+  Line 1390: statusText = isExpired ? '挑战期已过 (待解锁)' : 'AI 审查通过 (挑战期中)';
+  Line 1394: statusText = '遭到挑战争议，DAO 仲裁中';
+  Line 1416: 初始释放: {displayRatio}%
+  Line 1421: <p className="text-[10px] text-gray-400 mt-1">解锁前置说明: {ms.condition}</p>
+  Line 1435: <span className="text-gray-500">交付物:</span>
+  Line 1446: <span>挑战窗口截止: {new Date(ms.challengeExpiresAt).toLocaleString()} {isExpired ? '(已截止)' : ''}</span>
+  Line 1459: placeholder="输入 GitHub 仓库或交付物 URL (https://...)"
+  Line 1469: {milestoneActionLoading ? '提交中...' : '提交'}
+  Line 1475: 取消
+  Line 1486: 提交里程碑交付物
+  Line 1499: placeholder="请输入您挑战申诉的具体理由..."
+  Line 1510: {milestoneActionLoading ? '提交中...' : '提交挑战 (DAO仲裁)'}
+  Line 1516: 取消
+  Line 1528: 发起争议申诉挑战
+  Line 1542: <span>{milestoneActionLoading ? '正在划拨...' : '解锁并划拨款项'}</span>
+  Line 1560: 立即参与支持
+  Line 1577: <span>项目运营与健康看板</span>
+  Line 1581: ⚡ 当前阶段：Stage 2 中段
+  Line 1592: <div className="text-[9.5px] text-emerald-400 mt-1 font-bold">55% 阈值已达成 ✅</div>
+  Line 1596: <span className="text-lg font-black text-white block mt-1">已部署 · 已分配</span>
+  Line 1610: <div className="text-[9.5px] text-purple-400 mt-1 font-bold">治理合约托管中</div>
+  Line 1623: <span className="text-[9.5px] text-gray-400 font-bold block mb-2">{`30/${govRate}/${18}/${feeRate} 资金流向分布`}</span>
+  Line 1629: { name: '团队运营', value: 30 },
+  Line 1630: { name: '治理锁定', value: govRate },
+  Line 1631: { name: '项目方支配', value: 18 },
+  Line 1632: { name: '平台费', value: feeRate },
+  Line 1648: formatter={(value) => [`${value}%`, '占比']}
+  Line 1687: <div className="text-xs font-bold text-gray-200">团队运营 (30% Immediate)</div>
+  Line 1688: <div className="text-[9.5px] text-gray-500 mt-0.5">Launch 成功后立即释放，无需投票</div>
+  Line 1694: 已释放
+  Line 1704: <div className="text-xs font-bold text-gray-200">{`治理托管 (${govRate}% Gov Locked)`}</div>
+  Line 1705: <div className="text-[9.5px] text-gray-500 mt-0.5">锁定在治理合约，提款需平方根投票通过</div>
+  Line 1711: 托管锁定中
+  Line 1721: <div className="text-xs font-bold text-gray-200">项目方支配 (18% Project)</div>
+  Line 1722: <div className="text-[9.5px] text-gray-500 mt-0.5">建池子、运营、开发等自主支配</div>
+  Line 1727: <span className="text-[9px] text-[#10B981] font-bold block mt-0.5">可自由支配</span>
+  Line 1736: <div className="text-xs font-bold text-gray-200">{`平台费用 (${feeRate}% Fee)`}</div>
+  Line 1737: <div className="text-[9.5px] text-gray-500 mt-0.5">VibeCoder 平台服务费，进入 Fund 金库</div>
+  Line 1742: <span className="text-[9px] text-gray-400 font-bold block mt-0.5">已收取</span>
+  Line 1754: <span className="text-[9.5px] text-gray-500 block uppercase">解锁状态</span>
+  Line 1755: <span className="font-bold text-amber-500 mt-0.5 block">需投票 (代币未达150%)</span>
+  Line 1758: <span className="text-[9.5px] text-gray-500 block uppercase">活跃用户数</span>
+  Line 1759: <span className="font-bold text-white mt-0.5 block">+12% (本月环比增长)</span>
+  Line 1762: <span className="text-[9.5px] text-gray-500 block uppercase">代币市场价</span>
+  Line 1766: <span className="text-[9.5px] text-gray-500 block uppercase">已交付里程碑</span>
+  Line 1767: <span className="font-bold text-[#8B83FF] mt-0.5 block">●●●●○ 4/5 已完成</span>
+  Line 1782: <h4 className="text-xs font-black text-white uppercase tracking-wider pl-1">🗳 治理提案投票 (Pending Vote Proposals)</h4>
+  Line 1786: 当前没有待表决的提款提案。<br />
+  Line 1787: <span className="text-[10px] text-gray-600">当开发者为项目申请二次提款时，会在此处触发共建人投票通知。</span>
+  Line 1802: 待表决 提款申请
+  Line 1804: <span className="text-xs text-gray-400 font-bold">编号: {prop.id.toUpperCase()}</span>
+  Line 1807: 申请提现：<span className="text-[#8B83FF] font-black">{prop.amount} TON</span>
+  Line 1810: <strong className="text-gray-400">提款用途描述: </strong>{prop.purpose}
+  Line 1815: ⏰ 剩余时间: 48小时
+  Line 1823: <span>支持占比: {yesPercent.toFixed(0)}% (权重 {prop.yesWeight.toFixed(0)})</span>
+  Line 1824: <span>反对占比: {noPercent.toFixed(0)}% (权重 {prop.noWeight.toFixed(0)})</span>
+  Line 1831: 当前表决人数：{prop.votesCount?.yes || 0} 同意 / {prop.votesCount?.no || 0} 拒绝。投票权重根据持股代币数的平方根（Square Root）计算。
+  Line 1840: 您的持仓: <span className="text-emerald-400">{userTokens}</span> 代币 |
+  Line 1841: 您的平方根投票权重: <span className="text-indigo-400">{userVoteWeight}</span>
+  Line 1845: ⚠️ 您未持仓该代币，无法参与治理投票。
+  Line 1855: <span>您已完成对此提案的投票</span>
+  Line 1864: {voteSubmitting === prop.id ? '提交中...' : '✅ 同意'}
+  Line 1871: {voteSubmitting === prop.id ? '提交中...' : '❌ 拒绝'}
+  Line 1896: return <div className="text-gray-400 text-xs p-8 text-center">加载解锁数据...</div>;
+  Line 1907: <div className="text-[9px] text-gray-500 mt-1">轮次已解锁</div>
+  Line 1911: <div className="text-[9px] text-gray-500 mt-1">团队已解锁</div>
+  Line 1915: <div className="text-[9px] text-gray-500 mt-1">涨幅/轮</div>
+  Line 1919: <div className="text-[9px] text-gray-500 mt-1">维持时间</div>
+  Line 1925: <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">10 轮解锁进度</span>
+  Line 1939: 第 {round.round} 轮 · {round.locked}% 解锁
+  Line 1942: 触发价 ≥ {round.priceThreshold} TON
+  Line 1944: <span className="text-amber-400 ml-2">维持中: {round.matchedAt ? Math.ceil((Date.now() - new Date(round.matchedAt).getTime()) / 3600000) : '?'}h/24h</span>
+  Line 1950: {round.unlocked ? '✅ 已释放' : round.matched ? '⏳ 等待' : '🔒 锁仓中'}
+  Line 1977: <div className="text-[9px] text-gray-500 mt-1">运营代币池</div>
+  Line 1981: <div className="text-[9px] text-gray-500 mt-1">已使用</div>
+  Line 1985: <div className="text-[9px] text-gray-500 mt-1">申请记录</div>
+  Line 1991: <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3 font-mono">团队申请运营预算 (Apply for Operations Budget)</span>
+  Line 1996: placeholder="金额 (%)"
+  Line 2003: placeholder="用途说明 (描述需要申请的运营代币用途)"
+  Line 2009: 提交申请
+  Line 2016: <div className="text-[10px] text-emerald-450 mt-2 font-mono font-semibold">✅ 申请提交成功，请在历史列表中进行投票！</div>
+  Line 2022: <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block text-left font-mono">申请历史 (Application Log)</span>
+  Line 2025: 暂无运营预算申请记录。
+  Line 2043: {item.status === 'passed' ? '已通过' : item.status === 'rejected' ? '已拒绝' : '投票中'}
+  Line 2047: <div className="text-[9.5px] text-gray-500 font-mono mt-0.5">{item.amount}% 运营代币池</div>
+  Line 2062: 您的平方根投票权重: <span className="text-indigo-400 font-bold">{userVoteWeight}</span>
+  Line 2066: ⚠️ 未持仓该代币，无法参与治理投票
+  Line 2074: <span>已完成投票</span>
+  Line 2083: {voteSubmitting === item.id ? '提交中' : '同意'}
+  Line 2090: {voteSubmitting === item.id ? '提交中' : '拒绝'}
+  Line 2116: <span>项目治理历史提案公簿</span>
+  Line 2126: <p className="text-xs text-gray-555 py-6 text-center">暂无历史提案结算记录。</p>
+  Line 2148: {isPassed ? '✓ 提款通过' : '✕ 提案否决'}
+  Line 2150: <span className="text-gray-500 font-mono text-[10px]">编号: {prop.id.toUpperCase()}</span>
+  Line 2153: 资金提款：<span className="text-emerald-450 font-extrabold">+{prop.amount} TON</span>
+  Line 2156: <strong className="text-gray-500">申请用途：</strong>{prop.purpose}
+  Line 2161: <span className="text-gray-500 text-[10px] block">最终赞成权重占比</span>
+  Line 2182: <h4 className="text-sm font-bold text-white mt-0.5">项目创世提款提议发起端</h4>
+  Line 2187: 🎉 提款提案已发起成功！已记入治理公账，支持者现在可使用平方根投票对其进行公决。
+  Line 2200: <label className="text-[10px] text-gray-400 font-bold block uppercase">申请提现 TON 金额 (TON AMOUNT)</label>
+  Line 2203: placeholder="例如：200"
+  Line 2210: <label className="text-[10px] text-gray-400 font-bold block uppercase">当前可用治理锁定余额</label>
+  Line 2224: <label className="text-[10px] text-gray-400 font-bold block uppercase">提现具体开销用途说明 (WITHDRAWAL PURPOSE)</label>
+  Line 2226: placeholder="详细描述本次提款的用途，例如：租赁GPU算力、用于推特数据抓取模块研发、服务器流量扩容..."
+  Line 2237: 提交并公示提款提案
+  Line 2249: <span>合规退出与代币销毁机制</span>
+  Line 2259: <div className="text-xs font-bold text-white">退出窗口：剩余 42 天</div>
+  Line 2260: <div className="text-[9.5px] text-gray-500 font-sans mt-0.5">项目成功星火建币后 30 - 90 天为退出赎回窗口期</div>
+  Line 2265: <span className="text-[10px] text-gray-400 font-bold block uppercase">合规退出触发条件校验清单</span>
+  Line 2268: <span className="text-gray-300">① 连续 14 天项目没有任何代码/周报更新</span>
+  Line 2271: 已触发
+  Line 2275: <span className="text-gray-300">② 代币交易价连续 7 天跌破星火发行价的 50%</span>
+  Line 2278: 未触发
+  Line 2283: 💡 说明：满足以上任意一条校验状态即可执行硬退出。当前项目代码静默期已超限，退出判定生效。
+  Line 2298: <span className="text-[9.5px] text-gray-400 font-bold block uppercase">退出赎回结算测算</span>
+  Line 2314: <span className="text-gray-450">将被销毁的代币:</span>
+  Line 2318: <span className="text-gray-450">折合赎回系数:</span>
+  Line 2322: <span className="text-gray-400 font-bold">可退回的 TON 资金:</span>
+  Line 2345: {exitLoading ? '正在赎回资金并退款...' : '确认退出并销毁所持代币'}
+  Line 2351: 您未参与本项目的星火共建，故无份额可赎回。
+  Line 2373: <span>可验证自治审计</span>
+  Line 2378: <span>72小时代码试运行与决策加速沙盒</span>
+  Line 2381: 模拟智能体前 72 小时的链上运行状态、收入模式与自动分配划拨机制。默认折叠，可展开进行仿真加速。
+  Line 2389: {isSandboxCollapsed ? '展开沙箱模拟器 (Expand)' : '收起沙箱模拟器 (Collapse)'}
+  Line 2401: 72小时代码试运行与决策加速沙盒 (72H Sandbox Console)
+  Line 2405: <span>项目仿真编译与链上状态演进器</span>
+  Line 2425: <span>0H (编译/AST检查)</span>
+  Line 2426: <span>24H (沙盒侧链部署)</span>
+  Line 2427: <span>48H (自治算力审计)</span>
+  Line 2428: <span>72H (解锁自动派发)</span>
+  Line 2450: 🏃‍♂️ 加速 12 小时 (+12H)
+  Line 2458: 🚀 加速 24 小时 (+24H)
+  Line 2466: ⚡ 一键完成 72H 循环
+  Line 2473: 🔄 状态完全重置 (Reset)
+  Line 2483: <span>实时沙箱审计日志流 (EMULATED TELEMETRY LOGSTREAM)</span>
+  Line 2508: 💡 <strong>提示:</strong> 该测试沙盘基于 72H 自动星火共建规则，当您快进至特定小时后，系统将自动验证和拨付相对应的星火共建阶段。触发的里程碑可在 <strong>“Spark”</strong> 标签页实时核实，其产生的已分配份额记录也将在您的 <strong>“我的持仓控制面板” (Portfolio)</strong> 自动汇总。
+  Line 2518: <h3 className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#1A1F3F] pb-2">开发者与持有人共识论坛</h3>
+  Line 2523: <label className="text-[10px] text-gray-500 font-mono tracking-wider block">发表你的观点或提问</label>
+  Line 2525: placeholder={isConnected ? "请发表理性言论，向开发者提出技术或多签治理疑问..." : "请先连接钱包授权后参与发帖研讨..."}
+  Line 2538: <span>观点广播成功！正在全分布式节点中同步...</span>
+  Line 2541: <span className="text-[9.5px] text-gray-500">发言需要遵守 TON 测试沙盒协议。</span>
+  Line 2550: <span>发布评论</span>
+  Line 2558: <p className="text-gray-500 text-xs text-center py-6 block">目前尚无探讨观点，快连接钱包来抢占 SF 吧！</p>
+  Line 2616: <span>👑 创世星火支持者 (Genesis Backer)</span>
+  Line 2635: 首位星火人：<strong className="text-amber-400">虚位以待！</strong><br />
+  Line 2636: 参与支持该项目，成为首位创世星火支持者，即可在个人中心点亮专属勋章！
+  Line 2644: {/* Squad Co-building (组队集火) list */}
+  Line 2649: <span>👥 组队集火 Squad ({projectActiveSquads.length})</span>
+  Line 2655: {showCreateSquadForm ? '取消' : '+ 发起集火'}
+  Line 2662: <label className="text-gray-400 block">目标人数 (人)</label>
+  Line 2673: <label className="text-gray-400 block">目标金额 (TON)</label>
+  Line 2688: {squadCreationLoading ? '创建中...' : '确认发起集火队'}
+  Line 2696: <span>⚡ 已锁定集火队: <strong className="text-indigo-400 font-mono">{selectedSquadId}</strong></span>
+  Line 2701: 清除
+  Line 2708: 暂无活跃集火小队。你可以点击上方按钮发起首个集火小组，邀请好友参与！
+  Line 2731: {isSuccess ? '已达标 (SUCCESS)' : '集火中 (ACTIVE)'}
+  Line 2739: <span>人数: {squad.currentMembers}/{squad.targetMembers} 人</span>
+  Line 2748: <span>金额: {squad.currentAmount.toFixed(1)}/{squad.targetAmount} TON</span>
+  Line 2766: {copiedSquadId === squad.id ? '已复制' : '复制'}
+  Line 2770: shareToTelegram(shareLink, `我发起了项目 ${project.agentName} 的 Squad 组队集火！快来一起 Spark，享白名单和代币池分红加成！`);
+  Line 2774: 📢 分享至 Telegram
+  Line 2788: 加入
+  Line 2828: <h3 className="text-sm font-black text-white tracking-tight">修改和完善星火项目信息</h3>
+  Line 2840: <label className="text-[10px] text-gray-400 font-bold block uppercase">项目显示标题</label>
+  Line 2851: <label className="text-[10px] text-gray-400 font-bold block uppercase">智能体架构与功能介绍</label>
+  Line 2863: <label className="text-[10px] text-gray-400 font-bold block uppercase">项目分类</label>
+  Line 2869: {['数据分析', '交易工具', '社交', '监控', '基础设施', '创作工具', 'DeFi'].map((cat) => (
+  Line 2876: <label className="text-[10px] text-gray-400 font-bold block uppercase">官方网站链接</label>
+  Line 2889: <label className="text-[10px] text-gray-400 font-bold block uppercase">GitHub 开源仓库链接</label>
+  Line 2900: <label className="text-[10px] text-gray-400 font-bold block uppercase">发起人与团队背景</label>
+  Line 2903: placeholder="开发小组背景说明"
+  Line 2912: <label className="text-[10px] text-gray-400 font-bold block uppercase">支持者额外专属福利与权益说明 (Perks)</label>
+  Line 2915: placeholder="描述除了代币以外给支持者的额外福利（如：赠送终身会员、专属周边、服务折扣等，由项目方自主说明）"
+  Line 2928: 取消
+  Line 2934: 保存修改并同步
+FILE: vc/src/pages/LaunchPage.tsx (10 matches)
+  Line 33: const [selectedCategory, setSelectedCategory] = useState<string>('全部');
+  Line 74: const matchesCategory = selectedCategory === '全部' || proj.category === selectedCategory;
+  Line 161: case '全部': return t('launch.categoryAll');
+  Line 162: case '数据分析': return t('launch.categoryData');
+  Line 163: case '交易工具': return t('launch.categoryTrading');
+  Line 164: case '社交': return t('launch.categorySocial');
+  Line 165: case '监控': return t('launch.categoryMonitor');
+  Line 166: case '基础设施': return t('launch.categoryInfra');
+  Line 167: case '创作工具': return t('launch.categoryCreation');
+  Line 344: {['全部', '数据分析', '交易工具', '社交', '监控', '基础设施', '创作工具', 'DeFi'].map((cat) => (
+FILE: vc/src/pages/LaunchpadPage.tsx (131 matches)
+  Line 239: setErrorMsg('请输入有效的交易数额');
+  Line 245: setErrorMsg(`账户 TON 余额不足，当前可支配余额 ${profile.balanceTON} TON。您可以一键重置钱包或在“我的持仓”领取测试币。`);
+  Line 260: setSuccessMsg(`买入交易广播成功！消耗 ${tradeVal} TON，兑购到约 ${boughtTokens} ${activeToken.symbol}`);
+  Line 275: setErrorMsg(`未持有足够的代币 ${activeToken.symbol} 卖出。当前可用余额: ${activeOwnedBalance}`);
+  Line 290: setSuccessMsg(`卖出交易广播成功！售出 ${tradeVal} ${activeToken.symbol}，赎回约 ${receivedTON} TON`);
+  Line 309: let statusStr: '即将' | '进行中' | '已募完' | '已上市' = '进行中';
+  Line 311: statusStr = '进行中';
+  Line 313: statusStr = '已募完';
+  Line 315: statusStr = '已上市';
+  Line 317: statusStr = '即将';
+  Line 321: { name: "星火认配 Community Share", value: 37, color: "#635BFF" },
+  Line 322: { name: "团队解锁 Builder Vesting", value: 40, color: "#10B981" },
+  Line 323: { name: "运营代币 Ops Token Pool", value: 10, color: "#FFA825" },
+  Line 324: { name: "平台金库 Platform Fund", value: 8, color: "#EF4444" },
+  Line 325: { name: "AMM流动底仓 Liquidity Pool", value: 5, color: "#06B6D4" }
+  Line 340: vesting: proj.vesting || "TGE 释放 100%，AMM 锁定底仓保障"
+  Line 360: setErrorMsg("⚠️ 参与一级 Launchpad 发售需持有 ≥ 100 $VC 代码质押证明！您当前只有 " + profile.balanceVC + " $VC。请在设置或 Studio 完成新发布获取更多 $VC 代金券。");
+  Line 366: setErrorMsg("请输入有效的兑换数量");
+  Line 371: setErrorMsg(`您要求兑换 ${swapVC} $VC，但当前只有 ${profile.balanceVC} $VC。`);
+  Line 410: <span>Launchpad 代币发行终端</span>
+  Line 413: 审核星火共建成功的 AI Agents 一级代币发售、分配比例及二级自动联合报价曲线。
+  Line 426: <span>一级发行市场 (Primary Market)</span>
+  Line 435: <span>二级交易终端 (AMM Exchange)</span>
+  Line 448: <h3 className="text-xl sm:text-2xl font-black font-mono text-white">4 个自治代币</h3>
+  Line 449: <span className="text-[10px] text-[#A69FFF] font-medium block">已累计配股完成一轮全网交割</span>
+  Line 458: <span className="text-[10px] text-gray-400 font-medium block">≈ $5,278,000 USD 综合市值</span>
+  Line 466: <h3 className="text-xl sm:text-2xl font-black font-mono text-sky-400">1,240 地址数</h3>
+  Line 467: <span className="text-[10px] text-gray-400 font-medium block">全流派智能合约保险签存人数</span>
+  Line 478: <p className="font-extrabold text-[#10B981] text-base">智能合约一键流动性部署成功！</p>
+  Line 489: 立即进入二级 AMM 交易终端 (Trading Terminal)
+  Line 499: <CardTitle>一级代币发售上市大盘</CardTitle>
+  Line 500: <CardDescription>持有 $VC 代金合约证书，即可在 1 TON 的极低网络成本下换购具有多签托管保障的创世代币份额</CardDescription>
+  Line 503: 🔥 质押机制支持中
+  Line 511: <th className="p-4 pl-5">项目 Logo + 名称</th>
+  Line 512: <th className="p-4">代币符号</th>
+  Line 513: <th className="p-4">发行日期</th>
+  Line 514: <th className="p-4">总供应量</th>
+  Line 515: <th className="p-4">初始价格</th>
+  Line 516: <th className="p-4">共建额度</th>
+  Line 517: <th className="p-4">状态</th>
+  Line 518: <th className="p-4 pr-5 text-right">操作</th>
+  Line 524: "即将": "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20",
+  Line 525: "进行中": "bg-sky-500/10 text-sky-400 border border-sky-500/20 animate-pulse",
+  Line 526: "已募完": "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20",
+  Line 527: "已上市": "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+  Line 554: {proj.status === "进行中" ? (
+  Line 560: 参与兑购 (Swap)
+  Line 562: ) : proj.status === "已上市" ? (
+  Line 571: <span>二级自由交易 Terminal</span>
+  Line 574: ) : proj.status === "已募完" ? (
+  Line 579: setSuccessMsg(`✨ 代币 “${proj.name} ($${proj.symbol})” 一键锁筹 AMM 部署上市成功！初始流动底仓及报价曲线已实时激活，前往 AMM 终端可以即刻自由交易。`);
+  Line 596: <span>一键 AMM 上市</span>
+  Line 600: <span className="text-gray-500 font-mono uppercase text-[10px]">即将开放发行</span>
+  Line 615: <span className="text-white font-bold block pb-0.5">💡 Launchpad 支持规则指引：</span>
+  Line 616: 1. 凡是具有 <strong>≥ 100 $VC</strong> 折薪质押的地址均具备创世代币兑换权。
+  Line 617: 2. 开发者质押的押金将充入自动流动种子金池，由冷多签智能合约对里程碑进展自动执行核对。
+  Line 618: 3. 如里程碑判定不通过或产生恶意代码卷款，该代扣税款及抵押金将按等比例无息交割退还给支持者。
+  Line 671: <span className="text-[10px] text-gray-500 font-mono tracking-wider">实时委托账本 (ORDER BOOK)</span>
+  Line 718: <h3 className="text-sm font-black text-white tracking-tight">{activeToken.name} 行情折现价格</h3>
+  Line 775: {/* Corresponding project方 details & perks */}
+  Line 785: <h4 className="text-xs font-black text-white tracking-tight">项目创世档案 (PROJECT GENESIS DETAIL)</h4>
+  Line 790: <Globe size={11} /> 官网
+  Line 804: <span className="text-[10px] text-gray-500 font-mono block">项目背景</span>
+  Line 808: <span className="text-[10px] text-gray-500 font-mono block">创作者钱包</span>
+  Line 817: <span className="text-[10px] text-gray-500 font-mono block">团队与技术背景</span>
+  Line 818: <p className="text-gray-300 leading-relaxed font-sans">{matchedProj.teamDesc || "项目方未填写背景说明。"}</p>
+  Line 827: <Sparkles size={11} /> 早期共建者专属权益与福利 (HOLDER PERKS)
+  Line 849: 买入 (BUY)
+  Line 857: 卖出 (SELL)
+  Line 865: title="交易设置"
+  Line 873: <span className="text-[10px] text-gray-400 font-bold block">滑点限制 (Slippage Tolerance)</span>
+  Line 888: <span className="text-[9px] text-gray-500 block">自定义滑点:</span>
+  Line 893: placeholder="自定义"
+  Line 905: 保存设置
+  Line 915: <h4 className="text-xs font-black text-white">交易成功</h4>
+  Line 919: 再次进行 Swap 交易
+  Line 942: {tradeType === 'buy' ? '预计兑购：' : '预计套现 TON：'}
+  Line 951: {tradeType === 'buy' ? `可用: ${profile?.balanceTON} TON` : `可用: ${activeOwnedBalance} ${activeToken.symbol}`}
+  Line 960: <span>当前价格滑点</span>
+  Line 964: <span>价格冲击 (Price Impact)</span>
+  Line 970: <span>扣除滑点最低获得</span>
+  Line 979: <span>流动性提供商手续费</span>
+  Line 997: <span className="font-extrabold text-gray-400 block pb-0.5">联合曲线算法机制：</span>
+  Line 998: <span>每次买入将导致联合池规模减缩以触发代币价格自上移；套现卖出则让资金返还使得价格下降，保证任何时候都有承兑底层。</span>
+  Line 1006: <History size={12} className="text-[#8B83FF]" /> 最近交易历史流水 (RECENT TRADES)
+  Line 1037: <span className="text-xs font-black text-white uppercase tracking-tight">STON.fi V2 AMM 对冲路由引擎</span>
+  Line 1040: 已上市代币的二级自由流动由 STON.fi 去中心化做市合约驱动，所有交易通过链上联合曲线自动撮合。
+  Line 1046: <span className="text-[10px] font-mono font-bold text-emerald-400">DEX 合约状态：已激活 (Active)</span>
+  Line 1056: {/* ★ 星火首发成员收益光荣榜 (Spark Backers Yield Showcase) */}
+  Line 1071: <span>星火首发成员收益光荣榜</span>
+  Line 1075: 展示每位早期参与星火发射的支持者在二级市场上的实时投资回报，用数据证明「共建者已经赚了多少」。
+  Line 1107: <span>发行价 {launchPrice} TON</span>
+  Line 1109: <span className="text-emerald-400 font-bold">当前价 {currentPrice} TON</span>
+  Line 1115: <span className="text-[9px] text-gray-500 block font-mono uppercase">换售比例</span>
+  Line 1125: <th className="p-2.5 pl-3">支持者钱包</th>
+  Line 1126: <th className="p-2.5">认购金额</th>
+  Line 1127: <th className="p-2.5">获得代币</th>
+  Line 1128: <th className="p-2.5">当前市值</th>
+  Line 1129: <th className="p-2.5">净收益 (TON)</th>
+  Line 1169: <span className="text-gray-500 block">总入场金额</span>
+  Line 1173: <span className="text-gray-500 block">当前总市值</span>
+  Line 1179: <span className="text-gray-500 block">集体净收益</span>
+  Line 1185: <span className="text-gray-500 block">平均 ROI</span>
+  Line 1210: <span>我的持仓收益总览 (My Spark Returns)</span>
+  Line 1231: <div><span className="text-gray-500 block">投入</span><span className="text-gray-300 font-bold">{cost.toFixed(1)} TON</span></div>
+  Line 1232: <div><span className="text-gray-500 block">现值</span><span className={`font-bold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{currentValue.toFixed(1)} TON</span></div>
+  Line 1233: <div><span className="text-gray-500 block">持币</span><span className="text-gray-300">{tokensHeld.toFixed(0)} {proj.agentTicker}</span></div>
+  Line 1234: <div><span className="text-gray-500 block">净收益</span><span className={`font-extrabold ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>{profit >= 0 ? '+' : ''}{profit.toFixed(1)} TON</span></div>
+  Line 1252: <h3 className="text-sm font-black text-white tracking-tight">参与 ${selectedLaunchProj.symbol} 一级代币共建兑购</h3>
+  Line 1265: ${selectedLaunchProj.symbol} 创世代币共建发行中。支持者可以按初始铸造兑比 <strong>1 TON = {Math.floor(1 / selectedLaunchProj.initialPrice)} ${selectedLaunchProj.symbol}</strong> 用 $VC 抵用进行划转。
+  Line 1273: <span className="text-gray-400 block text-[10px]">质押资质要求</span>
+  Line 1274: <span className="text-white font-bold font-sans">需持有 &ge; 100 $VC 代码质押证明</span>
+  Line 1279: <Badge variant="success">已符合 (ELIGIBLE)</Badge>
+  Line 1281: <Badge variant="danger">额度不足 (NOT ELIGIBLE)</Badge>
+  Line 1288: <span className="text-[10px] text-gray-500 font-mono block uppercase">代币经济学分配比例（Tokenomics Distribution）</span>
+  Line 1323: <span className="text-[10px] text-gray-500 font-mono block">防割锁仓与解锁时间线 (Vesting Schedule)</span>
+  Line 1333: <span className="text-[10px] text-gray-550 font-mono">划拨抵用 $VC 额度数</span>
+  Line 1334: <span className="text-[10px] text-gray-400 font-mono">我的可用余额: <strong className="text-white">{profile?.balanceVC} $VC</strong></span>
+  Line 1348: 预计换得代币：
+  Line 1353: <span className="text-[#FF9F1A]">+ 网络交易折费 1 TON</span>
+  Line 1368: 取消
+  Line 1374: 确认划转兑换 (Lock Swap)
+  Line 1383: <h4 className="text-xs font-bold text-white uppercase tracking-wider">正在发送代扣代缴交易请求 (Broadcasting Claim Payload)...</h4>
+  Line 1385: 请在您的 Telegram 钱包或 Tonkeeper 弹窗中批准交易签名。这最多需要几秒，请勿刷新当前控制网关页面。
+  Line 1393: <h4 className="text-sm font-black text-white">🎉 兑换成功 (Launchpad Transferred!)</h4>
+  Line 1397: <span className="text-gray-500">成交哈希 Code:</span>
+  Line 1401: <span className="text-gray-500">消耗折抵 $VC:</span>
+  Line 1405: <span className="text-gray-500">扣减燃料 TON:</span>
+  Line 1409: <span className="text-gray-500 font-sans font-bold">获得分配代币:</span>
+  Line 1417: 该款项已锁入主网中继托管池，您可以在<strong>“我的持仓 (Portfolio)”</strong>中查验代币分配细节。感谢您共同铸造安全算力网络。
+  Line 1421: 关闭发行提示舱 (Minimize)
+FILE: vc/src/pages/LeaderboardPage.tsx (6 matches)
+  Line 34: case '数据分析': return t('launch.categoryData');
+  Line 35: case '交易工具': return t('launch.categoryTrading');
+  Line 36: case '社交': return t('launch.categorySocial');
+  Line 37: case '监控': return t('launch.categoryMonitor');
+  Line 38: case '基础设施': return t('launch.categoryInfra');
+  Line 39: case '创作工具': return t('launch.categoryCreation');
+FILE: vc/src/pages/PortfolioPage.tsx (205 matches)
+  Line 121: setAdminWithdrawError('请输入合法的提款金额');
+  Line 133: setAdminWithdrawError('申请金额不能超出可用治理国库额度');
+  Line 137: setAdminWithdrawError('请说明提款详细用途');
+  Line 146: setAdminWithdrawError(e.message || '提交提案失败');
+  Line 155: alert('社群关联配置保存成功！');
+  Line 161: alert('请填写公告标题和正文');
+  Line 173: setAdminAnnSuccess('🎉 公告发布成功！');
+  Line 184: "2026-05-27 10:14: 自动复投 3.50 TON 已分配份额配股 $OSA 池中",
+  Line 185: "2026-05-25 18:22: 自动复投 1.10 TON 已分配份额配股 $TBP 池中"
+  Line 199: setUtilityMsg(`🎉 调用成功！已消耗 0.1 $${ticker} AI 算力额度，成功导出最新的智能体分析报告日志。`);
+  Line 201: setUtilityMsg(`🎉 质押成功！已成功将部分 $${ticker} 代币划转至 Backer Pool 质押仓，您已获得下一期项目的早鸟优先配售乘数 (1.5x Multiplier)！`);
+  Line 206: setUtilityMsg(`⚠️ 项目未部署，无法跳转治理看板。`);
+  Line 313: { month: '01月', earnings: 1.2 },
+  Line 314: { month: '02月', earnings: 3.8 },
+  Line 315: { month: '03月', earnings: 7.5 },
+  Line 316: { month: '04月', earnings: 12.4 },
+  Line 317: { month: '05月', earnings: 22.7 }
+  Line 321: { name: '已分配份额 (Agent Allocations)', value: 65, color: '#635BFF' },
+  Line 322: { name: 'Launchpad 兑回 (Swap Allocation)', value: 20, color: '#10B981' },
+  Line 323: { name: '其他开发者返利 (Rebates)', value: 15, color: '#F59E0B' }
+  Line 327: { id: "e1", time: "2026-05-26 14:32", source: "TrendBot Pro (套利分配)", amount: "4.21 TON", status: "已到账" },
+  Line 328: { id: "e2", time: "2026-05-24 10:11", source: "Launchpad Swap 溢价", amount: "8.50 TON", status: "已到账" },
+  Line 329: { id: "e3", time: "2026-05-21 18:00", source: "OmniSocial 节点结算", amount: "2.10 TON", status: "已到账" },
+  Line 330: { id: "e4", time: "2026-05-18 09:44", source: "Developer Hub 返修算力", amount: "7.89 TON", status: "已到账" }
+  Line 364: // Rule: 体验金分配解锁门槛 ≥ 5 TON 且需一次链上 Gas 消耗，体验金本身使用不受限。
+  Line 367: setClaimError('⚠️ 提取失败：账户使用过体验金。需要钱包余额 ≥ 5 TON 才能解锁结算提取。');
+  Line 371: setClaimError('⚠️ 提取失败：账户使用过体验金。需要至少进行一次链上交易消耗 Gas 后才能解锁。');
+  Line 394: <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">授权当前工作区</h2>
+  Line 396: 查看您的共建持仓、分配算力账户或一键领测试代金券需要连接开发者 TON 钱包。
+  Line 404: 连接开发者钱包 Connect TON Wallet
+  Line 422: 实时汇总您的链上代币配股净值、自制 AI 项目共建进展及自动分配流水。
+  Line 436: <span>🛠️ VIBECODER SANDBOX TOOLKIT / 调试工具箱</span>
+  Line 439: <span>沙盒钱包与数据控制器</span>
+  Line 442: 快捷管理您的测试网络资产余额、模拟不同身份视角的看板，或恢复至系统初始演示数据。
+  Line 451: alert("🎉 成功充值 100 TON 测试币！");
+  Line 456: <span>充值 100 TON</span>
+  Line 463: alert("🎉 成功充值 500 VC 抵用券！");
+  Line 468: <span>充值 500 VC</span>
+  Line 474: if (confirm("⚠️ 确定要清空全部沙盒测试数据（包括发起的项目、支持记录、交易库存）并刷新重置吗？")) {
+  Line 481: alert("数据已清空，正在重载页面以恢复默认沙盒配置...");
+  Line 488: <span>重置沙盒数据</span>
+  Line 498: <span className="text-gray-400 font-sans">当前连接钱包：</span>
+  Line 503: <span className="text-gray-400 font-sans">当前角色视窗：</span>
+  Line 505: {profile.role === 'developer' ? 'DEVELOPER (项目方)' : profile.role === 'investor' ? 'INVESTOR (投资者)' : 'BOTH (双重身份)'}
+  Line 510: <span className="text-gray-500 text-[11px]">切换角色视窗：</span>
+  Line 523: 仅项目方
+  Line 537: 仅投资者
+  Line 551: 双重身份
+  Line 567: 分配清算凭证 (ALLOCATION SETTLEMENT CREDENTIALS)
+  Line 575: <span>累计已分配记录</span>
+  Line 578: 汇聚星火市场和 Launchpad 二级市场的多签分配派送。分配已通过智能合约网关进入您关联的 TON 网络钱包中。
+  Line 597: <span>直接支持分配: <strong className="text-white font-mono">22.70 TON</strong></span>
+  Line 601: <span>节点自动结算: <strong className="text-white font-mono">{(totalHistoricalDividends - 22.7).toFixed(2)} TON</strong></span>
+  Line 611: const statusLabel = pairedProj?.status === 'success' ? '完全商业化 (Success)' : '里程碑释放中 (Ongoing)';
+  Line 633: <span>持股份额: <strong className="text-gray-300">{Math.floor(inv.acquiredUnits).toLocaleString()}</strong></span>
+  Line 634: <span>进展进度: <strong className="text-emerald-400">{progressVal}%</strong></span>
+  Line 649: <span>✦ {expandedUtilityId === inv.id ? '收起代币效用控制台' : '查看代币上市前效用'}</span>
+  Line 666: <span>项目内消耗</span>
+  Line 669: 调用 AI 生成服务，每次扣减 0.1 代币。
+  Line 678: {utilityActionLoading === 'consume' ? '调用中...' : '使用'}
+  Line 690: 质押代币，获取下一期早鸟认购特权。
+  Line 699: {utilityActionLoading === 'stake' ? '质押中...' : '质押'}
+  Line 708: <span>治理投票</span>
+  Line 711: 前往项目的投票看板，参与资金公决。
+  Line 720: 投票
+  Line 745: <span>≈ ${((totalWorthTON + profile.balanceTON) * 6.5).toLocaleString()} USD 综合账面资产</span>
+  Line 750: 其中钱包现金: <strong className="text-white font-mono">{profile.balanceTON} TON</strong> ；代币仓值约: <strong className="text-white font-mono">{totalWorthTON} TON</strong>。
+  Line 757: <span className="text-[10px] text-gray-500 font-mono block">VC 持仓余额</span>
+  Line 760: <span className="text-[9px] text-gray-500 block">代金抵现券</span>
+  Line 762: <span className="text-[9px] text-gray-400 leading-normal block">用于优先认购 Launchpad</span>
+  Line 766: <span className="text-[10px] text-gray-500 font-mono block">支持项目数</span>
+  Line 769: <span className="text-[9px] text-gray-500 block">AI 自治资产契约</span>
+  Line 771: <span className="text-[9px] text-[#A69FFF] font-medium leading-normal block">通过智能多签托管核数</span>
+  Line 776: <span>累计已分配份额</span>
+  Line 781: <span className="text-[9px] text-gray-400 block pb-1">可提取: {(totalHistoricalDividends * 0.32).toFixed(2)} TON</span>
+  Line 792: 一键领分配
+  Line 802: <span className="text-[10px] text-gray-500 font-mono block">Launchpad 参与</span>
+  Line 804: <h4 className="text-lg font-black font-mono text-teal-400">2 次配股</h4>
+  Line 805: <span className="text-[9px] text-gray-500 block">已抵押解锁 250 $OSA</span>
+  Line 807: <span className="text-[9px] text-gray-400 leading-normal block">极客优先兑配已打底</span>
+  Line 824: <span>复投托管在线</span>
+  Line 827: <span className="text-[10px] text-gray-500 bg-gray-500/10 p-0.5 px-2.5 rounded-full border border-gray-500/20">复投托管已挂起</span>
+  Line 832: <span>72H 份额智能复投 & 自动算力倍增器</span>
+  Line 835: 由 VibeCoder 自治多签核数协议提供系统打底支持。开启后，您的未提取 TON 派发记录将每小时自动以 10%-15% 的二级折让率复投入选定的早期星火或种子流动性池中，享受 72H 星火级复利算力增加。
+  Line 842: <span className="text-[10px] text-gray-550 font-bold block uppercase tracking-wider text-gray-500">托管工作状态 Toggle</span>
+  Line 866: {isAutoReinvestEnabled ? 'Disable Reinvest (暂停复投)' : 'Enable Auto-Reinvest (开启复投)'}
+  Line 873: <span className="text-[10px] text-gray-550 font-bold block uppercase text-gray-500">复投标的 Target</span>
+  Line 888: <span className="text-[10px] text-gray-550 font-bold block uppercase text-gray-500">复投比例 split: {reinvestRatio}%</span>
+  Line 904: <span className="text-[10px] text-gray-500 font-mono tracking-wider block mb-2 uppercase">托管合约自动滚存记录 (REINVESTMENT AUDIT JOURNAL)</span>
+  Line 919: { id: 'projects', label: 'My Projects (我的项目)', count: myCreatedProjects.length },
+  Line 920: { id: 'investments', label: 'My Support (我的支持)', count: myInvestments.length },
+  Line 921: { id: 'earnings', label: 'My Allocations (我的分配)', count: null },
+  Line 922: { id: 'assets', label: 'Assets (持仓资产)', count: assetPositions.length + 1 }
+  Line 972: title="返回项目列表"
+  Line 989: <span>公开大厅页面</span>
+  Line 998: <span className="text-[10px] text-gray-500 font-mono block uppercase">筹集总额度 / 目标</span>
+  Line 1006: <span>筹款进度</span>
+  Line 1014: <span className="text-[10px] text-gray-500 font-mono block uppercase">参与支持地址 (Backers)</span>
+  Line 1016: {p.investorCount || 0} <span className="text-xs text-gray-500 font-bold font-sans">个独立地址</span>
+  Line 1018: <span className="text-[9.5px] text-gray-400 block mt-1 font-sans">起投额度: {p.minInvestment} TON</span>
+  Line 1022: <span className="text-[10px] text-gray-500 font-mono block uppercase">国库锁仓治理额度 (50%)</span>
+  Line 1026: <span className="text-[9.5px] text-gray-400 block mt-1 font-sans">已申请提取: {withdrawnGovFunds.toFixed(2)} TON</span>
+  Line 1030: <span className="text-[10px] text-gray-500 font-mono block uppercase">合约部署状态 (Onchain)</span>
+  Line 1035: <span>DEX AMM 交易</span>
+  Line 1040: <span>代币部署就绪 / 待分发</span>
+  Line 1044: <span>等待代币合约部署</span>
+  Line 1048: <span>星火募集中</span>
+  Line 1052: <span className="text-[9.5px] text-gray-500 block mt-1 font-mono">保障模式: {p.assuranceMode === 'staked' ? 'Staked' : 'Unstaked'}</span>
+  Line 1065: <span>一、链上合约部署与代币激活控制台</span>
+  Line 1075: <span className="font-bold text-white block text-[11px]">Campaign 募资合约部署</span>
+  Line 1077: 已部署。募资中继智能多签池地址: <strong className="text-gray-300 font-mono break-all font-normal">UQCcdG2z90oeMRojITcWBXRWIxViQmPf0AS5jQpwLO7PSgMU</strong>
+  Line 1090: <span className="font-bold text-white block text-[11px]">Project Token (TEP-74) & Vesting 合约生成</span>
+  Line 1094: ✅ 已上链部署。代币主合约: <strong className="text-gray-300 font-mono break-all font-normal">EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ</strong>
+  Line 1100: <span className="text-[10.5px] text-emerald-400 font-bold block animate-pulse">🎉 代币与 Vesting 锁仓合约已成功广播上链！</span>
+  Line 1108: {deploySimulateLoading ? '正在组装 AST 并发送部署包...' : '🚀 一键部署发币与 Vesting 合约'}
+  Line 1118: <span>🔒 一键部署发币与 Vesting 合约 (已锁定)</span>
+  Line 1121: ⚠️ 合约一键部署按键将在募集金额达到最低 55% 阈值后自动解锁（当前：{p.progress}%，还需募集 {(p.goalAmount * 0.55 - p.raisedAmount).toFixed(0)} TON）。
+  Line 1138: <span className="font-bold text-white block text-[11px]">投资者创世代币批量分发 (OP_MINT_BATCH)</span>
+  Line 1142: ✅ 创世代币已全额分配给 {p.investorCount} 名 Backers 钱包。
+  Line 1147: 发币就绪。触发分批铸造操作以铸造 35% 额度的代币并直接分配到投资者地址。
+  Line 1152: <span className="text-[9px] text-gray-500 font-mono block">正在遍历 investors dict: 铸造进度 {mintProgress}% ...</span>
+  Line 1155: <span className="text-[10.5px] text-emerald-400 font-bold block animate-pulse">✅ 代币批量铸造并分发完成！</span>
+  Line 1162: <span>一键触发 OP_MINT_BATCH (每次20人)</span>
+  Line 1167: <p className="text-[10px] text-gray-450 font-sans">请先在第二步完成 Token Master 的链上编译部署。</p>
+  Line 1180: <span className="font-bold text-white block text-[11px]">激活 AMM DEX 交易市场</span>
+  Line 1184: ✅ 已在 STON.fi 注入流动性对（20% 资金 + 5% 代币），二级交易激活，用户可以自由兑换。
+  Line 1189: 完成发币分配后，项目方需一键注入流动性到 DEX AMM 种子池以启动二级交易流通。
+  Line 1193: <span className="text-[10px] text-gray-400 animate-pulse block">正在向 STON.fi AMM 种子池划转资产配置...</span>
+  Line 1200: <span>注入 20% 流动性激活二级交易对</span>
+  Line 1206: <p className="text-[10px] text-gray-550 font-sans">代币尚未部署，暂无法激活二级 AMM。</p>
+  Line 1217: <span>二、国库锁定资金提现申请 (Withdrawal Proposals)</span>
+  Line 1223: 您可以为项目的日常研发和节点开支发起提现提案，由代币持有者通过平方根投票公决通过后，锁定的 TON 资金会自动打入您的账户。
+  Line 1228: 🎉 提款申请成功！提案已记入治理公账，已通知所有支持者参与平方根投票表决。
+  Line 1234: ⚠️ 提款失败: {adminWithdrawError}
+  Line 1241: <label className="text-[9.5px] text-gray-400 font-bold block uppercase">申请 TON 数量 *</label>
+  Line 1244: placeholder="例如: 200"
+  Line 1251: <label className="text-[9.5px] text-gray-400 font-bold block uppercase">当前可用治理国库额度</label>
+  Line 1259: <label className="text-[9.5px] text-gray-400 font-bold block uppercase">提现用途详细描述 *</label>
+  Line 1261: placeholder="请输入明确的资金用途，这有利于 Backers 进行投票，如：用于扩展第二阶段的大模型微调服务器开支..."
+  Line 1273: 向国库理事会提交提款提案
+  Line 1279: ⚠️ 募资成功且部署代币合约后，方可在此开启国库提款申请。
+  Line 1292: <span>三、撮合社群与最新通告配置</span>
+  Line 1296: VibeCoder 专注于信息撮合。在此配置您的外部社群入口（如 Telegram 链接、微信群二维码等），让支持者与您快速抱团建立社群。
+  Line 1301: <label className="text-[9.5px] text-gray-400 font-bold block uppercase">用户交流群链接 (Telegram / Web Group Link)</label>
+  Line 1312: <label className="text-[9.5px] text-gray-400 font-bold block uppercase">微信/外部群二维码图片链接 (Group QR Code Image URL)</label>
+  Line 1321: 支持输入本地上传图片或任何公开的二维码图源 URL，供用户在公开页面扫码。
+  Line 1330: 保存社群关联配置
+  Line 1336: <span className="text-[10px] text-gray-400 font-bold block uppercase font-mono">📢 发布项目新通告/周报公告</span>
+  Line 1347: placeholder="请输入通告标题，例: 第二周研发周报"
+  Line 1353: placeholder="请输入公告正文，详细披露最新的代码更新、外部社群进展或交付成果..."
+  Line 1363: 发布最新通告
+  Line 1373: <span>四、项目支持者列表 (Backers Network)</span>
+  Line 1388: 暂无支持者数据。
+  Line 1403: <h3 className="text-sm font-black text-white">我发起的星火合伙项目</h3>
+  Line 1404: <p className="text-[10.5px] text-gray-400">由您通过 Studio 部署、发布到公开大厅进行算力及开发资金募集的 AI 智能体产品</p>
+  Line 1411: <span>筹建新 Agent 代币共建</span>
+  Line 1432: {p.status === 'listed' ? "已上市交易" : isSuccess ? "星火共建成功" : "星火进行中"}
+  Line 1440: <span>已集进度</span>
+  Line 1448: <span className="text-[9px] text-gray-500 block">筹建目标</span>
+  Line 1452: <span className="text-[9px] text-gray-500 block">已 Spark 金额</span>
+  Line 1456: <span className="text-[9px] text-gray-500 block">当前进度比例</span>
+  Line 1470: <span>管理项目控制台</span>
+  Line 1476: 公开大厅 &rarr;
+  Line 1485: 您尚未在工作区创建项目。请前往 <strong><Link to="/studio" className="text-[#635BFF] hover:underline">“Agent Studio”</Link></strong> 部署，之后点击“发起共建”。
+  Line 1536: <span>资产分类多样性分析 (Portfolio Category Diversity)</span>
+  Line 1539: 实时分析您的 AI 代理板块支持配比，避免单一风险。
+  Line 1561: formatter={(value) => [`${value} TON`, '投融资储备']}
+  Line 1576: 🛡️ 链上多样性平衡指数与调仓参考 (Portfolio Diversity Index)
+  Line 1584: <span className="text-[11.5px] font-black text-white">{pos.name} 板块</span>
+  Line 1589: <span>总支持比重:</span>
+  Line 1603: <h3 className="text-sm font-black text-white">已参与支持的项目契约</h3>
+  Line 1604: <p className="text-[10.5px] text-gray-400 font-sans">您在一级星火大厅或 Launchpad 兑配中持有并持续监控的多签保障型 AI 自治股份</p>
+  Line 1612: <th className="p-4 pl-5">项目名称</th>
+  Line 1613: <th className="p-4">代币符号</th>
+  Line 1614: <th className="p-4">支持金额</th>
+  Line 1615: <th className="p-4">获得股份数 (Units)</th>
+  Line 1616: <th className="p-4">现行股价/净估值</th>
+  Line 1617: <th className="p-4">我的累计分配份额</th>
+  Line 1618: <th className="p-4 pr-5 text-right">操作</th>
+  Line 1633: <span className="text-emerald-500 font-bold block text-[9px]">({inv.currentPrice} TON/个)</span>
+  Line 1637: <Badge variant="success">已结清</Badge>
+  Line 1644: 自由 Swap
+  Line 1667: <span>星火智能资产每日累计分配曲线 (On-chain Cumulative Daily Allocations)</span>
+  Line 1671: ? '30天星火级智能资产滚动每日累计总白银、抗回撤表现统计'
+  Line 1672: : '2026 年度每月合并算力及自动化结算快照'}
+  Line 1687: 每日累计 (Daily Cumulative)
+  Line 1698: 逐月历史 (Monthly Record)
+  Line 1730: name="累计分配总计"
+  Line 1770: <Area type="monotone" name="每月分配" dataKey="earnings" stroke="#10B981" strokeWidth={2.5} fillOpacity={1} fill="url(#colorEarnings)" />
+  Line 1781: <span className="text-gray-200 font-bold">累计分配总额 (TON)</span>
+  Line 1793: <span className="text-gray-500">CodeVibe Auditor ($CVA) 等</span>
+  Line 1802: <h3 className="text-sm font-black text-white">配资来源占比 (Sources Split)</h3>
+  Line 1803: <p className="text-[10.5px] text-gray-400">折分您所得已分配资金的真实来源通道</p>
+  Line 1849: <span>分配与代币赎回资金流水 (Automatic Allocation Streams Log)</span>
+  Line 1857: <th className="p-3 pl-5">划拨记录时间</th>
+  Line 1858: <th className="p-3">资金派发源</th>
+  Line 1859: <th className="p-3">打入资金数</th>
+  Line 1860: <th className="p-3 pr-5 text-right">通证交割状态</th>
+  Line 1888: <h3 className="text-sm font-black text-white font-sans">链上托管资产明细表</h3>
+  Line 1890: 显示您在当前 TON 沙盒及 VibeCoder 联合曲线储备池中的代金劵和代代托管仓平衡值。
+  Line 1901: <h4 className="text-sm font-black text-white pt-1">VC 代金抵用券 (Platform Gas Credit)</h4>
+  Line 1913: <span>可通过对创世代码进行编译、部署、做市或静态安全模型审计获得。可按 1:1 抵用 Launchpad 代税发行划拨。</span>
+  Line 1920: <CardTitle className="text-xs font-black">持有二级市场代币持仓 (Holdings)</CardTitle>
+  Line 1938: <span className="text-white font-extrabold font-mono block">{pos.balance} 个</span>
+  Line 1948: 由于您目前为零持仓，在这里未显示流动资产。可至一级发售 (Launchpad) 抵用换购。
+FILE: vc/src/pages/StudioPage.tsx (13 matches)
+  Line 16: const [category, setCategory] = useState<'数据分析' | '交易工具' | '社交' | '监控' | '基础设施' | '创作工具' | 'DeFi'>('交易工具');
+  Line 41: case '数据分析': return t('launch.categoryData');
+  Line 42: case '交易工具': return t('launch.categoryTrading');
+  Line 43: case '社交': return t('launch.categorySocial');
+  Line 44: case '监控': return t('launch.categoryMonitor');
+  Line 45: case '基础设施': return t('launch.categoryInfra');
+  Line 46: case '创作工具': return t('launch.categoryCreation');
+  Line 195: <option value="数据分析">{translateCategory('数据分析')}</option>
+  Line 196: <option value="交易工具">{translateCategory('交易工具')}</option>
+  Line 197: <option value="社交">{translateCategory('社交')}</option>
+  Line 198: <option value="监控">{translateCategory('监控')}</option>
+  Line 199: <option value="基础设施">{translateCategory('基础设施')}</option>
+  Line 200: <option value="创作工具">{translateCategory('创作工具')}</option>
+FILE: vc/src/pages/WalletSDKDocPage.tsx (54 matches)
+  Line 16: const isZh = t('devhub.docDesc').includes('接入');
+  Line 20: isZh ? '// 点击上方 “运行沙箱 API” 会在此展示调试返回...' :
+  Line 27: { id: 'quickstart', label: isZh ? '快速开始 Quickstart' : isKo ? '빠른 시작 Quickstart' : 'Quickstart' },
+  Line 28: { id: 'installation', label: isZh ? 'SDK 安装 Installation' : isKo ? 'SDK 설치 Installation' : 'SDK Installation' },
+  Line 29: { id: 'receive-payments', label: isZh ? '1. 自动收款 Collect Pay' : isKo ? '1. 자동 수금 Collect Pay' : '1. Collect Payments' },
+  Line 30: { id: 'yield-routing', label: isZh ? '2. 自动分账 Yield Routing' : isKo ? '2. 자동 정산 Yield Routing' : '2. Yield Routing' },
+  Line 31: { id: 'proof-of-state', label: isZh ? '3. 链上存证 State Attestation' : isKo ? '3. 체인 온체인 증명 State Attestation' : '3. State Attestation' },
+  Line 32: { id: 'users-wallet', label: isZh ? '4. 用户钱包 Users Wallet' : isKo ? '4. 사용자 지갑 Users Wallet' : '4. Users Wallet' },
+  Line 33: { id: 'launch-tokens', label: isZh ? '5. 发行代币 Launch Tokens' : isKo ? '5. 토큰 발행 Launch Tokens' : '5. Launch Tokens' },
+  Line 34: { id: 'api-reference', label: isZh ? 'API 参考 API Reference' : isKo ? 'API 레퍼런스 API Reference' : 'API Reference' }
+  Line 39: desc: isZh ? "VibeCoder SDK 可以通过一行命令在您的 AI 智能体程序或 React 程序中接入 TON 链上安全支付担保。您只需要初始化 SDK 并在回调中传递交易要求即可。" :
+  Line 44: // 初始化 VibeCoder SDK 控制器
+  Line 47: network: "mainnet" // 或 "testnet"
+  Line 56: desc: isZh ? "开发环境最少需要 Node 18+ 环境。可以通过 npm, yarn, 或 pnpm 快速拉取。我们会自带 FunC 静态编译器依赖包。" :
+  Line 59: js: `# 使用 npm 安装 VibeCoder 原生 SDK 模块
+  Line 62: # 或者使用 pnpm 极速拉取
+  Line 69: desc: isZh ? "通过一行简单的 createRequest，拉起标准弹窗、生成二维码，支持用户通过手机端 Tonkeeper, Telegram Wallet 完成资产划付。" :
+  Line 72: js: `// 发起 TON 链上自动收款
+  Line 75: amountTON: 5.5,                      // 收款金额 5.5 TON
+  Line 76: memo: "OmniSocial Influencer 升级点数",
+  Line 78: console.log("付款成功！获得交易哈希: ", tx.hash);
+  Line 89: desc: isZh ? "支持每日产生的 AI 冠名或赞助收入直接划还给代币持有合伙人。支持按代币比例计算自动分账，并广播给中继池执行退佣。" :
+  Line 92: js: `// 精准分账：向持有特定 $OSA 的前 100 名用户派发赞助收入
+  Line 95: amountTON: 150.0, // 分配 150 TON
+  Line 97: feeDeduction: 0.01 // 1% 作为中继燃料
+  Line 100: console.log("派发成功，流水账单: ", payoutResult.payoutId);`,
+  Line 110: desc: isZh ? "利用链上合约存证您的 AI 代码哈希或模型指纹，让任何人或购买者可通过虚拟机直接解密、验证并执行模型安全合规性证明。" :
+  Line 113: js: `// 对特定的 fine-tuned 模型发布哈希指纹存证
+  Line 118: stakedAmountTON: 100 // 开发者提供 100 TON 保证金
+  Line 128: desc: isZh ? "在浏览器或 Telegram Mini App (TMA) 中接入 TON Connect。让用户不需要离开您的应用，即可查看其原生钱包余额与身份凭证。" :
+  Line 131: js: `// 极简 React hooks 接入
+  Line 135: console.log("当前绑定地址: ", wallet.account.address);
+  Line 142: desc: isZh ? "对于成功的星火项目，可以通过该 SDK 执行一键流动性种子 AMM 池划转。这将自动化部署 bonding curve 并自动上市二级发售大厅。" :
+  Line 145: js: `// 一键上市部署 bonding curve 联合曲线
+  Line 150: seedLiquidityTON: 1500, // 星火提现 1500 TON 作为做市基金
+  Line 161: desc: isZh ? "完整的 API 参考与类型定义。开发者可通过 TypeScript 类型声明提示快速调用。" :
+  Line 171: // 静态导出
+  Line 196: setSandboxLog((prev) => [...prev, isZh ? `[INIT] 准备执行沙箱调用: "${activeSection}"...` : isKo ? `[INIT] 샌드박스 API 호출 준비 중: "${activeSection}"...` : `[INIT] Ready to run Sandbox call for: "${activeSection}"...`]);
+  Line 202: isZh ? `[TX] 正在 TON Devnet v4 上模拟沙箱数字签名...` : isKo ? `[TX] TON Devnet v4 가상 노드에서 샌드박스 암호화 서명 시뮬레이션 중...` : `[TX] Mocking sandbox cryptographic signature on TON Devnet v4...`,
+  Line 206: isZh ? `[SUCCESS] 命令已成功执行，返回代码 === 0 🎉` : isKo ? `[SUCCESS] 명령이 성공적으로 실행되었습니다 (리턴 코드 === 0) 🎉` : `[SUCCESS] Command executed with return code === 0 🎉`
+  Line 220: title="返回 Dev Hub 主页"
+  Line 247: isZh ? '// 点击上方 “运行沙箱 API” 会在此展示调试返回...' :
+  Line 383: type: isZh ? "① 收款与代付" : isKo ? "① 수금 및 대지급" : "① Pay & Collect",
+  Line 385: logic: isZh ? "支持标准 Memo + 用户独立 App 钱包，兼容多代币 TON / $VC 资产划拨。" : isKo ? "표준 Memo + 사용자 개별 App 지갑을 지원하며, TON / $VC 다중 토큰 자산 이체를 지원합니다." : "Supports Memo + Wallet app integration. Compatible with TON / $VC asset transfers.",
+  Line 386: gas: isZh ? "即时确认 / ≤ 0.02 TON" : isKo ? "즉시 확인 / ≤ 0.02 TON" : "Instant / ≤ 0.02 TON",
+  Line 390: type: isZh ? "② 渐进式里程碑划账" : isKo ? "② 점진적 마일스톤 정산" : "② Progressive Payouts",
+  Line 392: logic: isZh ? "支持 4 阶段配置参数，由 3 独多签卫士验证解锁，执行 20% 自动复利注入。" : isKo ? "4단계 구성 파라미터 지원. 3개 독립 다중서명 수호자 검증 후 잠금해제하며 20% 자동 복리 주입을 실행합니다." : "Supports 4-stage locking parameters. Unlocked via 3 multi-sig guardians. Triggers 20% auto-reinvestment.",
+  Line 397: type: isZh ? "③ 链上存证 & 代码核查" : isKo ? "③ 온체인 증명 및 코드 검사" : "③ Attestations & Code Audit",
+  Line 399: logic: isZh ? "加密存储精调大模型指纹 (Weights) & 安全网关接入，静态 AST 校验自动报告。" : isKo ? "미세조정 AI 가중치(Weights)의 암호화 저장 및 안전한 게이트웨이 연동. 정적 AST 검증 보고서 제공." : "Stores model weights fingerprints and secure access keys. Yields automated AST control flow reports.",
+  Line 404: type: isZh ? "④ 开发者保底与退款" : isKo ? "④ 개발자 보증 및 환불" : "④ Builder Cushion & Refund",
+  Line 406: logic: isZh ? "支持 Staked 模式下 10k $VC 实盘抵押惩扣。遇意外由多签卫士退还至持股人。" : isKo ? "Staked 모드에서 10k $VC 담보 삭감 지원. 사고 발생 시 다중서명 수호자가 주주에게 전액 반환합니다." : "Allows 10k $VC collateral liquidation in Staked mode. Guardians return assets to backers on failures.",
+  Line 407: gas: isZh ? "即时锁定 / ≤ 0.01 TON" : isKo ? "즉시 잠금 / ≤ 0.01 TON" : "Instant / ≤ 0.01 TON",
+  Line 411: type: isZh ? "⑤ 用户账号与二级 AMM 发行" : isKo ? "⑤ 사용자 계정 및 AMM 유동성 공급" : "⑤ Users & DEX Launch",
+  Line 413: logic: isZh ? "无缝对接 TON Connect。达标后自动发布智能联合曲线 AMM 二级交易大厅。" : isKo ? "TON Connect와 원활하게 연동됩니다. 목표 달성 시 자동으로 보조 거래소의 폰딩 커브 AMM 풀을 개설합니다." : "Seamless integration with TON Connect. Launches token under bonding curve AMM secondary market once goal reached.",

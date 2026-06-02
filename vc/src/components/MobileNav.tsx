@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  Menu, 
+import { NavLink } from 'react-router-dom';
+import {
+  Menu,
   X,
   User,
   LogOut
 } from 'lucide-react';
 import { useUserStore } from '../store/userStore';
+import { useTranslation } from '../hooks/useTranslation';
 
 // Custom minimalist luxury high-fidelity SVG icons
 const CompassIcon = ({ className, size = 18 }: { className?: string; size?: number }) => (
@@ -82,21 +83,41 @@ const SparklesIcon = ({ className, size = 18 }: { className?: string; size?: num
   </svg>
 );
 
+const CreditCardIcon = ({ className, size = 18 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+  </svg>
+);
+
+const TrophyIcon = ({ className, size = 18 }: { className?: string; size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+    <path d="M4 22h16" />
+    <path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34" />
+    <path d="M12 2a6 6 0 0 1 6 6v3a6 6 0 0 1-6 6 6 6 0 0 1-6-6V8a6 6 0 0 1 6-6z" />
+  </svg>
+);
+
 export default function MobileNav() {
+  const { t } = useTranslation();
   const [showDrawer, setShowDrawer] = useState(false);
   const { walletAddress, isConnected, disconnectWallet } = useUserStore();
-  const location = useLocation();
 
   const primaryItems = [
-    { name: '探索', path: '/feed', icon: CompassIcon },
-    { name: 'Launch', path: '/launch', icon: CoinsIcon },
-    { name: 'Copilot', path: '/copilot', icon: SparklesIcon },
-    { name: '持仓', path: '/portfolio', icon: FolderIcon },
+    { name: t('sidebar.explore'), path: '/feed', icon: CompassIcon },
+    { name: t('sidebar.launch'), path: '/launch', icon: CoinsIcon },
+    { name: t('sidebar.copilot'), path: '/copilot', icon: SparklesIcon },
+    { name: t('sidebar.portfolio'), path: '/portfolio', icon: FolderIcon },
   ];
 
   const secondaryItems = [
-    { name: '特权与邀请', path: '/invite', icon: GiftIcon },
-    { name: '设置中心', path: '/settings', icon: SettingsIcon },
+    { name: t('sidebar.secondaryMarket'), path: '/launchpad', icon: RocketIcon },
+    { name: t('sidebar.leaderboard'), path: '/leaderboard', icon: TrophyIcon },
+    { name: t('sidebar.onramp'), path: '/onramp', icon: CreditCardIcon },
+    { name: t('sidebar.invite'), path: '/invite', icon: GiftIcon },
+    { name: t('sidebar.settings'), path: '/settings', icon: SettingsIcon },
   ];
 
   return (
@@ -105,20 +126,23 @@ export default function MobileNav() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#05060B]/95 backdrop-blur-lg border-t border-[#131626] px-2 pb-safe z-50 flex items-center justify-around select-none">
         {primaryItems.map((item) => {
           const Icon = item.icon;
-          const isActive = location.pathname.startsWith(item.path);
 
           return (
             <NavLink
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center w-14 h-12 rounded-lg transition-all ${
+              className={({ isActive }) => `flex flex-col items-center justify-center w-14 h-12 rounded-lg transition-all ${
                 isActive ? 'text-[#8B83FF]' : 'text-gray-400/60 hover:text-white'
               }`}
             >
-              <Icon size={18} />
-              <span className="text-[10px] mt-1 font-medium">{item.name}</span>
-              {isActive && (
-                <span className="w-1 h-1 rounded-full bg-[#8B83FF] mt-0.5 animate-pulse" />
+              {({ isActive }) => (
+                <>
+                  <Icon size={18} />
+                  <span className="text-[10px] mt-1 font-medium">{item.name}</span>
+                  {isActive && (
+                    <span className="w-1 h-1 rounded-full bg-[#8B83FF] mt-0.5 animate-pulse" />
+                  )}
+                </>
               )}
             </NavLink>
           );
@@ -132,24 +156,24 @@ export default function MobileNav() {
           }`}
         >
           <Menu size={18} />
-          <span className="text-[10px] mt-1 font-medium">更多</span>
+          <span className="text-[10px] mt-1 font-medium">{t('mobileNav.more')}</span>
         </button>
       </div>
 
       {/* Drawer Overlay */}
       {showDrawer && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[90] animate-in fade-in duration-200"
           onClick={() => setShowDrawer(false)}
         >
           {/* Drawer Sheet */}
-          <div 
+          <div
             className="absolute bottom-0 left-0 right-0 bg-[#0C0D1A] border-t border-[#232746] rounded-t-2xl p-6 pb-12 space-y-5 animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono text-gray-500 tracking-wider">MORE SERVICES & UTILITIES</span>
-              <button 
+              <span className="text-xs font-mono text-gray-500 tracking-wider">{t('mobileNav.servicesTitle')}</span>
+              <button
                 onClick={() => setShowDrawer(false)}
                 className="text-gray-400 hover:text-white hover:bg-white/5 p-1 rounded-md cursor-pointer"
               >
@@ -160,21 +184,24 @@ export default function MobileNav() {
             <div className="grid grid-cols-1 gap-2">
               {secondaryItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = location.pathname.startsWith(item.path);
 
                 return (
                   <NavLink
                     key={item.path}
                     to={item.path}
                     onClick={() => setShowDrawer(false)}
-                    className={`flex items-center gap-3.5 px-4 py-3 rounded-xl border transition-all ${
-                      isActive 
-                        ? 'bg-[#1C1A3F] border-[#635BFF]/30 text-white' 
+                    className={({ isActive }) => `flex items-center gap-3.5 px-4 py-3 rounded-xl border transition-all ${
+                      isActive
+                        ? 'bg-[#1C1A3F] border-[#635BFF]/30 text-white'
                         : 'bg-[#121425] border-transparent text-gray-300 hover:bg-[#1A1D36]'
                     }`}
                   >
-                    <Icon size={16} className={isActive ? 'text-[#635BFF]' : 'text-gray-400'} />
-                    <span className="text-xs font-semibold">{item.name}</span>
+                    {({ isActive }) => (
+                      <>
+                        <Icon size={16} className={isActive ? 'text-[#635BFF]' : 'text-gray-400'} />
+                        <span className="text-xs font-semibold">{item.name}</span>
+                      </>
+                    )}
                   </NavLink>
                 );
               })}
@@ -185,7 +212,7 @@ export default function MobileNav() {
               <div className="pt-2 border-t border-[#1F213C] flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <User size={14} className="text-gray-500" />
-                  <span className="text-xs text-gray-400 font-mono">Wallet Connected</span>
+                  <span className="text-xs text-gray-400 font-mono">{t('sidebar.walletConnected')}</span>
                 </div>
                 <button
                   onClick={() => {
@@ -195,7 +222,7 @@ export default function MobileNav() {
                   className="flex items-center gap-1.5 text-rose-400 hover:text-rose-300 text-xs font-medium cursor-pointer"
                 >
                   <LogOut size={13} />
-                  <span>Disconnect</span>
+                  <span>{t('wallet.disconnect')}</span>
                 </button>
               </div>
             )}

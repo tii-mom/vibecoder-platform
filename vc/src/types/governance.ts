@@ -10,6 +10,7 @@ export interface GovernanceProposal {
   expiresAt: string;
   votedAddresses?: string[]; // track who has voted in current sandbox state
   votesCount?: { yes: number; no: number };
+  type?: 'ton_withdrawal' | 'ops_token';
 }
 
 export interface GovernanceVote {

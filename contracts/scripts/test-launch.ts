@@ -1,18 +1,19 @@
 // Launch Campaign E2E Test
 // npx tsx scripts/test-launch.ts
 
-import { TonClient, WalletContractV4, internal, toNano, beginCell, Address, Cell } from '@ton/ton';
+import { TonClient4, WalletContractV4, internal, toNano, beginCell, Address, Cell } from '@ton/ton';
 import { mnemonicToPrivateKey } from '@ton/crypto';
 import { compile } from '@ton/blueprint';
 import 'dotenv/config';
 
 const MNEMONIC_RAW = process.env.DEPLOYER_MNEMONIC || '';
 const MNEMONIC = MNEMONIC_RAW.replace(/"/g, '').replace(/\u00a0/g, ' ').trim();
-const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
+const TON_NETWORK = process.env.TON_NETWORK || 'testnet';
+const isMainnet = TON_NETWORK === 'mainnet';
 
 async function main() {
-  const endpoint = `https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_KEY}`;
-  const client = new TonClient({ endpoint });
+  const endpoint = isMainnet ? 'https://mainnet-v4.tonhubapi.com' : 'https://testnet-v4.tonhubapi.com';
+  const client = new TonClient4({ endpoint });
   const keyPair = await mnemonicToPrivateKey(MNEMONIC.split(' '));
   const wallet = client.open(WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey }));
   console.log('Wallet:', wallet.address.toString({ bounceable: false }));
@@ -74,10 +75,11 @@ async function main() {
       body: beginCell().endCell(),
     })],
   }));
-  await sleep(8000);
+  console.log('Deployment sent. Waiting for confirmation...');
+  await sleep(15000);
 
   const cAddr = campaignAddr.toString({ bounceable: false });
-  console.log('Campaign:', cAddr);
+  console.log('Campaign Address:', cAddr);
 
   // Spark 1: 30 TON (below threshold 55)
   console.log('\nSpark 1: 30 TON...');
@@ -89,17 +91,24 @@ async function main() {
       body: beginCell().storeUint(0x111, 32).storeUint(0, 64).endCell(),
     })],
   }));
-  await sleep(6000);
+  console.log('Spark 1 sent. Waiting...');
+  await sleep(15000);
   console.log('  ✅ Spark 1 done (raised: 30/100 TON)');
 
   // Check after spark 1
   try {
-    const r1 = await client.runMethod(campaignAddr, 'getCampaignData');
-    console.log('  Raised:', Number(r1.stack.readBigNumber()) / 1e9, 'TON');
-  } catch(e) {}
+    const block1 = await client.getLastBlock();
+    const r1 = await client.runMethod(block1.last.seqno, campaignAddr, 'getCampaignData');
+    r1.reader.readAddress(); // owner
+    r1.reader.readBigNumber(); // target
+    r1.reader.readBigNumber(); // threshold
+    console.log('  Raised:', Number(r1.reader.readBigNumber()) / 1e9, 'TON');
+  } catch(e: any) {
+    console.log('  Failed to read raised amount:', e.message);
+  }
 
   // Spark 2: 30 TON (total: 60 → crosses 55%)
-  console.log('\nSpark 2: 30 TON (total reaches 60→55% threshold!)...');
+  console.log('\nSpark 2: 30 TON (total reaches 60 → 55% threshold!)...');
   const s2 = await clientRetry(() => wallet.getSeqno());
   await clientRetry(() => wallet.sendTransfer({
     seqno: s2, secretKey: keyPair.secretKey,
@@ -108,20 +117,42 @@ async function main() {
       body: beginCell().storeUint(0x111, 32).storeUint(0, 64).endCell(),
     })],
   }));
-  await sleep(10000);
+  console.log('Spark 2 sent. Waiting for deployment to trigger...');
+  await sleep(15000);
+
+  // Send Mint Batch to distribute tokens to backers and transition status to STATUS_SUCCESS (2)
+  console.log('\nSending Mint Batch: 0x777...');
+  const s3 = await clientRetry(() => wallet.getSeqno());
+  await clientRetry(() => wallet.sendTransfer({
+    seqno: s3, secretKey: keyPair.secretKey,
+    messages: [internal({
+      to: campaignAddr, value: toNano('0.2'),
+      body: beginCell().storeUint(0x777, 32).storeUint(0, 64).storeUint(10, 8).endCell(),
+    })],
+  }));
+  console.log('Mint Batch sent. Waiting for mint completion...');
+  await sleep(15000);
 
   // Verify
   console.log('\n=== Verification ===');
   try {
-    const r = await client.runMethod(campaignAddr, 'getCampaignData');
-    console.log('Raised:', Number(r.stack.readBigNumber()) / 1e9, 'TON');
-    const deployed = r.stack.readBit();
-    console.log('Token Deployed:', deployed);
+    const block2 = await client.getLastBlock();
+    const r = await client.runMethod(block2.last.seqno, campaignAddr, 'getCampaignData');
+    r.reader.readAddress(); // owner
+    r.reader.readBigNumber(); // target
+    r.reader.readBigNumber(); // threshold
+    const raised = r.reader.readBigNumber();
+    console.log('Final Raised:', Number(raised) / 1e9, 'TON');
+    r.reader.readBigNumber(); // deadline
+    const deployed = r.reader.readBigNumber() !== 0n;
+    console.log('Token Deployed Flag:', deployed);
     if (deployed) {
-      r.stack.readAddress(); // token address
-      r.stack.readAddress(); // platform
-      r.stack.readAddress(); // oracle
+      r.reader.readBigNumber(); // status
+      const tokenAddr = r.reader.readAddressOpt(); // token address
       console.log('✅ 55% trigger WORKED! Token auto-deployed.');
+      console.log('Token Master Address:', tokenAddr ? tokenAddr.toString() : 'None');
+    } else {
+      console.log('❌ Token not deployed yet. Status on-chain did not cross threshold or transaction bounced.');
     }
   } catch(e: any) {
     console.log('Get method failed:', e.message);

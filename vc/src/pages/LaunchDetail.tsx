@@ -1,32 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, RadialBarChart, RadialBar, Legend, PieChart, Pie, Cell } from 'recharts';
-import { 
-  ArrowLeft, Bot, MessageSquare, ArrowUp, ShieldCheck, 
-  Award, Calendar, Users, HelpCircle, HardDrive, 
+import {
+  ArrowLeft, Bot, MessageSquare, ArrowUp, ShieldCheck,
+  Award, Calendar, Users, HelpCircle, HardDrive,
   Send, Sparkles, AlertCircle, Heart, Coins, ExternalLink, ShieldAlert, Crown,
-  Activity, ClipboardList, CheckCircle
+  Activity, ClipboardList, CheckCircle, Globe
 } from 'lucide-react';
 import { useSparkStore } from '../store/sparkStore';
 import { useUserStore } from '../store/userStore';
 import { useGovernanceStore } from '../store/governanceStore';
 import { useVestingStore } from '../store/vestingStore';
 import { TONService } from '../services/ton';
+import { getWalletJwt, shareToTelegram } from '../services/telegramAuth';
 import LifecycleEmissionCard from '../components/LifecycleEmissionCard';
 import CelebrationOverlay from '../components/CelebrationOverlay';
 import ShareModal from '../components/ShareModal';
+import { useTranslation } from '../hooks/useTranslation';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
 
 export default function SparkDetail() {
+  const { t, language } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const { walletAddress, isConnected, profile, connectWallet, addFunds, updateProfile } = useUserStore();
-  const { projects, upvoteProject, addComment, advanceProjectMilestone, investInProject, teams } = useSparkStore();
+  const { projects, upvoteProject, addComment, advanceProjectMilestone, investInProject, teams, squads, createSquad, joinSquad, updateProjectDetails } = useSparkStore();
   const { proposals, votes, exitRequests, voteOnProposal, createProposal, createExitRequest } = useGovernanceStore();
   const { rounds, loadRounds } = useVestingStore();
 
+  const getCategoryLabel = (cat: string) => {
+    switch (cat) {
+      case '数据分析': return t('detail.categoryDataAnalysis');
+      case '交易工具': return t('detail.categoryTradingTools');
+      case '社交': return t('detail.categorySocial');
+      case '监控': return t('detail.categoryMonitoring');
+      case '基础设施': return t('detail.categoryInfrastructure');
+      case '创作工具': return t('detail.categoryCreativeTools');
+      case 'DeFi': return t('detail.categoryDeFi');
+      default: return cat;
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<'overview' | 'spark' | 'health' | 'vesting' | 'operations' | 'governance' | 'proof' | 'discussion'>('overview');
-  
+
   // URL parameters parsing
   const queryParams = new URLSearchParams(location.search);
   const refParam = queryParams.get('ref');
@@ -97,13 +115,13 @@ export default function SparkDetail() {
     }
     const userBacking = project.backers?.find(b => b.address === walletAddress);
     if (!userBacking) {
-      alert("只有该项目的星火支持者（Backer）才能参与治理投票！");
+      alert(t('detail.alertOnlyBackersCanVote'));
       return;
     }
     const userTokens = Math.round(userBacking.amount / project.tokenPrice);
     const weight = Math.round(Math.sqrt(userTokens));
     if (weight <= 0) {
-      alert("您的投票权重为 0，无法参与投票。");
+      alert(t('detail.alertZeroVoteWeight'));
       return;
     }
     setVoteSubmitting(proposalId);
@@ -116,16 +134,16 @@ export default function SparkDetail() {
   const handleCreateProposal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!project || !walletAddress) return;
-    
+
     // Allow creator or sandbox test addresses to trigger mock withdrawal
     if (project.creatorAddress !== walletAddress && walletAddress !== 'VibeDev_88ff') {
-      setWithdrawError("仅限项目创建者发起提款提案。");
+      setWithdrawError(t('detail.errorOnlyCreatorWithdraw'));
       return;
     }
 
     const amount = Number(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
-      setWithdrawError("请输入有效的提款金额！");
+      setWithdrawError(t('detail.errorInvalidWithdrawAmount'));
       return;
     }
 
@@ -137,12 +155,12 @@ export default function SparkDetail() {
     const remainingGovFunds = totalGovAllocated - passedAmount;
 
     if (amount > remainingGovFunds) {
-      setWithdrawError(`提款金额 (${amount} TON) 超出了当前治理锁定的可用余额 (${remainingGovFunds.toFixed(2)} TON)。`);
+      setWithdrawError(t('detail.errorWithdrawExceedsGov', { amount, balance: remainingGovFunds.toFixed(2) }));
       return;
     }
 
     if (!withdrawPurpose.trim()) {
-      setWithdrawError("请说明提款的具体用途（服务器扩容、代码优化等）！");
+      setWithdrawError(t('detail.errorExplainPurpose'));
       return;
     }
 
@@ -158,11 +176,11 @@ export default function SparkDetail() {
     if (!project || !walletAddress) return;
     const userBacking = project.backers?.find(b => b.address === walletAddress);
     if (!userBacking || userBacking.amount <= 0) {
-      alert("您未持有该项目的支持份额，无法申请退出。");
+      alert(t('detail.alertNoShareToExit'));
       return;
     }
-    
-    if (!confirm("您确定要执行合规退出并销毁所持代币吗？此操作将立即赎回您相应比例的 TON 代币。")) {
+
+    if (!confirm(t('detail.confirmExitBurnMessage'))) {
       return;
     }
 
@@ -183,7 +201,7 @@ export default function SparkDetail() {
       addFunds(refundableTON);
 
       setExitSuccess(true);
-      setExitMsg(`🎉 成功退款！已销毁 ${userTokens} $${project.agentTicker} 代币，赎回 ${refundableTON} TON 到您的钱包账户。`);
+      setExitMsg(t('detail.exitRefundSuccess', { tokens: userTokens, ticker: project.agentTicker, refunded: refundableTON }));
       setExitLoading(false);
     }, 1500);
   };
@@ -223,7 +241,7 @@ export default function SparkDetail() {
 
     const val = Number(swapAmount);
     if (isNaN(val) || val <= 0) {
-      setSwapErrText('请输入有效的数额（须大于 0）');
+      setSwapErrText(t('detail.errorInvalidAmount'));
       return;
     }
 
@@ -233,12 +251,12 @@ export default function SparkDetail() {
 
     if (swapType === 'buy') {
       if (profile.balanceTON < val) {
-        setSwapErrText(`钱包 TON 余额不足，无法买入。当前可用: ${profile.balanceTON} TON。`);
+        setSwapErrText(t('detail.errorInsufficientTon', { balance: profile.balanceTON }));
         return;
       }
 
       const boughtTokens = Number((val / project.tokenPrice).toFixed(2));
-      
+
       updateProfile({
         balanceTON: Number((profile.balanceTON - val).toFixed(2))
       });
@@ -246,12 +264,12 @@ export default function SparkDetail() {
       const nextInv = { ...localInventory, [project.id]: (localInventory[project.id] || 0) + boughtTokens };
       saveLocalInventory(nextInv);
 
-      setSwapSuccessMsg(`Swap广播成功！消耗 ${val} TON，兑购到 ${boughtTokens} ${project.agentTicker}`);
+      setSwapSuccessMsg(t('detail.swapBuySuccess', { spent: val, bought: boughtTokens, ticker: project.agentTicker }));
       setSwapSuccess(true);
       setSwapAmount('20');
     } else {
       if (tokenBalance < val) {
-        setSwapErrText(`可售出的 $${project.agentTicker} 余额不足。当前持有: ${tokenBalance}`);
+        setSwapErrText(t('detail.errorInsufficientTokens', { ticker: project.agentTicker, balance: tokenBalance }));
         return;
       }
 
@@ -264,7 +282,7 @@ export default function SparkDetail() {
       const nextInv = { ...localInventory, [project.id]: Math.max(0, Number((tokenBalance - val).toFixed(2))) };
       saveLocalInventory(nextInv);
 
-      setSwapSuccessMsg(`Swap广播成功！卖出 ${val} ${project.agentTicker}，赎回 ${receivedTON} TON`);
+      setSwapSuccessMsg(t('detail.swapSellSuccess', { sold: val, ticker: project.agentTicker, received: receivedTON }));
       setSwapSuccess(true);
       setSwapAmount('10');
     }
@@ -282,23 +300,23 @@ export default function SparkDetail() {
 
     const amount = Number(investAmount);
     if (isNaN(amount) || amount <= 0) {
-      setErrorText('请输入有效的认缴金额（须大于 0 TON）');
+      setErrorText(t('detail.errorInvalidSubscribeAmount'));
       return;
     }
 
     if (!project) return;
 
     if (investmentMode !== 'team' && amount < project.minInvestment) {
-      setErrorText(`认缴金额不能低于当前项目的起认额 ${project.minInvestment} TON`);
+      setErrorText(t('detail.errorMinSubscribeAmount', { min: project.minInvestment }));
       return;
     }
     if (investmentMode === 'team' && amount < 5) {
-      setErrorText('团队拼团模式起认额不低于 5 TON。');
+      setErrorText(t('detail.errorTeamMinSubscribe'));
       return;
     }
 
     if (profile.balanceTON < amount) {
-      setErrorText(`钱包 TON 余额不足。当前余额: ${profile.balanceTON} TON。您可以一键发放下方的新首投 15 TON 体验金！`);
+      setErrorText(t('detail.errorWalletTonInsufficient', { balance: profile.balanceTON }));
       return;
     }
 
@@ -312,7 +330,7 @@ export default function SparkDetail() {
         setSuccess(false);
       }, 5000);
     } else {
-      setErrorText('交易广播异常，请重试');
+      setErrorText(t('detail.errorBroadcastTx'));
     }
   };
 
@@ -424,15 +442,15 @@ export default function SparkDetail() {
     return (
       <div className="max-w-md mx-auto py-24 px-4 text-center space-y-4">
         <Bot size={48} className="text-rose-500 mx-auto animate-bounce" />
-        <h2 className="text-lg font-black text-white">未找到项目实例</h2>
+        <h2 className="text-lg font-black text-white">{t('detail.projectNotFound')}</h2>
         <p className="text-xs text-gray-400">
-          该代币或星火项目可能由于本地存储生命周期已被回收。
+          {t('detail.projectRecycledDesc')}
         </p>
-        <Link 
-          to="/feed" 
+        <Link
+          to="/feed"
           className="inline-block px-5 py-2 bg-[#635BFF] text-white text-xs font-bold rounded-lg"
         >
-          返回探索大厅
+          {t('detail.backToExplore')}
         </Link>
       </div>
     );
@@ -481,10 +499,10 @@ export default function SparkDetail() {
 
   // Simulated Tx list representation
   const simulatedTxs = [
-    { id: "tx-da2", action: "收取广告赞助", amount: "84.5 TON", from: "EQF1_sponsor_88", time: "2 小时前", status: "已确认" },
-    { id: "tx-f1a", action: "高频博弈获利流", amount: "12.2 TON", from: "Ston.Fi Pool A", time: "5 小时前", status: "已确认" },
-    { id: "tx-a09", action: "分配划拨", amount: "-198.0 TON", from: "OSA 分配多签账户", time: "1 天前", status: "已结算分配" },
-    { id: "tx-bca", action: "DEX 推理调用版税", amount: "44.0 TON", from: "EQA2_api_caller", time: "1 天前", status: "已确认" }
+    { id: "tx-da2", action: t('detail.actionAdSponsorship'), amount: "84.5 TON", from: "EQF1_sponsor_88", time: t('common.hoursAgo', { count: 2 }), status: t('detail.statusConfirmed') },
+    { id: "tx-f1a", action: t('detail.actionHighFreqProfit'), amount: "12.2 TON", from: "Ston.Fi Pool A", time: t('common.hoursAgo', { count: 5 }), status: t('detail.statusConfirmed') },
+    { id: "tx-a09", action: t('detail.actionAllocationPayout'), amount: "-198.0 TON", from: t('detail.osaMultisigAccount'), time: t('common.daysAgo', { count: 1 }), status: t('detail.statusSettled') },
+    { id: "tx-bca", action: t('detail.actionDexRoyalties'), amount: "44.0 TON", from: "EQA2_api_caller", time: t('common.daysAgo', { count: 1 }), status: t('detail.statusConfirmed') }
   ];
 
   const radialMilestoneData = (project.milestones || []).map((ms, index) => {
@@ -492,7 +510,7 @@ export default function SparkDetail() {
     if (ms.status === 'completed') progressVal = 100;
     else if (ms.status === 'ongoing') progressVal = Math.min(99, 40 + (currentHour / 72) * 60);
     else progressVal = 10;
-    
+
     let color = '#3B82F6';
     if (index === 0) color = '#10B981';
     else if (index === 1) color = '#635BFF';
@@ -533,7 +551,7 @@ export default function SparkDetail() {
         <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-2xl flex items-center gap-3">
           <Sparkles size={16} className="text-emerald-400 shrink-0" />
           <p className="text-xs text-slate-300 leading-normal">
-            🎉 您收到来自 <strong className="text-emerald-400 font-mono">{TONService.shortenAddress(refParam)}</strong> 的推荐！已在您的沙盒会话中激活 <strong>15 TON 首次共建体验金</strong>。
+            <span dangerouslySetInnerHTML={{ __html: t('detail.referrerExperienceActivated', { referrer: TONService.shortenAddress(refParam) }) }} />
           </p>
         </div>
       )}
@@ -544,14 +562,14 @@ export default function SparkDetail() {
           <div className="flex items-start gap-3">
             <Users size={20} className="text-amber-500 shrink-0 mt-0.5 animate-pulse" />
             <div className="space-y-1">
-              <span className="text-[10px] font-mono text-amber-500 font-bold block uppercase tracking-wider">👥 拼单共建邀请 (GROUP SPARK INVITE)</span>
+              <span className="text-[10px] font-mono text-amber-500 font-bold block uppercase tracking-wider">{t('detail.groupSparkInviteHeader')}</span>
               <p className="text-xs text-gray-300">
-                您的好友 <strong className="text-white font-mono">{invitedTeam.creatorName}</strong> 邀请您加入拼单战队共同支持星火！拼单进度: <strong className="text-white font-mono">{invitedTeam.currentAmount}/{invitedTeam.targetAmount} TON</strong>。
+                <span dangerouslySetInnerHTML={{ __html: t('detail.groupSparkInviteDesc', { creator: invitedTeam.creatorName, current: invitedTeam.currentAmount, target: invitedTeam.targetAmount }) }} />
               </p>
             </div>
           </div>
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={() => {
                 setSelectedTeamId(invitedTeam.id);
                 const formEl = document.getElementById('invest-form');
@@ -561,26 +579,26 @@ export default function SparkDetail() {
               }}
               className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-black font-extrabold text-xs rounded-xl transition cursor-pointer active:scale-95"
             >
-              加入拼单小组
+              {t('detail.joinTeamBtn')}
             </button>
-            <button 
+            <button
               onClick={() => setSelectedTeamId(undefined)}
               className="px-3 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-850 text-gray-400 hover:text-white text-xs font-bold rounded-xl transition cursor-pointer"
             >
-              独自支持
+              {t('detail.supportSoloBtn')}
             </button>
           </div>
         </div>
       )}
 
       {/* Back to feed anchor */}
-      <Link 
-        to="/feed" 
+      <Link
+        to="/feed"
         className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition"
         title="Go Back"
       >
         <ArrowLeft size={13} />
-        <span>返回项目探索Feed列表</span>
+        <span>{t('detail.backToExploreFeed')}</span>
       </Link>
 
       {/* Hero Header Area */}
@@ -603,10 +621,10 @@ export default function SparkDetail() {
             </p>
             <div className="flex flex-wrap items-center gap-2 pt-1 text-[10px] text-gray-300">
               <span className="bg-[#090A14]/70 p-1 px-2 rounded-md font-mono border border-gray-800">
-                   多签发布人: {project.creatorAddress}
+                   {t('detail.multisigCreator')} {project.creatorAddress}
               </span>
               <span className="bg-[#090A14]/70 p-1 px-2 rounded-md font-sans border border-gray-800 flex items-center gap-1">
-                   链上验证：
+                   {t('detail.onchainVerification')}
                 <span className={project.onchainVerifyStatus === 'verified' ? 'text-emerald-400 font-bold' : 'text-gray-400'}>
                   {project.onchainVerifyStatus === 'verified' ? 'verified' : 'unverified'}
                 </span>
@@ -628,7 +646,7 @@ export default function SparkDetail() {
                 activeTab === 'overview' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Overview (项目介绍)
+              {t('detail.tabOverview')}
             </button>
             <button
               onClick={() => setActiveTab('spark')}
@@ -636,7 +654,7 @@ export default function SparkDetail() {
                 activeTab === 'spark' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Spark (星火/里程碑)
+              {t('detail.tabSpark')}
             </button>
             <button
               onClick={() => setActiveTab('health')}
@@ -644,7 +662,7 @@ export default function SparkDetail() {
                 activeTab === 'health' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Project Health (健康度)
+              {t('detail.tabProjectHealth')}
               </button>
 
               <button
@@ -653,7 +671,7 @@ export default function SparkDetail() {
                   activeTab === 'vesting' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
                 }`}
               >
-              Vesting (解锁)
+              {t('detail.tabVesting')}
               </button>
 
               <button
@@ -662,7 +680,7 @@ export default function SparkDetail() {
                   activeTab === 'operations' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
                 }`}
               >
-              Operations (运营)
+              {t('detail.tabOperations')}
               </button>
 
               <button
@@ -671,7 +689,7 @@ export default function SparkDetail() {
                 activeTab === 'governance' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Governance (治理/退出)
+              {t('detail.tabGovernance')}
             </button>
             <button
               onClick={() => setActiveTab('proof')}
@@ -679,7 +697,7 @@ export default function SparkDetail() {
                 activeTab === 'proof' ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
               }`}
             >
-              Proof (链上存证)
+              {t('detail.tabProof')}
             </button>
             <button
               onClick={() => setActiveTab('discussion')}
@@ -699,28 +717,28 @@ export default function SparkDetail() {
                 <div className="space-y-2.5">
                   <h3 className="text-sm font-black text-white border-b border-[#21244E] pb-2 flex items-center gap-1.5">
                     <Bot size={15} className="text-[#635BFF]" />
-                    <span>智能体设计与架构阐述</span>
+                    <span>{t('detail.agentArchitectureTitle')}</span>
                   </h3>
                   <p className="text-xs text-gray-300 leading-relaxed font-sans">{project.description}</p>
                   <p className="text-xs text-gray-400 leading-relaxed font-sans mt-2">
-                    通过将核心大模型决策权和微调数据链锚定在 TON 的网络智能合约中，该 Agent 能够摆脱中心化控制器的干预，全天候自主读取 Telegram/Twitter 社交信号并执行对应的套利及内容孵化。
+                    {t('detail.agentArchitectureDescLong')}
                   </p>
                 </div>
 
                 {/* RadialBarChart Milestone Tracker */}
                 <div className="bg-[#121429] border border-[#212652] rounded-2xl p-5 text-left space-y-3">
                   <h4 className="text-xs font-black text-white flex items-center gap-1.5 uppercase font-sans text-[#A699FF]">
-                    ⌛ 里程碑链上交付圆环雷达 (Milestones Completion Radial Radar)
+                    {t('detail.milestonesRadarTitle')}
                   </h4>
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="w-[180px] h-[180px] shrink-0 relative flex items-center justify-center font-sans">
                       <ResponsiveContainer width="100%" height="100%">
-                        <RadialBarChart 
-                          cx="50%" 
-                          cy="50%" 
-                          innerRadius="20%" 
-                          outerRadius="100%" 
-                          barSize={12} 
+                        <RadialBarChart
+                          cx="50%"
+                          cy="50%"
+                          innerRadius="20%"
+                          outerRadius="100%"
+                          barSize={12}
                           data={radialMilestoneData}
                         >
                           <RadialBar
@@ -728,9 +746,9 @@ export default function SparkDetail() {
                             dataKey="value"
                             cornerRadius={5}
                           />
-                          <Tooltip 
+                          <Tooltip
                             contentStyle={{ backgroundColor: '#090A14', borderColor: '#22254B', color: '#fff', fontSize: '10px' }}
-                            formatter={(value: any, name: string, props: any) => [`${value}% 已交付`, props.payload.name]}
+                            formatter={(value: any, name: string, props: any) => [`${value}% ` + t('detail.statusDelivered'), props.payload.name]}
                           />
                         </RadialBarChart>
                       </ResponsiveContainer>
@@ -768,15 +786,15 @@ export default function SparkDetail() {
 
                 {/* Screenshot/Demo Placeholder Grid */}
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-gray-200">系统沙盒运行截图 / 模拟器演示</h4>
+                  <h4 className="text-xs font-bold text-gray-200">{t('detail.sandboxScreenshotTitle')}</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-[#121429] border border-[#212650] rounded-xl flex items-center gap-3.5">
                       <div className="p-2.5 bg-[#635BFF]/10 rounded-lg text-[#847BFF]">
                         <HardDrive size={18} />
                       </div>
                       <div className="text-left font-mono">
-                        <span className="text-[10.5px] font-bold text-gray-200 block">AST 树自动化翻译模块</span>
-                        <span className="text-[9px] text-gray-500">FunC V2 沙盒底层编译器就绪</span>
+                        <span className="text-[10.5px] font-bold text-gray-200 block">{t('detail.astTranslationModule')}</span>
+                        <span className="text-[9px] text-gray-500">{t('detail.compilerReady')}</span>
                       </div>
                     </div>
                     <div className="p-4 bg-[#121429] border border-[#212650] rounded-xl flex items-center gap-3.5">
@@ -784,8 +802,8 @@ export default function SparkDetail() {
                         <Award size={18} />
                       </div>
                       <div className="text-left font-mono">
-                        <span className="text-[10.5px] font-bold text-gray-200 block">AMM 联合曲线定价回测</span>
-                        <span className="text-[9px] text-gray-500">滑点机制损耗低于百分之零点一</span>
+                        <span className="text-[10.5px] font-bold text-gray-200 block">{t('detail.ammBacktesting')}</span>
+                        <span className="text-[9px] text-gray-500">{t('detail.slippageLossMin')}</span>
                       </div>
                     </div>
                   </div>
@@ -796,7 +814,7 @@ export default function SparkDetail() {
                   <div className="flex items-center justify-between border-b border-[#21244E] pb-2">
                     <h3 className="text-xs font-black text-white flex items-center gap-1.5 uppercase font-sans text-indigo-300">
                       <Coins size={14} className="text-[#FF9F1A]" />
-                      <span>智能体多签共建账本 (Multi-Sig Co-building Ledger)</span>
+                      <span>{t('detail.ledgerTitle')}</span>
                     </h3>
                   </div>
 
@@ -806,11 +824,11 @@ export default function SparkDetail() {
                         <table className="min-w-full divide-y divide-slate-800/40 text-xs text-left">
                           <thead>
                             <tr className="bg-[#121429]/95 text-gray-400 font-mono text-[9px] uppercase font-black">
-                              <th className="p-3 pl-4">交易行动</th>
-                              <th className="p-3">交割资产描述</th>
-                              <th className="p-3">多签来源</th>
-                              <th className="p-3">确认时间</th>
-                              <th className="p-3 pr-4 text-center">预期分配表现及变动报告 (Tooltip)</th>
+                              <th className="p-3 pl-4">{t('detail.colAction')}</th>
+                              <th className="p-3">{t('detail.colAmount')}</th>
+                              <th className="p-3">{t('detail.colFrom')}</th>
+                              <th className="p-3">{t('detail.colTime')}</th>
+                              <th className="p-3 pr-4 text-center">{t('detail.expectedPayoutPerformanceTooltip')}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-800/25 font-mono">
@@ -839,35 +857,35 @@ export default function SparkDetail() {
                                     {/* Tooltip Wrapper */}
                                     <div className="relative group/tool inline-block">
                                       <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-[#635BFF]/10 hover:bg-[#635BFF]/35 border border-[#635BFF]/35 text-[#A699FF] rounded-lg text-[10px] font-bold cursor-help transition">
-                                        <span>分配: {dynamicROI}%</span>
+                                        <span>{t('detail.ledgerAllocation', { roi: dynamicROI })}</span>
                                         <HelpCircle size={11} className="text-sky-300" />
                                       </span>
 
                                       {/* Tooltip block positioned absolute */}
                                       <div className="absolute right-0 bottom-full mb-2 hidden group-hover/tool:block w-70 p-4.5 bg-[#090A14] border border-[#21265E] rounded-xl shadow-2xl text-[10.5px] leading-relaxed z-50 text-gray-300 font-sans space-y-2 select-none animate-in fade-in duration-100">
                                         <div className="flex justify-between items-center border-b border-slate-800 pb-1.5">
-                                          <span className="font-semibold text-white uppercase tracking-wider text-[10px]">预计预期分配结算报表</span>
+                                          <span className="font-semibold text-white uppercase tracking-wider text-[10px]">{t('detail.expectedPayoutReportTitle')}</span>
                                           <span className="text-[8px] bg-[#635BFF]/20 text-[#A699FF] rounded p-0.5 px-1 font-mono font-bold">LIVE ALLOC</span>
                                         </div>
                                         <p className="text-xs text-gray-400">
-                                          该期交割对应合伙资产在当前自治算力表现与模拟累积利润评估下的实时对冲预期分配表现：
+                                          {t('detail.expectedPayoutReportDesc')}
                                         </p>
                                         <div className="bg-[#05060E] p-2 rounded border border-slate-800/60 font-mono text-[11px] flex justify-between items-center text-white">
-                                          <span>预计预期分配表现:</span>
+                                          <span>{t('detail.expectedPayoutPerformance')}</span>
                                           <span className="text-emerald-400 font-black">{dynamicROI}%</span>
                                         </div>
                                         <div className="text-[10px] space-y-1 pt-1.5 border-t border-slate-800/40 text-gray-400 font-mono">
                                           <div className="flex justify-between">
-                                            <span>智能体累积利润:</span>
+                                            <span>{t('detail.accumulatedAgentProfit')}</span>
                                             <span className="text-gray-200">+{simulatedProfit.toFixed(2)} TON</span>
                                           </div>
                                           <div className="flex justify-between">
-                                            <span>星火达成进度:</span>
+                                            <span>{t('detail.sparkAchievementProgress')}</span>
                                             <span className="text-gray-200">{project.progress}%</span>
                                           </div>
                                           {originalAmt && originalAmt > 0 ? (
                                             <div className="flex justify-between border-t border-dashed border-slate-800/50 pt-1 text-white text-[10.5px]">
-                                              <span>对应到手估算:</span>
+                                              <span>{t('detail.estimatedPayoutAmount')}</span>
                                               <span className="text-emerald-450 font-black">≈ {simulatedROIValue} TON</span>
                                             </div>
                                           ) : null}
@@ -889,10 +907,10 @@ export default function SparkDetail() {
                 <div className="space-y-3 pt-2">
                   <h3 className="text-xs font-black text-white border-b border-[#21244E] pb-2 flex items-center gap-1.5">
                     <Users size={14} className="text-sky-400" />
-                    <span>自治开发者团队成员构成和往期实绩</span>
+                    <span>{t('detail.creatorTeamHistoryTitle')}</span>
                   </h3>
                   <p className="text-xs text-slate-300 leading-relaxed bg-[#101224] p-3 rounded-xl border border-[#20234B]">
-                    {project.teamDesc || "VibeCoder 自治开发者联盟团队。该团队核心研发团队具备 5 年以上的链上高频开发经历，由数位区块链智能合约科学家共同创立并维护。已经过多签安全沙盒全链路校验。"}
+                    {project.teamDesc || t('detail.defaultTeamDesc')}
                   </p>
                 </div>
               </div>
@@ -906,20 +924,20 @@ export default function SparkDetail() {
                   <div className="flex items-center gap-2">
                     <ShieldCheck size={16} className="text-emerald-400" />
                     <span className="text-xs font-bold text-white uppercase">
-                      保障模式: {project.assuranceMode === 'staked' ? 'Creator Assurance (Staked)' : 'Unstaked (无保障)'}
+                      {t('detail.assuranceModeLabel')} {project.assuranceMode === 'staked' ? t('detail.assuranceModeStaked') : t('detail.assuranceModeUnstaked')}
                     </span>
                   </div>
                   <p className="text-[11px] text-gray-400 leading-relaxed">
-                    {project.assuranceMode === 'staked' 
-                      ? '该项目开发者已向多签共建金库质押了约 10,000 $VC。在里程碑完成审计并通过之前，共建款将锁在冷托管合约中，由平台和支持者联合掌控，平台手续费仅扣除 5%。'
-                      : '该项目采用 Unstaked 自由释放模式，平台手续费提档至 15%，无开发者预质押担保，请支持者注意合理控制资金比例。'}
+                    {project.assuranceMode === 'staked'
+                      ? t('detail.assuranceModeStakedDesc')
+                      : t('detail.assuranceModeUnstakedDesc')}
                   </p>
                 </div>
 
                 {/* Milestones timeline */}
                 <div className="space-y-4 text-left">
-                  <h3 className="text-xs font-bold text-white border-b border-[#21244E] pb-2">星火释放里程碑时间线 (Milestone Timeline)</h3>
-                  
+                  <h3 className="text-xs font-bold text-white border-b border-[#21244E] pb-2">{t('detail.milestoneTimelineTitle')}</h3>
+
                   <div className="space-y-4">
                     {(project.milestones || []).map((ms, index) => (
                       <div key={index} className="flex gap-4 items-start relative pl-2 group">
@@ -940,14 +958,14 @@ export default function SparkDetail() {
                           <div className="flex justify-between items-center text-[10.5px]">
                             <span className="font-bold text-white">{ms.title}</span>
                             <span className="bg-[#080916] px-1.5 py-0.2 rounded font-mono text-[9px] text-gray-400">
-                              初始释放: {ms.releaseRadio}%
+                              {t('detail.initialRelease', { ratio: ms.releaseRadio })}
                             </span>
                           </div>
-                          <p className="text-[10px] text-gray-400 mt-1">解锁前置说明: {ms.condition}</p>
+                          <p className="text-[10px] text-gray-400 mt-1">{t('detail.unlockConditionLabel')} {ms.condition}</p>
                           <span className={`text-[9px] font-bold block mt-1 uppercase ${
                             ms.status === 'completed' ? 'text-emerald-400' : ms.status === 'ongoing' ? 'text-sky-400' : 'text-gray-500'
                           }`}>
-                            当前进度: {ms.status === 'completed' ? '已核验并通过' : ms.status === 'ongoing' ? '正在加速开发中' : '锁定未解锁'}
+                            {t('detail.currentProgressLabel')} {ms.status === 'completed' ? t('detail.statusVerified') : ms.status === 'ongoing' ? t('detail.statusDeveloping') : t('detail.statusLocked')}
                           </span>
                         </div>
                       </div>
@@ -962,7 +980,7 @@ export default function SparkDetail() {
                       onClick={() => navigate(`/launch/${project.id}`)}
                       className="px-6 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl transition cursor-pointer"
                     >
-                      立即参与支持
+                      {t('detail.supportProjectImmediate')}
                     </button>
                   </div>
                 )}
@@ -979,11 +997,11 @@ export default function SparkDetail() {
                       <span className="text-[10px] text-gray-500 font-mono tracking-wider block">PUBLIC STATUS TELEMETRY</span>
                       <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
                         <Activity className="text-emerald-400" size={16} />
-                        <span>项目运营与健康看板</span>
+                        <span>{t('detail.healthDashboardTitle')}</span>
                       </h4>
                     </div>
                     <span className="p-1 px-3 text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full shrink-0">
-                      ⚡ 当前阶段：Stage 2 中段
+                      {t('detail.currentStageMiddle')}
                     </span>
                   </div>
 
@@ -994,11 +1012,11 @@ export default function SparkDetail() {
                       <span className="text-lg font-black text-white block mt-1">
                         {((project.raisedAmount / project.goalAmount) * 100).toFixed(0)}%
                       </span>
-                      <div className="text-[9.5px] text-emerald-400 mt-1 font-bold">55% 阈值已达成 ✅</div>
+                      <div className="text-[9.5px] text-emerald-400 mt-1 font-bold">{t('detail.goalReachedCheck')}</div>
                     </div>
                     <div className="bg-[#1A1C2C] border border-[#22253E] rounded-xl p-4.5 text-left">
                       <span className="text-[9.5px] text-gray-400 font-mono tracking-wider block">TOKEN DEPLOYMENT</span>
-                      <span className="text-lg font-black text-white block mt-1">已部署 · 已分配</span>
+                      <span className="text-lg font-black text-white block mt-1">{t('detail.statusDeployedAllocated')}</span>
                       <span className="text-[9.5px] text-gray-505 block mt-1 font-mono">TEP-74 JETTON CONTRACT</span>
                     </div>
                     <div className="bg-[#1A1C2C] border border-[#22253E] rounded-xl p-4.5 text-left">
@@ -1012,7 +1030,7 @@ export default function SparkDetail() {
                           return (project.raisedAmount * 0.5 - passedAmount).toFixed(0);
                         })()} TON
                       </span>
-                      <div className="text-[9.5px] text-purple-400 mt-1 font-bold">治理合约托管中</div>
+                      <div className="text-[9.5px] text-purple-400 mt-1 font-bold">{t('detail.governanceEscrowLocked')}</div>
                     </div>
                   </div>
 
@@ -1020,16 +1038,16 @@ export default function SparkDetail() {
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                     {/* Recharts Pie Chart (40% width on md+) */}
                     <div className="md:col-span-5 flex flex-col items-center justify-center p-3 bg-[#1A1C2C]/50 border border-[#22253E]/50 rounded-xl min-h-[220px]">
-                      <span className="text-[9.5px] text-gray-400 font-bold block mb-2">30/50/18/2 资金流向分布</span>
+                      <span className="text-[9.5px] text-gray-400 font-bold block mb-2">{t('detail.fundingFlowTitle')}</span>
                       <div className="relative w-40 h-40">
                         <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
                             <Pie
                               data={[
-                                { name: '团队运营', value: 30 },
-                                { name: '治理锁定', value: 50 },
-                                { name: '项目方支配', value: 18 },
-                                { name: '平台费', value: 2 },
+                                { name: t('detail.fundingDistributionTeam'), value: 30 },
+                                { name: t('detail.fundingDistributionGov'), value: 50 },
+                                { name: t('detail.fundingDistributionCreator'), value: 18 },
+                                { name: t('detail.fundingDistributionFee'), value: 2 },
                               ]}
                               cx="50%"
                               cy="50%"
@@ -1043,9 +1061,9 @@ export default function SparkDetail() {
                               <Cell fill="#10B981" />
                               <Cell fill="#EF4444" />
                             </Pie>
-                            <Tooltip 
+                            <Tooltip
                               contentStyle={{ backgroundColor: '#090A13', borderColor: '#23264B', borderRadius: '8px', fontSize: '11px' }}
-                              formatter={(value) => [`${value}%`, '占比']}
+                              formatter={(value) => [`${value}%`, t('detail.fundingDistributionRatio')]}
                             />
                           </PieChart>
                         </ResponsiveContainer>
@@ -1078,14 +1096,14 @@ export default function SparkDetail() {
                               <div className="flex items-center gap-2.5">
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#635BFF]" />
                                 <div>
-                                  <div className="text-xs font-bold text-gray-200">团队运营 (30% Immediate)</div>
-                                  <div className="text-[9.5px] text-gray-500 mt-0.5">Launch 成功后立即释放，无需投票</div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionTeam')} (30% Immediate)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.teamOpsImmediateDesc')}</div>
                                 </div>
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="text-xs font-black text-white">{teamReleased.toFixed(1)} / {teamAllocated.toFixed(0)} TON</div>
                                 <span className="p-0.5 px-2 bg-emerald-500/10 text-emerald-450 border border-emerald-500/20 rounded text-[9px] font-bold inline-block mt-0.5">
-                                  已释放
+                                  {t('detail.teamOpsReleased')}
                                 </span>
                               </div>
                             </div>
@@ -1095,14 +1113,14 @@ export default function SparkDetail() {
                               <div className="flex items-center gap-2.5">
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#FFA825]" />
                                 <div>
-                                  <div className="text-xs font-bold text-gray-200">治理托管 (50% Gov Locked)</div>
-                                  <div className="text-[9.5px] text-gray-500 mt-0.5">锁定在治理合约，提款需平方根投票通过</div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.govEscrowTitle')}</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.govEscrowDesc')}</div>
                                 </div>
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="text-xs font-black text-white">{remainingGovFunds.toFixed(1)} / {totalGovAllocated.toFixed(0)} TON</div>
                                 <span className="p-0.5 px-2 bg-[#FFA825]/10 text-[#FFA825] border border-[#FFA825]/20 rounded text-[9px] font-bold inline-block mt-0.5">
-                                  托管锁定中
+                                  {t('detail.govEscrowLockedStatus')}
                                 </span>
                               </div>
                             </div>
@@ -1112,13 +1130,13 @@ export default function SparkDetail() {
                               <div className="flex items-center gap-2.5">
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
                                 <div>
-                                  <div className="text-xs font-bold text-gray-200">项目方支配 (18% Project)</div>
-                                  <div className="text-[9.5px] text-gray-500 mt-0.5">建池子、运营、开发等自主支配</div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionCreator')} (18% Project)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.creatorControlDesc')}</div>
                                 </div>
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="text-xs font-black text-white">{projectAllocated.toFixed(0)} TON</div>
-                                <span className="text-[9px] text-[#10B981] font-bold block mt-0.5">可自由支配</span>
+                                <span className="text-[9px] text-[#10B981] font-bold block mt-0.5">{t('detail.creatorControlStatus')}</span>
                               </div>
                             </div>
 
@@ -1127,13 +1145,13 @@ export default function SparkDetail() {
                               <div className="flex items-center gap-2.5">
                                 <div className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
                                 <div>
-                                  <div className="text-xs font-bold text-gray-200">平台费用 (2% Fee)</div>
-                                  <div className="text-[9.5px] text-gray-500 mt-0.5">VibeCoder 平台服务费，进入 Fund 金库</div>
+                                  <div className="text-xs font-bold text-gray-200">{t('detail.fundingDistributionFee')} (2% Fee)</div>
+                                  <div className="text-[9.5px] text-gray-500 mt-0.5">{t('detail.platformFeeDesc')}</div>
                                 </div>
                               </div>
                               <div className="text-right shrink-0">
                                 <div className="text-xs font-black text-white">{platformFee.toFixed(0)} TON</div>
-                                <span className="text-[9px] text-gray-400 font-bold block mt-0.5">已收取</span>
+                                <span className="text-[9px] text-gray-400 font-bold block mt-0.5">{t('detail.platformFeeStatus')}</span>
                               </div>
                             </div>
                           </>
@@ -1145,20 +1163,20 @@ export default function SparkDetail() {
                   {/* Bottom details grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[#22253E] pt-5 text-xs text-gray-300">
                     <div>
-                      <span className="text-[9.5px] text-gray-500 block uppercase">解锁状态</span>
-                      <span className="font-bold text-amber-500 mt-0.5 block">需投票 (代币未达150%)</span>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.unlockStatus')}</span>
+                      <span className="font-bold text-amber-500 mt-0.5 block">{t('detail.statusRequiresVote')}</span>
                     </div>
                     <div>
-                      <span className="text-[9.5px] text-gray-500 block uppercase">活跃用户数</span>
-                      <span className="font-bold text-white mt-0.5 block">+12% (本月环比增长)</span>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.activeUsers')}</span>
+                      <span className="font-bold text-white mt-0.5 block">{t('detail.activeUsersGrowth')}</span>
                     </div>
                     <div>
-                      <span className="text-[9.5px] text-gray-500 block uppercase">代币市场价</span>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.tokenMarketPrice')}</span>
                       <span className="font-bold text-emerald-400 mt-0.5 block">0.42 TON (+15% 7d)</span>
                     </div>
                     <div>
-                      <span className="text-[9.5px] text-gray-500 block uppercase">已交付里程碑</span>
-                      <span className="font-bold text-[#8B83FF] mt-0.5 block">●●●●○ 4/5 已完成</span>
+                      <span className="text-[9.5px] text-gray-500 block uppercase">{t('detail.deliveredMilestonesCount')}</span>
+                      <span className="font-bold text-[#8B83FF] mt-0.5 block">{t('detail.milestonesRatio')}</span>
                     </div>
                   </div>
                 </div>
@@ -1173,12 +1191,12 @@ export default function SparkDetail() {
 
                   return (
                     <div className="space-y-4 text-left">
-                      <h4 className="text-xs font-black text-white uppercase tracking-wider pl-1">🗳 治理提案投票 (Pending Vote Proposals)</h4>
-                      
+                      <h4 className="text-xs font-black text-white uppercase tracking-wider pl-1">{t('detail.governanceProposalsTitle')}</h4>
+
                       {activeProps.length === 0 ? (
                         <div className="bg-[#121424]/40 border border-[#22253E] p-6 rounded-2xl text-center text-xs text-gray-500 leading-relaxed">
-                          当前没有待表决的提款提案。<br />
-                          <span className="text-[10px] text-gray-600">当开发者为项目申请二次提款时，会在此处触发共建人投票通知。</span>
+                          {t('detail.noPendingProposals')}<br />
+                          <span className="text-[10px] text-gray-600">{t('detail.secondWithdrawalNotify')}</span>
                         </div>
                       ) : (
                         activeProps.map((prop) => {
@@ -1193,20 +1211,20 @@ export default function SparkDetail() {
                                 <div>
                                   <div className="flex items-center gap-2">
                                     <span className="p-1 px-2 text-[9.5px] font-mono font-bold bg-[#FFA825]/10 text-[#FFA825] border border-[#FFA825]/20 rounded-md">
-                                      待表决 提款申请
+                                      {t('detail.pendingWithdrawalRequest')}
                                     </span>
-                                    <span className="text-xs text-gray-400 font-bold">编号: {prop.id.toUpperCase()}</span>
+                                    <span className="text-xs text-gray-400 font-bold">{t('detail.proposalId', { id: prop.id.toUpperCase() })}</span>
                                   </div>
                                   <h5 className="text-sm font-bold text-white mt-2 leading-relaxed">
-                                    申请提现：<span className="text-[#8B83FF] font-black">{prop.amount} TON</span>
+                                    {t('detail.withdrawalAmountLabel')}<span className="text-[#8B83FF] font-black">{prop.amount} TON</span>
                                   </h5>
                                   <p className="text-xs text-gray-300 mt-1 leading-relaxed bg-[#1A1C2C]/50 p-2.5 rounded-xl border border-slate-900 font-sans">
-                                    <strong className="text-gray-400">提款用途描述: </strong>{prop.purpose}
+                                    <strong className="text-gray-400">{t('detail.withdrawalPurposeLabel')}</strong>{prop.purpose}
                                   </p>
                                 </div>
                                 <div className="text-right shrink-0">
                                   <span className="text-[10px] text-rose-400 font-bold block bg-rose-950/20 p-1 px-2.5 rounded-full border border-rose-900/35">
-                                    ⏰ 剩余时间: 48小时
+                                    {t('detail.remainingTimeLabel', { hours: 48 })}
                                   </span>
                                 </div>
                               </div>
@@ -1214,15 +1232,15 @@ export default function SparkDetail() {
                               {/* Voting stats weight charts */}
                               <div className="space-y-2">
                                 <div className="flex justify-between text-[10.5px] font-bold text-gray-400">
-                                  <span>支持占比: {yesPercent.toFixed(0)}% (权重 {prop.yesWeight.toFixed(0)})</span>
-                                  <span>反对占比: {noPercent.toFixed(0)}% (权重 {prop.noWeight.toFixed(0)})</span>
+                                  <span>{t('detail.proposalYesPercent', { percent: yesPercent.toFixed(0), weight: prop.yesWeight.toFixed(0) })}</span>
+                                  <span>{t('detail.proposalNoPercent', { percent: noPercent.toFixed(0), weight: prop.noWeight.toFixed(0) })}</span>
                                 </div>
                                 <div className="h-2 w-full bg-[#1A1C2C] rounded-full overflow-hidden flex">
                                   <div className="h-full bg-[#10B981] transition-all duration-300" style={{ width: `${yesPercent}%` }} />
                                   <div className="h-full bg-[#EF4444] transition-all duration-300" style={{ width: `${noPercent}%` }} />
                                 </div>
                                 <div className="text-[9.5px] text-gray-500 font-sans mt-1">
-                                  当前表决人数：{prop.votesCount?.yes || 0} 同意 / {prop.votesCount?.no || 0} 拒绝。投票权重根据持股代币数的平方根（Square Root）计算。
+                                  {t('detail.proposalVotesSummary', { yesCount: prop.votesCount?.yes || 0, noCount: prop.votesCount?.no || 0 })}
                                 </div>
                               </div>
 
@@ -1231,12 +1249,12 @@ export default function SparkDetail() {
                                 <div>
                                   {userVoteWeight > 0 ? (
                                     <div className="text-xs text-gray-300 font-bold">
-                                      您的持仓: <span className="text-emerald-400">{userTokens}</span> 代币 | 
-                                      您的平方根投票权重: <span className="text-indigo-400">{userVoteWeight}</span>
+                                      {t('detail.yourHolding')} <span className="text-emerald-400">{userTokens}</span> {project.agentTicker} |
+                                      {t('detail.yourVoteWeight')} <span className="text-indigo-400">{userVoteWeight}</span>
                                     </div>
                                   ) : (
                                     <div className="text-xs text-gray-505 font-bold">
-                                      ⚠️ 您未持仓该代币，无法参与治理投票。
+                                      {t('detail.cannotVoteNoTokens')}
                                     </div>
                                   )}
                                 </div>
@@ -1246,7 +1264,7 @@ export default function SparkDetail() {
                                     {hasVoted ? (
                                       <div className="p-2 px-4 bg-slate-900 border border-slate-850 text-gray-400 text-xs font-bold rounded-xl flex items-center gap-1.5 w-full justify-center">
                                         <CheckCircle size={14} className="text-emerald-400" />
-                                        <span>您已完成对此提案的投票</span>
+                                        <span>{t('detail.youVoted')}</span>
                                       </div>
                                     ) : (
                                       <>
@@ -1255,14 +1273,14 @@ export default function SparkDetail() {
                                           onClick={() => handleVote(prop.id, 'yes')}
                                           className="flex-1 sm:flex-initial p-2 px-5 bg-emerald-650 hover:bg-emerald-550 text-white text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1 min-w-[90px]"
                                         >
-                                          {voteSubmitting === prop.id ? '提交中...' : '✅ 同意'}
+                                          {voteSubmitting === prop.id ? t('common.submitting') : t('detail.voteApprove')}
                                         </button>
                                         <button
                                           disabled={voteSubmitting === prop.id}
                                           onClick={() => handleVote(prop.id, 'no')}
                                           className="flex-1 sm:flex-initial p-2 px-5 bg-rose-650 hover:bg-rose-550 text-white text-xs font-black rounded-xl transition cursor-pointer flex items-center justify-center gap-1 min-w-[90px]"
                                         >
-                                          {voteSubmitting === prop.id ? '提交中...' : '❌ 拒绝'}
+                                          {voteSubmitting === prop.id ? t('common.submitting') : t('detail.voteReject')}
                                         </button>
                                       </>
                                     )}
@@ -1287,7 +1305,7 @@ export default function SparkDetail() {
                   ? 0.01 + (project.raisedAmount / project.goalAmount) * 0.005
                   : 0.01;
                 loadRounds(project.id, 1000000, avgPrice);
-                return <div className="text-gray-400 text-xs p-8 text-center">加载解锁数据...</div>;
+                return <div className="text-gray-400 text-xs p-8 text-center">{t('detail.loadingUnlockData')}</div>;
               }
               const unlockedRounds = projectRounds.filter(r => r.unlocked).length;
               const totalLocked = 38;
@@ -1298,25 +1316,25 @@ export default function SparkDetail() {
                   <div className="grid grid-cols-4 gap-4">
                     <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                       <div className="text-2xl font-black text-white">{unlockedRounds}/10</div>
-                      <div className="text-[9px] text-gray-500 mt-1">轮次已解锁</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.roundUnlocked')}</div>
                     </div>
                     <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                       <div className="text-2xl font-black text-[#635BFF]">{unlockedPct.toFixed(1)}%</div>
-                      <div className="text-[9px] text-gray-500 mt-1">团队已解锁</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.teamUnlocked')}</div>
                     </div>
                     <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                       <div className="text-2xl font-black text-[#FFA825]">50%</div>
-                      <div className="text-[9px] text-gray-500 mt-1">涨幅/轮</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.priceIncreasePerRound')}</div>
                     </div>
                     <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                       <div className="text-2xl font-black text-emerald-400">24h</div>
-                      <div className="text-[9px] text-gray-500 mt-1">维持时间</div>
+                      <div className="text-[9px] text-gray-500 mt-1">{t('detail.maintenanceDuration')}</div>
                     </div>
                   </div>
 
                   {/* Round timeline */}
                   <div className="space-y-2">
-                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">10 轮解锁进度</span>
+                    <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('detail.tenRoundsProgress')}</span>
                     {projectRounds.map((round) => (
                       <div key={round.round}
                         className={`p-3 border rounded-xl flex items-center gap-4 ${
@@ -1330,18 +1348,18 @@ export default function SparkDetail() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-xs font-bold text-white">
-                            第 {round.round} 轮 · {round.locked}% 解锁
+                            {t('detail.roundUnlockProgress', { round: round.round, locked: round.locked })}
                           </div>
                           <div className="text-[9px] text-gray-500 mt-0.5">
-                            触发价 ≥ {round.priceThreshold} TON
+                            {t('detail.priceThresholdTrigger', { price: round.priceThreshold })}
                             {round.matched && !round.unlocked && (
-                              <span className="text-amber-400 ml-2">维持中: {round.matchedAt ? Math.ceil((Date.now() - new Date(round.matchedAt).getTime()) / 3600000) : '?'}h/24h</span>
+                              <span className="text-amber-400 ml-2">{t('detail.maintenanceHours', { hours: round.matchedAt ? Math.ceil((Date.now() - new Date(round.matchedAt).getTime()) / 3600000) : '?' })}</span>
                             )}
                           </div>
                         </div>
                         <div className="text-right shrink-0">
                           <span className={`text-xs font-black ${round.unlocked ? 'text-emerald-400' : 'text-gray-500'}`}>
-                            {round.unlocked ? '✅ 已释放' : round.matched ? '⏳ 等待' : '🔒 锁仓中'}
+                            {round.unlocked ? t('detail.statusRoundReleased') : round.matched ? t('detail.statusRoundWaiting') : t('detail.statusRoundLocked')}
                           </span>
                         </div>
                       </div>
@@ -1357,37 +1375,37 @@ export default function SparkDetail() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                     <div className="text-2xl font-black text-[#635BFF]">10%</div>
-                    <div className="text-[9px] text-gray-500 mt-1">运营代币池</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsTokenPool')}</div>
                   </div>
                   <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                     <div className="text-2xl font-black text-emerald-400">2.3%</div>
-                    <div className="text-[9px] text-gray-500 mt-1">已使用</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsUsed')}</div>
                   </div>
                   <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl text-center">
                     <div className="text-2xl font-black text-white">3</div>
-                    <div className="text-[9px] text-gray-500 mt-1">申请记录</div>
+                    <div className="text-[9px] text-gray-500 mt-1">{t('detail.opsApplicationLog')}</div>
                   </div>
                 </div>
 
                 {/* Apply form */}
                 <div className="p-4 bg-[#1A1C2C] border border-[#22253E] rounded-xl">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">团队申请运营预算</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-3">{t('detail.applyOpsBudgetTitle')}</span>
                   <div className="flex gap-2">
-                    <input type="number" placeholder="金额 (%)" className="flex-1 bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
-                    <input type="text" placeholder="用途说明" className="flex-[2] bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <input type="number" placeholder={t('detail.opsAmountPlaceholder')} className="flex-1 bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
+                    <input type="text" placeholder={t('detail.opsPurposePlaceholder')} className="flex-[2] bg-[#0A0B14] border border-[#22253E] rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500" />
                     <button className="px-4 py-2 bg-[#635BFF] text-white rounded-lg text-xs font-bold hover:bg-[#5245EE] transition">
-                      提交申请
+                      {t('detail.submitOpsApplication')}
                     </button>
                   </div>
                 </div>
 
                 {/* History */}
                 <div className="space-y-2">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">申请历史</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t('detail.opsApplicationLog')}</span>
                   {[
-                    { id: 1, amount: '1.2%', purpose: 'X 平台营销推广', status: 'passed', votes: { yes: 45, no: 8 } },
-                    { id: 2, amount: '0.8%', purpose: '社区AMA活动奖品', status: 'passed', votes: { yes: 52, no: 3 } },
-                    { id: 3, amount: '2.5%', purpose: '审计费用', status: 'active', votes: { yes: 18, no: 12 } },
+                    { id: 1, amount: '1.2%', purpose: t('detail.mockOpsPurpose1'), status: 'passed', votes: { yes: 45, no: 8 } },
+                    { id: 2, amount: '0.8%', purpose: t('detail.mockOpsPurpose2'), status: 'passed', votes: { yes: 52, no: 3 } },
+                    { id: 3, amount: '2.5%', purpose: t('detail.mockOpsPurpose3'), status: 'active', votes: { yes: 18, no: 12 } },
                   ].map((item) => (
                     <div key={item.id} className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
@@ -1396,11 +1414,11 @@ export default function SparkDetail() {
                           item.status === 'rejected' ? 'bg-red-500/10 text-red-400' :
                           'bg-amber-500/10 text-amber-400'
                         }`}>
-                          {item.status === 'passed' ? '已通过' : item.status === 'rejected' ? '已拒绝' : '投票中'}
+                          {item.status === 'passed' ? t('detail.opsStatusPassed') : item.status === 'rejected' ? t('detail.opsStatusRejected') : t('detail.opsStatusVoting')}
                         </span>
                         <div>
                           <div className="text-xs font-bold text-white">{item.purpose}</div>
-                          <div className="text-[9px] text-gray-500">{item.amount} 运营代币池</div>
+                          <div className="text-[9px] text-gray-500">{t('detail.opsPoolPercentage', { amount: item.amount })}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-6 text-xs">
@@ -1422,7 +1440,7 @@ export default function SparkDetail() {
                     <span className="text-[10px] text-gray-500 font-mono tracking-wider block">LEDGER PROTOCOL LOGS</span>
                     <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
                       <ClipboardList className="text-[#8B83FF]" size={16} />
-                      <span>项目治理历史提案公簿</span>
+                      <span>{t('detail.governanceHistoryTitle')}</span>
                     </h4>
                   </div>
 
@@ -1432,7 +1450,7 @@ export default function SparkDetail() {
 
                     if (historicalProps.length === 0) {
                       return (
-                        <p className="text-xs text-gray-555 py-6 text-center">暂无历史提案结算记录。</p>
+                        <p className="text-xs text-gray-555 py-6 text-center">{t('detail.noGovernanceHistory')}</p>
                       );
                     }
 
@@ -1450,24 +1468,24 @@ export default function SparkDetail() {
                               <div className="space-y-1.5 text-left">
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <span className={`p-0.5 px-2 text-[9px] font-bold rounded ${
-                                    isPassed 
-                                      ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20' 
+                                    isPassed
+                                      ? 'bg-emerald-500/10 text-emerald-450 border border-emerald-500/20'
                                       : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
                                   }`}>
-                                    {isPassed ? '✓ 提款通过' : '✕ 提案否决'}
+                                    {isPassed ? t('detail.govProposalPassed') : t('detail.govProposalRejected')}
                                   </span>
-                                  <span className="text-gray-500 font-mono text-[10px]">编号: {prop.id.toUpperCase()}</span>
+                                  <span className="text-gray-500 font-mono text-[10px]">{t('detail.proposalId', { id: prop.id.toUpperCase() })}</span>
                                 </div>
                                 <div className="font-bold text-white text-xs">
-                                  资金提款：<span className="text-emerald-450 font-extrabold">+{prop.amount} TON</span>
+                                  {t('detail.fundsWithdrawalLabel')}<span className="text-emerald-450 font-extrabold">+{prop.amount} TON</span>
                                 </div>
                                 <p className="text-gray-450 text-[11px] leading-relaxed max-w-lg font-sans">
-                                  <strong className="text-gray-500">申请用途：</strong>{prop.purpose}
+                                  <strong className="text-gray-500">{t('detail.withdrawalPurposeHistoryLabel')}</strong>{prop.purpose}
                                 </p>
                               </div>
 
                               <div className="text-left sm:text-right shrink-0">
-                                <span className="text-gray-500 text-[10px] block">最终赞成权重占比</span>
+                                <span className="text-gray-500 text-[10px] block">{t('detail.finalYesWeightPercent')}</span>
                                 <span className={`text-sm font-mono font-extrabold block mt-0.5 ${isPassed ? 'text-emerald-450' : 'text-rose-450'}`}>
                                   {yesPercent.toFixed(1)}%
                                 </span>
@@ -1488,12 +1506,12 @@ export default function SparkDetail() {
                   <div className="bg-[#121424] border border-[#22253E] rounded-2xl p-6 text-left">
                     <div className="border-b border-[#22253E] pb-3 mb-5">
                       <span className="text-[10px] text-gray-500 font-mono tracking-wider block">CREATOR CONSOLE ONLY</span>
-                      <h4 className="text-sm font-bold text-white mt-0.5">项目创世提款提议发起端</h4>
+                      <h4 className="text-sm font-bold text-white mt-0.5">{t('detail.initiateWithdrawalTitle')}</h4>
                     </div>
 
                     {withdrawSuccess && (
                       <div className="p-3 bg-emerald-950/25 border border-emerald-900/35 text-emerald-400 text-xs rounded-xl mb-4.5">
-                        🎉 提款提案已发起成功！已记入治理公账，支持者现在可使用平方根投票对其进行公决。
+                        {t('detail.withdrawalProposalSuccess')}
                       </div>
                     )}
 
@@ -1506,17 +1524,17 @@ export default function SparkDetail() {
                     <form onSubmit={handleCreateProposal} className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-400 font-bold block uppercase">申请提现 TON 金额 (TON AMOUNT)</label>
+                          <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.withdrawTonAmountLabel')}</label>
                           <input
                             type="text"
-                            placeholder="例如：200"
+                            placeholder={t('detail.withdrawTonAmountPlaceholder')}
                             value={withdrawAmount}
                             onChange={(e) => setWithdrawAmount(e.target.value)}
                             className="w-full bg-[#1A1C2C] border border-[#22253E] focus:border-[#635BFF] text-white rounded-xl px-3.5 py-2.5 text-xs outline-none transition"
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] text-gray-400 font-bold block uppercase">当前可用治理锁定余额</label>
+                          <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.availableGovBalance')}</label>
                           <div className="w-full bg-[#1A1C2C] border border-[#22253E] text-gray-405 rounded-xl px-3.5 py-2.5 text-xs outline-none font-mono">
                             {(() => {
                               const projectProposals = proposals[project.id] || [];
@@ -1530,9 +1548,9 @@ export default function SparkDetail() {
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-[10px] text-gray-400 font-bold block uppercase">提现具体开销用途说明 (WITHDRAWAL PURPOSE)</label>
+                        <label className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.withdrawalPurposePlaceholder')}</label>
                         <textarea
-                          placeholder="详细描述本次提款的用途，例如：租赁GPU算力、用于推特数据抓取模块研发、服务器流量扩容..."
+                          placeholder={t('detail.withdrawalPurposeDetailedPlaceholder')}
                           value={withdrawPurpose}
                           onChange={(e) => setWithdrawPurpose(e.target.value)}
                           className="w-full bg-[#1A1C2C] border border-[#22253E] focus:border-[#635BFF] text-white rounded-xl px-3.5 py-2.5 text-xs outline-none transition h-20 resize-none font-sans"
@@ -1543,7 +1561,7 @@ export default function SparkDetail() {
                         type="submit"
                         className="px-6 py-2.5 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-black rounded-xl transition cursor-pointer"
                       >
-                        提交并公示提款提案
+                        {t('detail.submitWithdrawalProposal')}
                       </button>
                     </form>
                   </div>
@@ -1555,7 +1573,7 @@ export default function SparkDetail() {
                     <span className="text-[10px] text-gray-500 font-mono tracking-wider block">COMPLIANCE AND SAFETY PANELS</span>
                     <h4 className="text-sm font-bold text-white mt-0.5 flex items-center gap-1.5">
                       <ShieldAlert className="text-rose-450" size={16} />
-                      <span>合规退出与代币销毁机制</span>
+                      <span>{t('detail.exitTokenBurnTitle')}</span>
                     </h4>
                   </div>
 
@@ -1565,31 +1583,31 @@ export default function SparkDetail() {
                       <div className="flex items-center gap-2 bg-slate-950/20 border border-slate-900 p-3 rounded-xl">
                         <Calendar size={15} className="text-rose-455" />
                         <div>
-                          <div className="text-xs font-bold text-white">退出窗口：剩余 42 天</div>
-                          <div className="text-[9.5px] text-gray-500 font-sans mt-0.5">项目成功星火建币后 30 - 90 天为退出赎回窗口期</div>
+                          <div className="text-xs font-bold text-white">{t('detail.exitWindowRemaining', { days: 42 })}</div>
+                          <div className="text-[9.5px] text-gray-500 font-sans mt-0.5">{t('detail.exitWindowDesc')}</div>
                         </div>
                       </div>
 
                       <div className="space-y-2.5">
-                        <span className="text-[10px] text-gray-400 font-bold block uppercase">合规退出触发条件校验清单</span>
+                        <span className="text-[10px] text-gray-400 font-bold block uppercase">{t('detail.exitConditionChecklist')}</span>
                         <div className="space-y-2 text-[11px] font-sans">
                           <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between">
-                            <span className="text-gray-300">① 连续 14 天项目没有任何代码/周报更新</span>
+                            <span className="text-gray-300">{t('detail.exitConditionCodeSilence')}</span>
                             <span className="text-rose-400 font-extrabold flex items-center gap-1 shrink-0">
                               <AlertCircle size={12} />
-                              已触发
+                              {t('detail.exitConditionTriggered')}
                             </span>
                           </div>
                           <div className="p-3 bg-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between">
-                            <span className="text-gray-300">② 代币交易价连续 7 天跌破星火发行价的 50%</span>
+                            <span className="text-gray-300">{t('detail.exitConditionPriceDrop')}</span>
                             <span className="text-gray-500 font-semibold flex items-center gap-1 shrink-0">
                               <CheckCircle size={12} className="text-gray-600" />
-                              未触发
+                              {t('detail.exitConditionNotTriggered')}
                             </span>
                           </div>
                         </div>
                         <span className="text-[9.5px] text-gray-500 block leading-normal">
-                          💡 说明：满足以上任意一条校验状态即可执行硬退出。当前项目代码静默期已超限，退出判定生效。
+                          {t('detail.exitConditionNote')}
                         </span>
                       </div>
                     </div>
@@ -1604,11 +1622,11 @@ export default function SparkDetail() {
                       ) : (
                         <>
                           <div className="space-y-3.5">
-                            <span className="text-[9.5px] text-gray-400 font-bold block uppercase">退出赎回结算测算</span>
+                            <span className="text-[9.5px] text-gray-400 font-bold block uppercase">{t('detail.exitRefundCalculationTitle')}</span>
                             {(() => {
                               const userBacking = project.backers?.find(b => b.address === walletAddress);
                               const userTokens = userBacking ? Math.round(userBacking.amount / project.tokenPrice) : 0;
-                              
+
                               const projectProposals = proposals[project.id] || [];
                               const passedAmount = projectProposals
                                 .filter(p => p.status === 'passed')
@@ -1620,15 +1638,15 @@ export default function SparkDetail() {
                               return (
                                 <div className="space-y-2 text-xs">
                                   <div className="flex justify-between">
-                                    <span className="text-gray-450">将被销毁的代币:</span>
+                                    <span className="text-gray-450">{t('detail.tokensToBeBurned')}</span>
                                     <span className="font-bold text-white font-mono">{userTokens} {project.agentTicker}</span>
                                   </div>
                                   <div className="flex justify-between">
-                                    <span className="text-gray-450">折合赎回系数:</span>
+                                    <span className="text-gray-450">{t('detail.refundCoefficient')}</span>
                                     <span className="font-bold text-gray-300 font-mono">{(remainingRatio * 0.95 * 100).toFixed(0)}%</span>
                                   </div>
                                   <div className="flex justify-between border-t border-[#22253E] pt-2 mt-1">
-                                    <span className="text-gray-400 font-bold">可退回的 TON 资金:</span>
+                                    <span className="text-gray-400 font-bold">{t('detail.refundableTon')}</span>
                                     <span className="font-black text-emerald-400 font-mono text-sm">{refundableTON} TON</span>
                                   </div>
                                 </div>
@@ -1646,18 +1664,18 @@ export default function SparkDetail() {
                                   disabled={exitLoading || !hasShare}
                                   onClick={handleExitProject}
                                   className={`w-full py-2.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                                    hasShare 
-                                      ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-950/20' 
+                                    hasShare
+                                      ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-950/20'
                                       : 'bg-slate-900 border border-slate-800 text-gray-500 cursor-not-allowed'
                                   }`}
                                 >
-                                  {exitLoading ? '正在赎回资金并退款...' : '确认退出并销毁所持代币'}
+                                  {exitLoading ? t('detail.refundingFunds') : t('detail.confirmExitBurn')}
                                 </button>
                               );
                             })()}
                             {!project.backers?.some(b => b.address === walletAddress) && (
                               <span className="text-[9px] text-gray-500 block text-center mt-2 leading-relaxed">
-                                您未参与本项目的星火共建，故无份额可赎回。
+                                {t('detail.cannotRefundNoSpark')}
                               </span>
                             )}
                           </div>
@@ -1679,15 +1697,15 @@ export default function SparkDetail() {
                       <span className="p-1 px-2 rounded bg-indigo-500/10 border border-indigo-500/20 text-[#A699FF] text-[9px] font-mono font-bold tracking-widest uppercase">72H SANDBOX SIMULATOR</span>
                       <span className="text-[10px] text-emerald-450 font-bold flex items-center gap-1 bg-emerald-500/10 p-0.5 px-2.5 rounded-full border border-emerald-500/20">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>可验证自治审计</span>
+                        <span>{t('detail.verifiableAutonomousAudit')}</span>
                       </span>
                     </div>
                     <h3 className="text-base font-black text-white flex items-center gap-1.5 mt-1">
                       <Bot size={18} className="text-[#635BFF]" />
-                      <span>72小时代码试运行与决策加速沙盒</span>
+                      <span>{t('detail.sandboxTrialTitle')}</span>
                     </h3>
                     <p className="text-xs text-gray-400 leading-relaxed font-sans">
-                      模拟智能体前 72 小时的链上运行状态、收入模式与自动分配划拨机制。默认折叠，可展开进行仿真加速。
+                      {t('detail.sandboxTrialDesc')}
                     </p>
                   </div>
                   <button
@@ -1695,7 +1713,7 @@ export default function SparkDetail() {
                     onClick={() => setIsSandboxCollapsed(!isSandboxCollapsed)}
                     className="px-4 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0"
                   >
-                    {isSandboxCollapsed ? '展开沙箱模拟器 (Expand)' : '收起沙箱模拟器 (Collapse)'}
+                    {isSandboxCollapsed ? t('detail.expandSandbox') : t('detail.collapseSandbox')}
                   </button>
                 </div>
 
@@ -1703,15 +1721,15 @@ export default function SparkDetail() {
                   <>
                     <div className="bg-gradient-to-br from-[#110E34] to-[#0A0B1A] border border-[#26215D] rounded-2xl p-5 relative overflow-hidden text-left">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-2xl pointer-events-none" />
-                      
+
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#212453] pb-4">
                         <div className="space-y-1">
                           <span className="p-1 px-2.5 rounded-full bg-indigo-500/10 border border-indigo-400/30 text-[#A699FF] text-[9.5px] font-mono font-black uppercase tracking-wider">
-                            72小时代码试运行与决策加速沙盒 (72H Sandbox Console)
+                            {t('detail.sandboxConsoleTitle')}
                           </span>
                           <h4 className="text-base font-black text-white flex items-center gap-1.5 mt-1">
                             <Bot size={16} className="text-emerald-400" />
-                            <span>项目仿真编译与链上状态演进器</span>
+                            <span>{t('detail.sandboxEvolutionTitle')}</span>
                           </h4>
                         </div>
 
@@ -1731,14 +1749,14 @@ export default function SparkDetail() {
                       {/* Hour Indicator Progress Timeline */}
                       <div className="py-4 select-none">
                         <div className="flex justify-between items-center text-[10px] text-gray-400 mb-2 font-mono">
-                          <span>0H (编译/AST检查)</span>
-                          <span>24H (沙盒侧链部署)</span>
-                          <span>48H (自治算力审计)</span>
-                          <span>72H (解锁自动派发)</span>
+                          <span>{t('detail.sandboxHour0')}</span>
+                          <span>{t('detail.sandboxHour24')}</span>
+                          <span>{t('detail.sandboxHour48')}</span>
+                          <span>{t('detail.sandboxHour72')}</span>
                         </div>
 
                         <div className="w-full h-2.5 bg-[#050711] rounded-full overflow-hidden border border-[#1A1F3B] p-0.5 relative">
-                          <div 
+                          <div
                             className="h-full bg-gradient-to-r from-indigo-500 via-sky-400 to-emerald-400 rounded-full transition-all duration-300"
                             style={{ width: `${(currentHour / 72) * 100}%` }}
                           />
@@ -1756,7 +1774,7 @@ export default function SparkDetail() {
                           disabled={currentHour >= 72}
                           className="py-1.5 px-3 bg-[#111326] hover:bg-[#1C1F3F] border border-[#212550] text-[#A699FF] hover:text-white rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
                         >
-                          🏃‍♂️ 加速 12 小时 (+12H)
+                          {t('detail.fastForward12H')}
                         </button>
                         <button
                           type="button"
@@ -1764,7 +1782,7 @@ export default function SparkDetail() {
                           disabled={currentHour >= 72}
                           className="py-1.5 px-3 bg-[#111326] hover:bg-[#1C1F3F] border border-[#212550] text-[#A699FF] hover:text-white rounded-lg text-[10.5px] font-bold transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
                         >
-                          🚀 加速 24 小时 (+24H)
+                          {t('detail.fastForward24H')}
                         </button>
                         <button
                           type="button"
@@ -1772,14 +1790,14 @@ export default function SparkDetail() {
                           disabled={currentHour >= 72}
                           className="py-1.5 px-3 bg-indigo-505/10 hover:bg-indigo-600/20 text-indigo-400 hover:text-indigo-300 rounded-lg text-[10.5px] font-bold border border-indigo-505/20 transition flex items-center justify-center gap-1 cursor-pointer disabled:opacity-40"
                         >
-                          ⚡ 一键完成 72H 循环
+                          {t('detail.fastForward72H')}
                         </button>
                         <button
                           type="button"
                           onClick={handleResetSandbox}
                           className="py-1.5 px-3 bg-red-950/20 hover:bg-red-950/40 text-red-400 hover:text-red-300 rounded-lg text-[10.5px] font-bold border border-red-950/30 transition flex items-center justify-center gap-1 cursor-pointer"
                         >
-                          🔄 状态完全重置 (Reset)
+                          {t('detail.resetSimulation')}
                         </button>
                       </div>
                     </div>
@@ -1789,7 +1807,7 @@ export default function SparkDetail() {
                       <div className="flex items-center justify-between text-[11px] text-gray-500 font-mono">
                         <span className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                          <span>实时沙箱审计日志流 (EMULATED TELEMETRY LOGSTREAM)</span>
+                          <span>{t('detail.sandboxLogsTitle')}</span>
                         </span>
                         <span>Node: SG_W3_Validator_7</span>
                       </div>
@@ -1814,7 +1832,7 @@ export default function SparkDetail() {
 
                     {/* Simulated revenue and layout stats */}
                     <div className="bg-[#0B0C18]/60 p-4 border border-[#1E2145] rounded-xl text-left text-xs leading-relaxed text-gray-400">
-                      💡 <strong>提示:</strong> 该测试沙盘基于 72H 自动星火共建规则，当您快进至特定小时后，系统将自动验证和拨付相对应的星火共建阶段。触发的里程碑可在 <strong>“Spark”</strong> 标签页实时核实，其产生的已分配份额记录也将在您的 <strong>“我的持仓控制面板” (Portfolio)</strong> 自动汇总。
+                      <span dangerouslySetInnerHTML={{ __html: t('detail.sandboxSimulatorTip') }} />
                     </div>
                   </>
                 )}
@@ -1824,14 +1842,14 @@ export default function SparkDetail() {
             {/* 4. Discussion Tab */}
             {activeTab === 'discussion' && (
               <div className="space-y-5 animate-in fade-in duration-100">
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#1A1F3F] pb-2">开发者与持有人共识论坛</h3>
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider block border-b border-[#1A1F3F] pb-2">{t('detail.forumTitle')}</h3>
 
                 {/* Comment Form Submit block */}
                 <form onSubmit={handlePostComment} className="space-y-3">
                   <div className="space-y-1.5 text-left">
-                    <label className="text-[10px] text-gray-500 font-mono tracking-wider block">发表你的观点或提问</label>
+                    <label className="text-[10px] text-gray-500 font-mono tracking-wider block">{t('detail.publishPerspectiveLabel')}</label>
                     <textarea
-                      placeholder={isConnected ? "请发表理性言论，向开发者提出技术或多签治理疑问..." : "请先连接钱包授权后参与发帖研讨..."}
+                      placeholder={isConnected ? t('detail.forumPlaceholderConnected') : t('detail.forumPlaceholderDisconnected')}
                       disabled={!isConnected}
                       value={newCommentText}
                       onChange={(e) => setNewCommentText(e.target.value)}
@@ -1844,10 +1862,10 @@ export default function SparkDetail() {
                     {commentSuccess ? (
                       <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1 animate-in fade-in">
                         <ShieldCheck size={12} />
-                        <span>观点广播成功！正在全分布式节点中同步...</span>
+                        <span>{t('detail.perspectiveBroadcastSuccess')}</span>
                       </span>
                     ) : (
-                      <span className="text-[9.5px] text-gray-500">发言需要遵守 TON 测试沙盒协议。</span>
+                      <span className="text-[9.5px] text-gray-500">{t('detail.forumDisclaimer')}</span>
                     )}
 
                     <button
@@ -1856,7 +1874,7 @@ export default function SparkDetail() {
                       className="px-4 py-2 bg-[#635BFF] hover:bg-[#5048E5] text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
                       <Send size={11} />
-                      <span>发布评论</span>
+                      <span>{t('detail.publishComment')}</span>
                     </button>
                   </div>
                 </form>
@@ -1864,7 +1882,7 @@ export default function SparkDetail() {
                 {/* Comments Stream feed */}
                 <div className="space-y-4 pt-4 border-t border-[#1C1F3F]/60">
                   {(project.comments || []).length === 0 ? (
-                    <p className="text-gray-500 text-xs text-center py-6 block">目前尚无探讨观点，快连接钱包来抢占 SF 吧！</p>
+                    <p className="text-gray-500 text-xs text-center py-6 block">{t('detail.noForumPerspectives')}</p>
                   ) : (
                     <div className="space-y-3 max-h-80 overflow-y-auto pr-1 scrollbar-thin">
                       {(project.comments || []).map((comm) => (
@@ -1905,14 +1923,14 @@ export default function SparkDetail() {
             const firstBacker = project.backers && project.backers.length > 0
               ? [...project.backers].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())[0]
               : null;
-            
+
             return (
               <div className="bg-[#090A13] border border-[#1C1F3F] rounded-3xl p-5 space-y-3 text-left">
                 <h3 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5 border-b border-[#141630] pb-2">
                   <Crown size={14} className="text-amber-400" />
-                  <span>👑 创世星火支持者 (Genesis Backer)</span>
+                  <span>{t('detail.genesisBackerTitle')}</span>
                 </h3>
-                
+
                 {firstBacker ? (
                   <div className="flex items-center justify-between gap-3 bg-[#0E101F]/40 border border-[#1D2140] p-3 rounded-2xl">
                     <div className="min-w-0 flex-1">
@@ -1929,8 +1947,8 @@ export default function SparkDetail() {
                 ) : (
                   <div className="p-4 bg-[#0E101F]/20 border border-dashed border-[#1E2245] rounded-2xl text-center">
                     <p className="text-[11px] text-gray-400 leading-relaxed font-sans">
-                      首位星火人：<strong className="text-amber-400">虚位以待！</strong><br />
-                      参与支持该项目，成为首位创世星火支持者，即可在个人中心点亮专属勋章！
+                      {t('detail.firstSparkPerson')}<strong className="text-amber-400">{t('detail.toBeFilled')}</strong><br />
+                      {t('detail.firstSparkPersonTip')}
                     </p>
                   </div>
                 )}
@@ -1943,7 +1961,7 @@ export default function SparkDetail() {
             <div className="bg-[#090A13] border border-[#1C1F3F] rounded-3xl p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-black text-white uppercase tracking-wider">
-                  👥 活跃拼单战队 ({projectActiveTeams.length})
+                  👥 {t('detail.activeSquadsHeader', { count: projectActiveTeams.length })}
                 </h3>
                 <button
                   onClick={() => {
@@ -1955,13 +1973,13 @@ export default function SparkDetail() {
                   }}
                   className="px-2 py-1.5 bg-[#635BFF]/10 hover:bg-[#635BFF]/20 text-[#8C84FF] text-[10px] font-bold rounded-xl border border-[#635BFF]/20 transition cursor-pointer"
                 >
-                  + 发起拼单
+                  + {t('detail.initiateSquadBtn')}
                 </button>
               </div>
 
               {projectActiveTeams.length === 0 ? (
                 <p className="text-[11px] text-gray-500 py-3 text-center border border-dashed border-slate-900 rounded-xl leading-relaxed">
-                  暂无活跃拼单。你可以点击上方按钮发起首个拼单小组，邀请好友参与！
+                  {t('detail.noActiveSquads')}
                 </p>
               ) : (
                 <div className="space-y-3.5 pr-1 max-h-[220px] overflow-y-auto scrollbar-thin">
@@ -1970,20 +1988,20 @@ export default function SparkDetail() {
                     return (
                       <div key={team.id} className="p-3 bg-[#111324]/40 border border-[#202341] rounded-xl space-y-2.5 text-xs text-left">
                         <div className="flex justify-between items-center">
-                          <span className="font-bold text-gray-300 font-sans">{team.creatorName} 的战队</span>
+                          <span className="font-bold text-gray-300 font-sans">{t('detail.squadTitle', { name: team.creatorName })}</span>
                           <span className="text-[10px] text-sky-400 font-bold bg-sky-950/20 px-1.5 py-0.5 rounded font-mono">
-                            {team.members.length} 人已入
+                            {t('detail.squadMembersCount', { count: team.members.length })}
                           </span>
                         </div>
-                        
+
                         {/* Progress Bar */}
                         <div className="space-y-1 font-mono text-[10px] text-gray-400">
                           <div className="flex justify-between">
-                            <span>已凑: {team.currentAmount}/{team.targetAmount} TON</span>
+                            <span>{t('detail.squadProgress', { current: team.currentAmount, target: team.targetAmount })}</span>
                             <span>{progress.toFixed(0)}%</span>
                           </div>
                           <div className="h-1 bg-[#05060F] rounded-full overflow-hidden border border-[#161833]">
-                            <div 
+                            <div
                               className="h-full bg-gradient-to-r from-[#635BFF] to-sky-400 animate-pulse rounded-full"
                               style={{ width: `${progress}%` }}
                             />
@@ -1991,7 +2009,7 @@ export default function SparkDetail() {
                         </div>
 
                         <div className="flex justify-between items-center pt-1">
-                          <span className="text-[9.5px] text-gray-550">截止时间: 24h 内</span>
+                          <span className="text-[9.5px] text-gray-550">{t('detail.squadDeadline')}</span>
                           <button
                             onClick={() => {
                               setSelectedTeamId(team.id);
@@ -2002,7 +2020,7 @@ export default function SparkDetail() {
                             }}
                             className="px-3 py-1 bg-sky-500 hover:bg-sky-600 text-black font-extrabold text-[10px] rounded-lg transition cursor-pointer active:scale-95"
                           >
-                            立即加入
+                            {t('common.join')}
                           </button>
                         </div>
                       </div>
@@ -2063,8 +2081,8 @@ export default function SparkDetail() {
                   }
                 }}
                 className={`w-full px-2.5 py-1 text-left rounded-lg text-[10px] font-mono font-bold transition flex justify-between items-center ${
-                  currentHour === stg.hour 
-                    ? 'bg-[#635BFF] text-white font-black' 
+                  currentHour === stg.hour
+                    ? 'bg-[#635BFF] text-white font-black'
                     : 'text-gray-400 bg-[#121429] hover:bg-[#635BFF]/15 hover:text-white'
                 }`}
               >

@@ -2,13 +2,13 @@ import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { Cell, toNano } from '@ton/core';
 import { ProjectToken } from '../../wrappers/ProjectToken';
 import '@ton/test-utils';
-import { compile } from '@ton/blueprint';
+import { compileActonCode } from '../helpers/actonArtifacts';
 
 describe('ProjectToken', () => {
     let code: Cell;
 
     beforeAll(async () => {
-        code = await compile('ProjectToken');
+        code = compileActonCode('project_token');
     });
 
     let blockchain: Blockchain;

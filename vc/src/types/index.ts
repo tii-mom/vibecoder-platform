@@ -19,4 +19,7 @@ export interface UserProfile {
   hasGasConsumption?: boolean;
   realChainBalanceTON?: number;
   localOffsetTON?: number;
+  telegramId?: number;
+  telegramUsername?: string;
+  telegramAuthDate?: number;
 }

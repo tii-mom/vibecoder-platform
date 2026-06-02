@@ -1,17 +1,40 @@
 import { create } from 'zustand';
-import { SparkProject, TokenInfo, TeamSpark } from '../types';
+import { SparkProject, TokenInfo, TeamSpark, CreatorEcosystem, LaunchType, SparkSquad, ReferralRecord } from '../types';
+import { useNotificationStore } from './notificationStore';
+import { getWalletJwt } from '../services/telegramAuth';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
+
+let _codeCounter = 1000;
+function generateProjectCode(): string {
+  _codeCounter++;
+  return `VC-L-${String(_codeCounter).padStart(6, '0')}`;
+}
+function generateSquadCode(): string {
+  const seq = Math.floor(Math.random() * 900000) + 100000;
+  return `VC-F-${seq}`;
+}
+function generateEcosystemCode(): string {
+  const seq = Math.floor(Math.random() * 900000) + 100000;
+  return `VC-E-${seq}`;
+}
 
 interface SparkState {
   projects: SparkProject[];
   tokens: TokenInfo[];
   teams: TeamSpark[];
-  addProject: (project: Omit<SparkProject, 'id' | 'raisedAmount' | 'investorCount' | 'progress' | 'backers' | 'status'> & {
+  ecosystems: CreatorEcosystem[];
+  squads: SparkSquad[];
+  referrals: ReferralRecord[];
+  addProject: (project: Omit<SparkProject, 'id' | 'projectCode' | 'raisedAmount' | 'investorCount' | 'progress' | 'backers' | 'status'> & {
     category?: '数据分析' | '交易工具' | '社交' | '监控' | '基础设施' | '创作工具' | 'DeFi';
     tags?: string[];
     assuranceMode?: 'staked' | 'unstaked';
     milestones?: Array<{ title: string; condition: string; releaseRadio: number; status: 'pending' | 'completed' | 'ongoing' }>;
     useOfFunds?: Array<{ name: string; percentage: number; desc: string }>;
     teamDesc?: string;
+    launchType?: LaunchType;
+    ecosystemId?: string;
   }) => SparkProject;
   investInProject: (projectId: string, amount: number, address: string) => boolean;
   getProjectById: (id: string) => SparkProject | undefined;
@@ -24,11 +47,20 @@ interface SparkState {
   createTeamSpark: (projectId: string, creatorAddress: string, creatorName: string, targetAmount: number, initialContribution: number) => TeamSpark;
   joinTeamSpark: (teamId: string, address: string, amount: number) => boolean;
   getTeamById: (teamId: string) => TeamSpark | undefined;
+  updateProjectDetails: (projectId: string, updates: Partial<SparkProject>) => void;
+  createEcosystem: (name: string, description: string, creatorWallet: string) => Promise<CreatorEcosystem>;
+  getEcosystemsByCreator: (creatorWallet: string) => CreatorEcosystem[];
+  createSquad: (projectId: string, creatorWallet: string, creatorName: string, targetMembers: number, targetAmount: number) => Promise<SparkSquad>;
+  joinSquad: (squadId: string, walletAddress: string, amount: number) => Promise<boolean>;
+  loadSquads: (projectId: string) => Promise<void>;
+  addReferral: (inviterWallet: string, inviteeWallet: string) => Promise<boolean>;
+  loadReferrals: (wallet: string) => Promise<void>;
 }
 
 const mockProjects: SparkProject[] = [
   {
     id: "spark-1",
+    projectCode: "SPARK-OSA-001",
     agentId: "agent-3",
     agentName: "OmniSocial Influencer",
     agentTicker: "OSA",
@@ -67,6 +99,7 @@ const mockProjects: SparkProject[] = [
     ],
     teamDesc: "Omni Labs 早期极客小队，拥有 4 年智能合约设计与自然语言处理调优经验。核心成员毕业于清华大学交叉信息院。",
     onchainVerifyStatus: "verified",
+    extraPerks: "1. 早期支持者享受 70% 赞助分配分润比例；2. 赠送 OmniSocial 订阅高级会员年卡一张",
     backers: [
       { address: "EQD4...7fA3", amount: 500, timestamp: "2026-05-26T12:00:00Z" },
       { address: "EQB2...11p2", amount: 200, timestamp: "2026-05-27T01:30:00Z" },
@@ -75,6 +108,7 @@ const mockProjects: SparkProject[] = [
   },
   {
     id: "spark-2",
+    projectCode: "SPARK-CVA-002",
     agentId: "agent-5",
     agentName: "CodeVibe Auditor",
     agentTicker: "CVA",
@@ -87,7 +121,7 @@ const mockProjects: SparkProject[] = [
     status: 'active',
     endTime: new Date(Date.now() + 28 * 24 * 3600 * 1000).toISOString(),
     creatorAddress: "VibeDev_bc67",
-    tokenPrice: 0.05,
+    tokenPrice: 0.005,
     progress: 41,
     category: "监控",
     tags: ["#TON", "#FunC", "#审计", "#安全"],
@@ -118,6 +152,7 @@ const mockProjects: SparkProject[] = [
   },
   {
     id: "spark-3",
+    projectCode: "SPARK-NFR-003",
     agentId: "agent-1",
     agentName: "TrendBot Pro",
     agentTicker: "TBP",
@@ -153,10 +188,16 @@ const mockProjects: SparkProject[] = [
     ],
     teamDesc: "10 年高频量化基金资深架构团队，全自动交易吞吐引擎搭建者。",
     onchainVerifyStatus: "verified",
-    backers: []
+    extraPerks: "1. 永久免费接入 TrendBot Pro 自动套利策略；2. 赠送专属高频专线 API 额度 1,000,000 次/月。",
+    backers: [
+      { address: "EQD4...7fA3", amount: 1000, timestamp: "2026-05-18T10:00:00Z" },
+      { address: "EQB2...11p2", amount: 500, timestamp: "2026-05-18T12:30:00Z" },
+      { address: "EQC9...99xY", amount: 2000, timestamp: "2026-05-19T08:15:00Z" }
+    ]
   },
   {
     id: "spark-4",
+    projectCode: "SPARK-MGAI-004",
     agentId: "agent-2",
     agentName: "Matrix Game Oracle",
     agentTicker: "MGAI",
@@ -189,7 +230,11 @@ const mockProjects: SparkProject[] = [
     ],
     teamDesc: "由数名原腾讯/字节游戏 AI 算法总监自主孵化的自治打金智能体联盟。",
     onchainVerifyStatus: "verified",
-    backers: []
+    extraPerks: "1. Matrix Arena 创世打金角色皮肤空投；2. 打金分配权提权 20%。",
+    backers: [
+      { address: "EQD7...22gL", amount: 1500, timestamp: "2026-05-20T14:00:00Z" },
+      { address: "EQA1...88fW", amount: 800, timestamp: "2026-05-21T11:45:00Z" }
+    ]
   }
 ];
 
@@ -290,8 +335,10 @@ export const useSparkStore = create<SparkState>((set, get) => {
     if (typeof window === 'undefined') return mockProjects;
     const stored = localStorage.getItem('vc_projects');
     if (!stored) {
-      localStorage.setItem('vc_projects', JSON.stringify(mockProjects));
-      return mockProjects;
+      if (import.meta.env.DEV) {
+        localStorage.setItem('vc_projects', JSON.stringify(mockProjects));
+      }
+      return import.meta.env.DEV ? mockProjects : [];
     }
     return JSON.parse(stored);
   };
@@ -300,8 +347,10 @@ export const useSparkStore = create<SparkState>((set, get) => {
     if (typeof window === 'undefined') return mockTokens;
     const stored = localStorage.getItem('vc_tokens');
     if (!stored) {
-      localStorage.setItem('vc_tokens', JSON.stringify(mockTokens));
-      return mockTokens;
+      if (import.meta.env.DEV) {
+        localStorage.setItem('vc_tokens', JSON.stringify(mockTokens));
+      }
+      return import.meta.env.DEV ? mockTokens : [];
     }
     return JSON.parse(stored);
   };
@@ -310,22 +359,46 @@ export const useSparkStore = create<SparkState>((set, get) => {
     if (typeof window === 'undefined') return mockTeams;
     const stored = localStorage.getItem('vc_teams');
     if (!stored) {
-      localStorage.setItem('vc_teams', JSON.stringify(mockTeams));
-      return mockTeams;
+      if (import.meta.env.DEV) {
+        localStorage.setItem('vc_teams', JSON.stringify(mockTeams));
+      }
+      return import.meta.env.DEV ? mockTeams : [];
     }
     return JSON.parse(stored);
+  };
+
+  const loadStoredEcosystems = () => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('vc_ecosystems');
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const loadStoredSquads = () => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('vc_squads');
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  const loadStoredReferrals = () => {
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('vc_referrals');
+    return stored ? JSON.parse(stored) : [];
   };
 
   return {
     projects: loadStoredProjects(),
     tokens: loadStoredTokens(),
     teams: loadStoredTeams(),
+    ecosystems: loadStoredEcosystems(),
+    squads: loadStoredSquads(),
+    referrals: loadStoredReferrals(),
 
     addProject: (input) => {
       const id = `spark-${Date.now()}`;
       const newProject: SparkProject = {
         ...input,
         id,
+        projectCode: `SPARK-${input.agentTicker}-${Date.now().toString(36).toUpperCase()}`,
         raisedAmount: 0,
         investorCount: 0,
         progress: 0,
@@ -370,9 +443,9 @@ export const useSparkStore = create<SparkState>((set, get) => {
             const newRaised = proj.raisedAmount + amount;
             const newProgress = Math.min(100, Number(((newRaised / proj.goalAmount) * 100).toFixed(1)));
             const isFinished = newRaised >= proj.goalAmount;
-            
+
             isSuccess = true;
-            
+
             // Check if address is already a backer
             const existingBackerIdx = proj.backers.findIndex(b => b.address === address);
             let nextBackers = [...proj.backers];
@@ -464,7 +537,7 @@ export const useSparkStore = create<SparkState>((set, get) => {
             const newMCap = Number((tok.marketCap + amountTON).toFixed(2));
             const newVol = Number((tok.volume24h + amountTON).toFixed(2));
             const priceChange = Number((((newPrice - originalPrice) / originalPrice) * 100).toFixed(2));
-            
+
             const updatedChart = [
               ...tok.chartData,
               {
@@ -652,7 +725,7 @@ export const useSparkStore = create<SparkState>((set, get) => {
           if (team.id === teamId && team.status === 'active') {
             const newAmount = team.currentAmount + amount;
             const isFull = newAmount >= team.targetAmount;
-            
+
             // Check if member already exists
             const existingMemberIdx = team.members.findIndex(m => m.address === address);
             let nextMembers = [...team.members];
@@ -682,15 +755,12 @@ export const useSparkStore = create<SparkState>((set, get) => {
                 updatedTeam.members.forEach((member) => {
                   store.investInProject(updatedTeam.projectId, member.amount, member.address);
                 });
-                
+
                 // Add a notification to notificationStore
                 try {
                   const project = store.getProjectById(updatedTeam.projectId);
                   if (project) {
-                    import('./notificationStore').then(({ useNotificationStore }) => {
-                      useNotificationStore.getState().markAsRead(project.agentTicker); // dummy trigger or similar
-                      // We can push a custom notification
-                    }).catch(() => {});
+                    useNotificationStore.getState().markAsRead(project.agentTicker);
                   }
                 } catch (err) {}
               }, 100);
@@ -711,6 +781,298 @@ export const useSparkStore = create<SparkState>((set, get) => {
 
     getTeamById: (teamId) => {
       return get().teams.find(t => t.id === teamId);
+    },
+
+    updateProjectDetails: (projectId, updates) => {
+      set((state) => {
+        const nextProjects = state.projects.map((p) => p.id === projectId ? { ...p, ...updates } : p);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vc_projects', JSON.stringify(nextProjects));
+        }
+        return { projects: nextProjects };
+      });
+
+      const token = getWalletJwt();
+      if (token) {
+        fetch(`${API_BASE}/api/v1/launches/${projectId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(updates),
+          signal: AbortSignal.timeout(5000),
+        }).catch((err) => {
+          console.error('[SparkStore] Sync update launch details failed:', err);
+        });
+      }
+    },
+
+    createEcosystem: async (name, description, creatorWallet) => {
+      const id = `eco-${Date.now()}`;
+      const code = generateEcosystemCode();
+      const ecosystem: CreatorEcosystem = {
+        id,
+        ecosystemCode: code,
+        creatorWallet,
+        name,
+        description,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        memberCount: 1
+      };
+
+      const token = getWalletJwt();
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/ecosystems`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ name, description }),
+            signal: AbortSignal.timeout(5000)
+          });
+          const data = await res.json();
+          if (data.success && data.data) {
+            ecosystem.id = data.data.id;
+            ecosystem.ecosystemCode = data.data.ecosystemCode;
+          }
+        } catch (e) {
+          console.error('Failed to create ecosystem via API, using fallback:', e);
+        }
+      }
+
+      set((state) => {
+        const next = [ecosystem, ...state.ecosystems];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vc_ecosystems', JSON.stringify(next));
+        }
+        return { ecosystems: next };
+      });
+      return ecosystem;
+    },
+
+    getEcosystemsByCreator: (creatorWallet) => {
+      return get().ecosystems.filter(e => e.creatorWallet.toLowerCase() === creatorWallet.toLowerCase());
+    },
+
+    createSquad: async (projectId, creatorWallet, creatorName, targetMembers, targetAmount) => {
+      const id = `squad-${Date.now()}`;
+      const code = generateSquadCode();
+      const squad: SparkSquad = {
+        id,
+        squadCode: code,
+        projectId,
+        creatorWallet,
+        creatorName,
+        targetMembers,
+        targetAmount,
+        currentAmount: 0,
+        currentMembers: 0,
+        expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+        rewardText: '集火达标全队白名单权益',
+        status: 'active',
+        createdAt: new Date().toISOString()
+      };
+
+      const token = getWalletJwt();
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/squads`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({
+              projectId,
+              creatorName,
+              targetMembers,
+              targetAmount: targetAmount
+            }),
+            signal: AbortSignal.timeout(5000)
+          });
+          const data = await res.json();
+          if (data.success && data.data) {
+            squad.id = data.data.id;
+            squad.squadCode = data.data.squadCode;
+            squad.expiresAt = data.data.expiresAt;
+          }
+        } catch (e) {
+          console.error('Failed to create squad via worker API, using fallback:', e);
+        }
+      }
+
+      set((state) => {
+        const next = [squad, ...state.squads];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('vc_squads', JSON.stringify(next));
+        }
+        return { squads: next };
+      });
+      return squad;
+    },
+
+    joinSquad: async (squadId, walletAddress, amount) => {
+      let isSuccess = false;
+      const token = getWalletJwt();
+
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/squads/${squadId}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ amount }),
+            signal: AbortSignal.timeout(5000)
+          });
+          const data = await res.json();
+          if (data.success) {
+            isSuccess = true;
+          } else {
+            console.error('Squad join rejected by API:', data.error);
+            return false;
+          }
+        } catch (e) {
+          console.error('Failed to join squad via API, using fallback:', e);
+          isSuccess = true;
+        }
+      } else {
+        isSuccess = true;
+      }
+
+      if (isSuccess) {
+        set((state) => {
+          const nextSquads = state.squads.map(s => {
+            if (s.id === squadId && s.status === 'active') {
+              const newAmount = s.currentAmount + amount;
+              const newMembers = s.currentMembers + 1;
+              const isFull = newAmount >= s.targetAmount && newMembers >= s.targetMembers;
+
+              // Defer investment to avoid nested store calls during state compute
+              setTimeout(() => {
+                const store = useSparkStore.getState();
+                store.investInProject(s.projectId, amount, walletAddress);
+              }, 100);
+
+              return {
+                ...s,
+                currentAmount: newAmount,
+                currentMembers: newMembers,
+                status: isFull ? 'success' as const : 'active' as const
+              };
+            }
+            return s;
+          });
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('vc_squads', JSON.stringify(nextSquads));
+          }
+          return { squads: nextSquads };
+        });
+      }
+      return isSuccess;
+    },
+
+    loadSquads: async (projectId) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/squads/project/${projectId}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          const fetchedSquads = data.data.map((r: any) => ({
+            id: r.id,
+            squadCode: r.squad_code,
+            projectId: r.project_id,
+            creatorWallet: r.creator_wallet,
+            creatorName: r.creator_name,
+            targetMembers: r.target_members,
+            targetAmount: Number(r.target_amount_nano) / 1e9,
+            currentAmount: Number(r.current_amount_nano) / 1e9,
+            currentMembers: r.current_members,
+            expiresAt: r.expires_at,
+            rewardText: r.reward_text,
+            status: r.status,
+            createdAt: r.created_at,
+          }));
+          set((state) => {
+            const otherSquads = state.squads.filter(s => s.projectId !== projectId);
+            const nextSquads = [...fetchedSquads, ...otherSquads];
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('vc_squads', JSON.stringify(nextSquads));
+            }
+            return { squads: nextSquads };
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load squads:', err);
+      }
+    },
+
+    addReferral: async (inviterWallet, inviteeWallet) => {
+      let isSuccess = false;
+      const token = getWalletJwt();
+      if (token) {
+        try {
+          const res = await fetch(`${API_BASE}/api/v1/referrals`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ inviterWallet }),
+            signal: AbortSignal.timeout(5000)
+          });
+          const data = await res.json();
+          if (data.success) {
+            isSuccess = true;
+          }
+        } catch (e) {
+          console.error('Failed to record referral via API, using fallback:', e);
+          isSuccess = true;
+        }
+      } else {
+        isSuccess = true;
+      }
+
+      if (isSuccess) {
+        const newRef: ReferralRecord = {
+          id: `ref-${Date.now()}`,
+          inviterWallet,
+          inviteeWallet,
+          inviteeConnectedAt: new Date().toISOString(),
+          rewardStatus: 'pending',
+          rewardVcAmount: 50,
+          createdAt: new Date().toISOString()
+        };
+        set((state) => {
+          const next = [newRef, ...state.referrals];
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('vc_referrals', JSON.stringify(next));
+          }
+          return { referrals: next };
+        });
+      }
+      return isSuccess;
+    },
+
+    loadReferrals: async (wallet) => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/referrals/${wallet}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          const fetchedRefs = data.data.map((r: any) => ({
+            id: r.id,
+            inviterWallet: r.inviter_wallet,
+            inviteeWallet: r.invitee_wallet,
+            inviteeConnectedAt: r.created_at,
+            firstSparkProjectId: r.first_spark_project_id || undefined,
+            firstSparkAmount: r.first_spark_amount_nano ? Number(r.first_spark_amount_nano) / 1e9 : undefined,
+            firstSparkAt: r.first_spark_at || undefined,
+            rewardStatus: r.reward_status,
+            rewardVcAmount: Number(r.reward_vc_nano) / 1e9,
+            flaggedReason: r.flagged_reason || undefined,
+            createdAt: r.created_at,
+          }));
+          set((state) => {
+            const others = state.referrals.filter(ref => ref.inviterWallet.toLowerCase() !== wallet.toLowerCase());
+            const next = [...fetchedRefs, ...others];
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('vc_referrals', JSON.stringify(next));
+            }
+            return { referrals: next };
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load referrals:', err);
+      }
     }
   };
 });

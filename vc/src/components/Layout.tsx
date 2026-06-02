@@ -1,18 +1,22 @@
 import { Outlet } from 'react-router-dom';
 import RiskNotice from './RiskNotice';
 import Header from './Header';
+import RecommendBar from './RecommendBar';
 import Sidebar from './Sidebar';
 import MobileNav from './MobileNav';
 import TelegramNotificationToast from './TelegramNotificationToast';
 
 export default function Layout() {
   return (
-    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0B14] text-gray-200 font-sans">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[#0A0B14] text-gray-200 font-sans pt-safe">
       {/* 1. Top Risk Notice Banner */}
       <RiskNotice />
 
       {/* 2. Top Navigation header */}
       <Header />
+
+      {/* 2.5. Sticky Recommend Bar */}
+      <RecommendBar />
 
       {/* 3. Main Split View Grid */}
       <div className="flex flex-1 overflow-hidden relative">
