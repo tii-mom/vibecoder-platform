@@ -54,7 +54,7 @@ export const useUserStore = create<UserState>((set, get) => {
             username: `VibeDev_${address.slice(0, 4)}...${address.slice(-4)}`,
             avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${address}`,
             balanceTON: 0, // sync component will update this
-            balanceVC: 1000,
+            balanceVC: 0,
             trialBalance: 15,
             isRegistered: true,
             role: 'both',

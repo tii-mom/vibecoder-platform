@@ -64,7 +64,7 @@ export default function BountyPage() {
             <Gift size={20} className="text-[#635BFF]" />
             赏金市场
           </h2>
-          <p className="text-xs text-gray-500 mt-1">完成任务赚 VC 和代币 · 机器人自动验证</p>
+          <p className="text-xs text-gray-500 mt-1">完成任务赚 testnet VC 和代币 · 机器人自动验证</p>
         </div>
         <button
           onClick={() => setChatWallet(chatWallet === 'auto' ? 'manual' : 'auto')}
@@ -80,11 +80,11 @@ export default function BountyPage() {
       <div className="p-4 bg-gradient-to-r from-[#1C1A3F] to-[#1A1C2C] border border-[#22253E] rounded-xl flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div>
-            <div className="text-[9px] text-gray-500 uppercase">待提取 VC</div>
+            <div className="text-[9px] text-gray-500 uppercase">待提取 testnet VC</div>
             <div className="text-2xl font-black text-[#635BFF]">{pendingVC} <span className="text-[10px] font-normal text-gray-400">VC</span></div>
           </div>
           <div>
-            <div className="text-[9px] text-gray-500 uppercase">累计收益</div>
+            <div className="text-[9px] text-gray-500 uppercase">累计收益（待结算）</div>
             <div className="text-lg font-bold text-white">{totalEarned} <span className="text-[10px] text-gray-400">VC</span></div>
           </div>
         </div>
@@ -108,7 +108,7 @@ export default function BountyPage() {
               filter === f ? 'bg-[#1C1A3F] text-white' : 'text-gray-400 hover:text-white'
             }`}
           >
-            {f === 'all' ? '全部任务' : f === 'vc' ? 'VC 奖励' : '代币奖励'}
+            {f === 'all' ? '全部任务' : f === 'vc' ? 'testnet VC 奖励' : '代币奖励'}
           </button>
         ))}
       </div>
@@ -132,7 +132,7 @@ export default function BountyPage() {
                   {task.creatorName} · {task.creatorType}
                 </div>
                 <div className="flex items-center gap-4 mt-2 text-[10px]">
-                  <span className="text-[#635BFF] font-bold">{task.reward} / 人</span>
+                  <span className="text-[#635BFF] font-bold">{task.rewardToken === 'VC' ? `${task.reward} (testnet)` : task.reward} / 人</span>
                   <span className="text-gray-500">{task.completedSlots}/{task.totalSlots} 已完成</span>
                   <div className="w-20 h-1.5 bg-[#22253E] rounded-full overflow-hidden">
                     <div className="h-full bg-[#635BFF] rounded-full" style={{ width: `${(task.completedSlots / task.totalSlots) * 100}%` }} />
@@ -160,7 +160,7 @@ export default function BountyPage() {
             <h3 className="text-lg font-black text-white">{selectedTask.title}</h3>
             <div className="flex items-center gap-2 text-xs text-gray-400">
               {tierBadge(selectedTask.creatorTier)}
-              <span>奖励: <strong className="text-[#635BFF]">{selectedTask.reward}</strong></span>
+              <span>奖励: <strong className="text-[#635BFF]">{selectedTask.rewardToken === 'VC' ? `${selectedTask.reward} (testnet VC_JETTON)` : selectedTask.reward}</strong></span>
             </div>
 
             {selectedTask.creatorTier > 0 && (

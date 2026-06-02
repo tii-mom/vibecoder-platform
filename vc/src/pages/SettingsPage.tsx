@@ -51,7 +51,7 @@ export default function SettingsPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  // Faucet claim helper (Claim 50 TON or 100 $VC instantly)
+  // Faucet claim helper (TON is local fuel; VC is displayed from the synced testnet Jetton balance)
   const handleFaucetClaim = (type: 'TON' | 'VC') => {
     if (!isConnected || !profile) {
       handleWalletFallback();
@@ -68,10 +68,7 @@ export default function SettingsPage() {
         });
         setFaucetMsg('🎉 成功领取 50 TON 测试代金券！账户已刷新。');
       } else {
-        updateProfile({
-          balanceVC: Number((profile.balanceVC + 100).toFixed(2))
-        });
-        setFaucetMsg('🎉 成功领取 100 $VC 代码质押券！可在 Launchpad 抵用。');
+        setFaucetMsg('ℹ️ VC 余额来自 TON testnet VC_JETTON 钱包；本地 faucet 不再伪造链上 $VC。请在合约列表确认 VC_JETTON 来源。');
       }
       setFaucetLoading(null);
     }, 1200);
@@ -301,7 +298,7 @@ export default function SettingsPage() {
                     <span className="text-white font-extrabold">{profile?.balanceTON} TON</span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[9px] text-gray-500 block">VC CREDITS</span>
+                    <span className="text-[9px] text-gray-500 block">TESTNET VC JETTON</span>
                     <span className="text-purple-400 font-extrabold">{profile?.balanceVC} VC</span>
                   </div>
                 </div>
@@ -336,7 +333,7 @@ export default function SettingsPage() {
             <div className="space-y-3.5">
               <div>
                 <h4 className="text-xs font-bold text-white">沙盒子代币申领中心</h4>
-                <p className="text-[10px] text-gray-405 leading-relaxed mt-0.5">测试网代币非主网真金。可在星火大厅以及 Launchpad 发行中完成代码模拟流转交割校验。</p>
+                <p className="text-[10px] text-gray-405 leading-relaxed mt-0.5">TON faucet 为本地沙盒燃料；VC 余额来自 TON testnet 的 VC_JETTON 钱包查询，非本地伪造额度。</p>
               </div>
 
               {faucetMsg && (
@@ -363,7 +360,7 @@ export default function SettingsPage() {
                   variant="secondary"
                   className="w-full justify-between"
                 >
-                  <span className="text-left text-purple-400">申领 +100 VC Launchpad Credits</span>
+                  <span className="text-left text-purple-400">查看 VC_JETTON testnet 来源</span>
                   <ChevronRight size={12} />
                 </Button>
               </div>

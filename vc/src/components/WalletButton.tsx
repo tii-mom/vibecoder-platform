@@ -39,7 +39,7 @@ export default function WalletButton() {
   };
 
   const triggerFaucet = () => {
-    addFunds(100, 5000);
+    addFunds(100);
     setFaucetSuccess(true);
     setTimeout(() => setFaucetSuccess(false), 3000);
   };
@@ -57,7 +57,7 @@ export default function WalletButton() {
             <span className="text-[#32365A]">|</span>
             <span className="flex items-center gap-1 text-[#635BFF]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#635BFF]"></span>
-              {profile.balanceVC} $VC
+              {profile.balanceVC} $VC testnet
             </span>
           </div>
 
@@ -110,7 +110,7 @@ export default function WalletButton() {
                 <span className="text-sky-400 font-semibold">{profile.balanceTON} TON</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">$VC:</span>
+                <span className="text-gray-500">$VC testnet:</span>
                 <span className="text-[#635BFF] font-semibold">{profile.balanceVC} $VC</span>
               </div>
             </div>
@@ -123,9 +123,9 @@ export default function WalletButton() {
             >
               <span className="flex items-center gap-1.5">
                 <Coins size={14} className={faucetSuccess ? 'text-emerald-400' : 'text-[#9A7DFA]'} />
-                {faucetSuccess ? 'Claimed successfully!' : 'Claim Faucet (+100 TON / VC)'}
+                {faucetSuccess ? 'Claimed local TON!' : 'Claim local TON faucet (+100)'}
               </span>
-              {!faucetSuccess && <span className="bg-[#635BFF]/35 text-[9px] text-[#D8CEFC] px-1.5 py-0.5 rounded font-mono">FREE</span>}
+              {!faucetSuccess && <span className="bg-[#635BFF]/35 text-[9px] text-[#D8CEFC] px-1.5 py-0.5 rounded font-mono">LOCAL</span>}
             </button>
 
             <button
