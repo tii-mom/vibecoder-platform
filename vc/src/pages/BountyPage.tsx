@@ -1,5 +1,21 @@
-import { useState } from 'react';
-import { Gift, ExternalLink, Wallet, Clock, Zap, AlertTriangle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Gift, ExternalLink, Wallet, Clock, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useUserStore } from '../store/userStore';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
+
+type ClaimStatus = 'IDLE' | 'PENDING' | 'SUBMITTED' | 'CONFIRMED';
+
+interface BountyClaim {
+  id: string;
+  user_id: string;
+  wallet_address: string;
+  amount_vc: number;
+  status: Exclude<ClaimStatus, 'IDLE'>;
+  tx_hash?: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 interface BountyTask {
   id: string;
@@ -34,14 +50,76 @@ const BOUNTY_TYPES: Record<string, string> = {
 };
 
 export default function BountyPage() {
+  const { isConnected, walletAddress, connectWallet } = useUserStore();
   const [filter, setFilter] = useState<'all' | 'vc' | 'token'>('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<BountyTask | null>(null);
   const [extWallet, setExtWallet] = useState('');
   const [chatWallet, setChatWallet] = useState('auto');
+  const [pendingVC, setPendingVC] = useState(47);
+  const [totalEarned, setTotalEarned] = useState(156);
+  const [latestClaim, setLatestClaim] = useState<BountyClaim | null>(null);
+  const [isClaiming, setIsClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
-  const pendingVC = 47;
-  const totalEarned = 156;
+  const claimStatus: ClaimStatus = latestClaim?.status || 'IDLE';
+  const claimUi = useMemo(() => {
+    if (claimStatus === 'PENDING') {
+      return { label: '待发放', description: '发放脚本正在排队处理', icon: Clock, disabled: true };
+    }
+    if (claimStatus === 'SUBMITTED') {
+      return { label: '已提交链上', description: latestClaim?.tx_hash ? `Tx: ${latestClaim.tx_hash}` : '等待链上确认', icon: Zap, disabled: true };
+    }
+    if (claimStatus === 'CONFIRMED') {
+      return { label: '已到账', description: latestClaim?.tx_hash ? `Tx: ${latestClaim.tx_hash}` : '后台已确认发放', icon: CheckCircle2, disabled: pendingVC <= 0 };
+    }
+    return { label: '一键提取', description: '提交后由后台发放到链上钱包', icon: Wallet, disabled: pendingVC <= 0 };
+  }, [claimStatus, latestClaim?.tx_hash, pendingVC]);
+  const ClaimIcon = claimUi.icon;
+
+  const refreshBalance = async () => {
+    if (!walletAddress) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/bounty/balance?user_id=${encodeURIComponent(walletAddress)}`);
+      const json = await res.json() as { success: boolean; data?: { pending_vc?: number; total_earned_vc?: number; latest_claim?: BountyClaim | null } };
+      if (!json.success || !json.data) return;
+      setPendingVC(Number(json.data.pending_vc || 0));
+      setTotalEarned(Number(json.data.total_earned_vc || 0));
+      setLatestClaim(json.data.latest_claim || null);
+    } catch (error) {
+      console.warn('[Bounty] balance fetch failed, using mock balance:', error);
+    }
+  };
+
+  useEffect(() => {
+    refreshBalance();
+  }, [walletAddress]);
+
+  const handleClaim = async () => {
+    setClaimError(null);
+    if (!isConnected || !walletAddress) {
+      connectWallet();
+      return;
+    }
+    if (claimUi.disabled || isClaiming) return;
+
+    setIsClaiming(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/bounty/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: walletAddress, wallet_address: walletAddress }),
+      });
+      const json = await res.json() as { success: boolean; error?: string; data?: BountyClaim };
+      if (!json.success) throw new Error(json.error || '提交提取失败');
+      if (json.data) setLatestClaim(json.data);
+      await refreshBalance();
+    } catch (error: any) {
+      setClaimError(error.message || '提交提取失败');
+    } finally {
+      setIsClaiming(false);
+    }
+  };
 
   const filtered = MOCK_TASKS.filter((t) => {
     if (filter === 'vc') return t.rewardToken === 'VC';
@@ -88,13 +166,27 @@ export default function BountyPage() {
             <div className="text-lg font-bold text-white">{totalEarned} <span className="text-[10px] text-gray-400">VC</span></div>
           </div>
         </div>
-        <div className="flex gap-2">
-          <button className="px-4 py-2 bg-[#635BFF] text-white rounded-lg text-xs font-bold hover:bg-[#5245EE] transition flex items-center gap-1.5">
-            <Wallet size={13} /> 一键提取
-          </button>
-          <button className="px-3 py-2 bg-[#1A1C2C] border border-[#22253E] text-gray-400 rounded-lg text-[10px] hover:text-white transition">
-            设置自动提取
-          </button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleClaim}
+              disabled={claimUi.disabled || isClaiming}
+              className={`px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                claimUi.disabled || isClaiming
+                  ? 'bg-[#1A1C2C] border border-[#22253E] text-gray-400 cursor-not-allowed'
+                  : 'bg-[#635BFF] text-white hover:bg-[#5245EE]'
+              }`}
+            >
+              <ClaimIcon size={13} /> {isClaiming ? '提交中...' : claimUi.label}
+            </button>
+            <button className="px-3 py-2 bg-[#1A1C2C] border border-[#22253E] text-gray-400 rounded-lg text-[10px] hover:text-white transition">
+              设置自动提取
+            </button>
+          </div>
+          <div className="max-w-[220px] truncate text-[10px] text-gray-500" title={claimUi.description}>
+            {claimUi.description}
+          </div>
+          {claimError && <div className="text-[10px] text-red-400">{claimError}</div>}
         </div>
       </div>
 

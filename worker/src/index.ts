@@ -434,7 +434,7 @@ app.get('/api/v1/bounty/stake/status', async (c) => {
   }
 });
 
-// 17. GET /api/v1/bounty/balance - Get user VC balance
+// 17. GET /api/v1/bounty/balance - Get user VC balance and latest claim state
 app.get('/api/v1/bounty/balance', async (c) => {
   try {
     const userId = c.req.query('user_id');
@@ -442,32 +442,104 @@ app.get('/api/v1/bounty/balance', async (c) => {
     const balance = await c.env.DB.prepare(
       'SELECT * FROM user_vc_balances WHERE user_id = ?'
     ).bind(userId).first();
-    return c.json({ success: true, data: balance || { pending_vc: 0, total_earned_vc: 0 } });
+    const latestClaim = await c.env.DB.prepare(
+      'SELECT * FROM bounty_claims WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+    ).bind(userId).first();
+    return c.json({
+      success: true,
+      data: {
+        ...(balance || { pending_vc: 0, total_earned_vc: 0 }),
+        latest_claim: latestClaim || null,
+      },
+    });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
 });
 
-// 18. POST /api/v1/bounty/claim - Claim VC to wallet
+// 18. POST /api/v1/bounty/claim - Queue VC claim for off-chain payout worker
 app.post('/api/v1/bounty/claim', async (c) => {
   try {
-    const { user_id } = await c.req.json();
-    if (!user_id) return c.json({ success: false, error: 'user_id required' }, 400);
+    const { user_id, wallet_address } = await c.req.json();
+    if (!user_id || !wallet_address) {
+      return c.json({ success: false, error: 'user_id and wallet_address required' }, 400);
+    }
+
+    const inFlightClaim = await c.env.DB.prepare(
+      `SELECT * FROM bounty_claims
+       WHERE user_id = ? AND status IN ('PENDING', 'SUBMITTED')
+       ORDER BY created_at DESC LIMIT 1`
+    ).bind(user_id).first() as any;
+    if (inFlightClaim) {
+      return c.json({
+        success: true,
+        message: 'Claim already queued',
+        data: inFlightClaim,
+      });
+    }
+
     const balance = await c.env.DB.prepare(
       'SELECT * FROM user_vc_balances WHERE user_id = ?'
     ).bind(user_id).first() as any;
     if (!balance || balance.pending_vc <= 0) {
       return c.json({ success: false, error: 'No pending VC to claim' }, 400);
     }
-    // Reset pending
+
+    const now = new Date().toISOString();
+    const claimId = `claim-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     await c.env.DB.prepare(
-      'UPDATE user_vc_balances SET pending_vc = 0, updated_at = ? WHERE user_id = ?'
-    ).bind(new Date().toISOString(), user_id).run();
-    // Mark all pending submissions claimed
+      `INSERT INTO bounty_claims (id, user_id, wallet_address, amount_vc, status, tx_hash, created_at, updated_at)
+       VALUES (?, ?, ?, ?, 'PENDING', NULL, ?, ?)`
+    ).bind(claimId, user_id, wallet_address, balance.pending_vc, now, now).run();
+
+    const claim = await c.env.DB.prepare(
+      'SELECT * FROM bounty_claims WHERE id = ?'
+    ).bind(claimId).first();
+    return c.json({
+      success: true,
+      message: `${balance.pending_vc} VC claim queued for payout`,
+      data: claim,
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 19. PUT /api/v1/bounty/claims/:id - Update payout status from background payout script
+app.put('/api/v1/bounty/claims/:id', async (c) => {
+  try {
+    const claimId = c.req.param('id');
+    const { status, tx_hash } = await c.req.json();
+    const allowedStatuses = new Set(['PENDING', 'SUBMITTED', 'CONFIRMED']);
+    if (!allowedStatuses.has(status)) {
+      return c.json({ success: false, error: 'status must be PENDING, SUBMITTED, or CONFIRMED' }, 400);
+    }
+
+    const claim = await c.env.DB.prepare(
+      'SELECT * FROM bounty_claims WHERE id = ?'
+    ).bind(claimId).first() as any;
+    if (!claim) return c.json({ success: false, error: 'Claim not found' }, 404);
+
+    const now = new Date().toISOString();
     await c.env.DB.prepare(
-      'UPDATE bounty_submissions SET claimed = 1 WHERE user_id = ? AND claimed = 0'
-    ).bind(user_id).run();
-    return c.json({ success: true, message: `Claimed ${balance.pending_vc} VC`, amount: balance.pending_vc });
+      'UPDATE bounty_claims SET status = ?, tx_hash = COALESCE(?, tx_hash), updated_at = ? WHERE id = ?'
+    ).bind(status, tx_hash || null, now, claimId).run();
+
+    if (status === 'CONFIRMED') {
+      await c.env.DB.prepare(
+        `UPDATE user_vc_balances
+         SET pending_vc = MAX(pending_vc - ?, 0), updated_at = ?
+         WHERE user_id = ?`
+      ).bind(claim.amount_vc, now, claim.user_id).run();
+      await c.env.DB.prepare(
+        'UPDATE bounty_submissions SET claimed = 1 WHERE user_id = ? AND claimed = 0'
+      ).bind(claim.user_id).run();
+    }
+
+    const updatedClaim = await c.env.DB.prepare(
+      'SELECT * FROM bounty_claims WHERE id = ?'
+    ).bind(claimId).first();
+    return c.json({ success: true, data: updatedClaim });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
