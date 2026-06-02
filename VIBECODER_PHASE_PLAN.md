@@ -33,7 +33,54 @@
 
 ---
 
-## 阶段 0：Acton 工具链升级（1 天）
+## 最新测试网平台合约地址
+
+> 来源：当前 `contracts/scripts/mint-vc.ts` 使用的 testnet 常量。`EARLY_FUNDRAISING` 为统一命名，后续文档、环境变量、D1 `platform_contracts` 与前端展示都必须使用该名称。
+
+| # | 平台组件 | 统一键名 | Testnet 地址 | 上线分级 |
+|---|----------|----------|--------------|----------|
+| 1 | VC Jetton Master | `VC_JETTON` | `UQDwO6ai0zr0UVekU-NIqI_eCTKCICrkt2zGMnAzNJrk58dO` | 上线前必须 |
+| 2 | Platform Fund | `FUND` | `UQDVccelkngo4cX9KkkL109Mf7tYRlwLNC4zrj_cdKfbM8Ha` | 上线前必须 |
+| 3 | Strategic Reserve | `STRATEGIC` | `UQBFKyg4osbhB7pRtzwcTmyCBuyPn4H3LJdHaWJ6HqIj5eH8` | 上线前必须 |
+| 4 | Early Fundraising | `EARLY_FUNDRAISING` | `UQBSEb8LI6QZVDjFOLdV6i4cEYDlTJ7g-mY94l1u6F16t5QT` | 上线前必须 |
+| 5 | Liquidity / LP Wallet | `LIQUIDITY` | `UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq` | 上线前必须 |
+| 6 | Platform Deployer | `DEPLOYER` | `UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq` | 上线前必须 |
+
+---
+
+## 当前阻塞（上线前必须清零）
+
+| 阻塞项 | 当前状态 | 上线前验收标准 | 负责人/落点 |
+|--------|----------|----------------|-------------|
+| Spark 未链上 | Spark 仍存在 mock / 本地混合记账路径 | Spark 提交走 Launch Campaign 合约交易；D1 仅做索引与缓存；Portfolio 以链上事件/余额为准 | 阶段 2.2 + Launch Campaign 联调 |
+| VC 余额未读 Jetton | 已接 testnet TON 余额，但 VC 余额仍未完整读取 Jetton Wallet | 根据用户钱包派生 VC Jetton Wallet，读取余额并在前端统一展示；无钱包时显示未连接态 | 阶段 2.1 `/platform/contracts` + 钱包服务 |
+| bounty 未接前端 | Bounty API / 表设计已有规划，前端入口和领取流程未形成闭环 | BountyPage 接 Worker API：列表、提交、质押状态、余额、claim 均可用 | 阶段 4.2-4.3 |
+| claim 未链上发放 | claim 仍停留在 D1 pending / 设计层 | `/api/v1/bounty/claim` 触发 VC Jetton transfer 或批量发放任务，并记录链上 tx hash | 阶段 4.5 |
+| mock seed 未隔离 | demo seed / mock 数据仍可能进入真实 testnet 流程 | 所有 mock seed 仅在 dev/demo profile 启用；生产/testnet API 与前端构建默认禁用 mock 写入 | 阶段 2.2 + 配置清理 |
+
+---
+
+## 上线分级总览
+
+### 上线前必须完成（MVP Gate）
+
+1. **链上闭环**：Spark 上链、VC Jetton 余额读取、claim 链上发放、关键合约地址进入 Worker/D1/前端同一事实源。
+2. **前端闭环**：Spark 弹窗、Portfolio、BountyPage、Claim 状态全部接 Worker API，不再依赖 mock 写入。
+3. **数据隔离**：mock seed、demo 钱包、测试任务与真实 testnet 数据分库/分 profile 隔离。
+4. **命名统一**：所有对外文档、API key、表字段、环境变量统一使用 `EARLY_FUNDRAISING`。
+5. **上线验收**：至少完成一次真实 testnet 钱包连接 → 读 VC Jetton → Spark → bounty 完成 → claim 到钱包的端到端演练。
+
+### 上线后优化（Post-Launch）
+
+1. Acton 原生测试迁移、合约开发体验优化。
+2. Operations / Vesting 深度页面、图表与高级治理分析。
+3. TON Pay 法币入金、Jetton 支付 Spark。
+4. Agentic Wallet、Copilot 自动化、自动投票/自动退出策略。
+5. 外部链代币赏金、跨链验证增强、仲裁与 slashing 高级流程。
+
+---
+
+## 阶段 0：Acton 工具链升级（1 天）｜上线后优化
 
 **目标**：替换 Blueprint → Acton，简化合约开发工具链。
 
@@ -60,7 +107,7 @@ Acton 的 Tolk 版本可能略有语法差异。检查和修复编译错误。
 
 ---
 
-## 阶段 1：前端对齐新合约模型（2-3 天）
+## 阶段 1：前端对齐新合约模型（2-3 天）｜上线前必须
 
 **目标**：前端展示从旧模型（30/50/20）更新为新模型。
 
@@ -101,7 +148,7 @@ Acton 的 Tolk 版本可能略有语法差异。检查和修复编译错误。
 
 ---
 
-## 阶段 2：Worker API 补充（2-3 天）
+## 阶段 2：Worker API 补充（2-3 天）｜上线前必须
 
 ### 任务 2.1：补充 API 端点
 
@@ -121,7 +168,7 @@ Acton 的 Tolk 版本可能略有语法差异。检查和修复编译错误。
 
 ---
 
-## 阶段 3：前端新增页面（3-5 天）
+## 阶段 3：前端新增页面（3-5 天）｜上线后优化
 
 ### 任务 3.1：Vesting 进度页
 
@@ -156,7 +203,7 @@ Acton 的 Tolk 版本可能略有语法差异。检查和修复编译错误。
 
 ---
 
-## 阶段 4：赏金任务系统（1-2 周）⭐ 增长引擎
+## 阶段 4：赏金任务系统（1-2 周）⭐ 增长引擎｜核心闭环上线前必须，高级玩法上线后优化
 
 **目标**：VC 的内循环经济。项目方/用户发起赏金任务，用户完成赚 VC。实现"赏金 > 赚 VC > 用 VC > 更多人发赏金"的正循环。
 
@@ -182,7 +229,7 @@ Gas 策略     ：累积提取（手动/每周自动/到额度触发）
 > VC 开发者（平台项目方）已通过 Launch 验证，风险最低，质押门槛也最低。
 > 外部链创作者匿名度高，50 万 VC 质押 = 实质性信誉担保。
 
-### 任务 4.1：D1 新增表
+### 任务 4.1：D1 新增表（上线前必须）
 
 `worker/migrations/0002_bounty.sql`：
 
@@ -241,7 +288,7 @@ CREATE TABLE user_vc_balances (
 );
 ```
 
-### 任务 4.2：Worker API — 赏金
+### 任务 4.2：Worker API — 赏金（上线前必须）
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
@@ -254,7 +301,7 @@ CREATE TABLE user_vc_balances (
 | `/api/v1/bounty/balance` | GET | 用户待提取 VC |
 | `/api/v1/bounty/claim` | POST | 提取 VC 到钱包 |
 
-### 任务 4.3：前端 — 赏金市场页
+### 任务 4.3：前端 — 赏金市场页（上线前必须）
 
 新建 `src/pages/BountyPage.tsx`：
 
@@ -291,7 +338,7 @@ CREATE TABLE user_vc_balances (
 ```
 ```
 
-### 任务 4.4：Bot 自动验证引擎
+### 任务 4.4：Bot 自动验证引擎（上线前必须：TON/VC；上线后优化：外部链增强）
 
 Worker `services/bounty/verifier.ts`：
 
@@ -309,7 +356,7 @@ Worker `services/bounty/verifier.ts`：
   → 前端: "✅ 任务完成! +2 VC"
 ```
 
-### 任务 4.5：VC 提取 + Gas 优化
+### 任务 4.5：VC 提取 + Gas 优化（上线前必须：手动 claim；上线后优化：批量/自动）
 
 ```
 提取触发方式（3 选 1，用户设置）：
@@ -323,7 +370,7 @@ Worker `services/bounty/verifier.ts`：
   → 每个用户只付 1 次 gas（0.005 TON，从提取额中扣）
 ```
 
-### 任务 4.6：VC 质押管理
+### 任务 4.6：VC 质押管理（上线前必须：平台/TON 质押；上线后优化：外部链仲裁）
 
 Worker `services/bounty/staking.ts`：
 - 用户转 10 万 VC 到平台钱包 → Worker 记 `bounty_stakes`
@@ -332,7 +379,7 @@ Worker `services/bounty/staking.ts`：
 
 ---
 
-## 阶段 5：TG Mini App 适配（1-2 周）
+## 阶段 5：TG Mini App 适配（1-2 周）｜上线后优化
 
 ### 任务 5.1：TG WebApp SDK 集成
 
@@ -365,7 +412,7 @@ npm install @ton-pay/api @ton-pay/react
 
 ---
 
-## 阶段 6：Agentic Wallet + AI 自动化（2-3 周）
+## 阶段 6：Agentic Wallet + AI 自动化（2-3 周）｜上线后优化
 
 ### 任务 6.1：Agentic Wallet 创建流程
 
@@ -405,13 +452,13 @@ Worker 每 1 小时 → 检查所有规则 → 匹配的 → 用 Agentic Wallet 
 ## 执行顺序
 
 ```
-阶段 0（1 天）    → Acton + Blueprint 共存
-阶段 1（2-3 天）  → 前端对齐新合约模型
-阶段 2（2-3 天）  → Worker API 补充（与阶段 1 并行）
-阶段 3（3-5 天）  → 前端新增页面（Vesting + Operations）
-阶段 4（1-2 周）  → ⭐ 赏金任务系统（增长引擎）
-阶段 5（1-2 周）  → TG Mini App 适配 + TON Pay
-阶段 6（2-3 周）  → Agentic Wallet + Copilot 打通
+阶段 0（1 天）    → Acton + Blueprint 共存（上线后优化）
+阶段 1（2-3 天）  → 前端对齐新合约模型（上线前必须）
+阶段 2（2-3 天）  → Worker API 补充（与阶段 1 并行，上线前必须）
+阶段 3（3-5 天）  → 前端新增页面（Vesting + Operations，上线后优化）
+阶段 4（1-2 周）  → ⭐ 赏金任务系统（bounty 前端 + claim 上线前必须；外部链高级玩法上线后优化）
+阶段 5（1-2 周）  → TG Mini App 适配 + TON Pay（上线后优化）
+阶段 6（2-3 周）  → Agentic Wallet + Copilot 打通（上线后优化）
 ```
 
 ---
@@ -445,5 +492,6 @@ Worker 每 1 小时 → 检查所有规则 → 匹配的 → 用 Agentic Wallet 
 
 ## 当前任务
 
-**立即执行阶段 0**：Acton + Blueprint 共存（`acton init` + `acton build`，保留 npm test）。
-然后阶段 1：前端对齐新模型。
+**立即执行上线前 Gate**：优先清零“当前阻塞”中的 5 项（Spark 上链、VC Jetton 余额、bounty 前端、claim 链上发放、mock seed 隔离）。
+
+**随后执行上线后优化**：Acton + Blueprint 共存（`acton init` + `acton build`，保留 npm test），再推进 Vesting / Operations / TG Mini App / Agentic Wallet。
