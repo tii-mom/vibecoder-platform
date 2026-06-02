@@ -5,17 +5,35 @@ import { TonClient, WalletContractV4, internal, toNano, beginCell, Address } fro
 import { mnemonicToPrivateKey } from '@ton/crypto';
 import 'dotenv/config';
 
-const MNEMONIC_RAW = process.env.DEPLOYER_MNEMONIC || '';
+const MNEMONIC_RAW = requireEnv('DEPLOYER_MNEMONIC');
 const MNEMONIC = MNEMONIC_RAW.replace(/"/g, '').replace(/\u00a0/g, ' ').trim();
 
-const VC_JETTON = Address.parse('UQDwO6ai0zr0UVekU-NIqI_eCTKCICrkt2zGMnAzNJrk58dO');
-const FUND = Address.parse('UQDVccelkngo4cX9KkkL109Mf7tYRlwLNC4zrj_cdKfbM8Ha');
-const STRATEGIC = Address.parse('UQBFKyg4osbhB7pRtzwcTmyCBuyPn4H3LJdHaWJ6HqIj5eH8');
-const EARLY_SUB = Address.parse('UQBSEb8LI6QZVDjFOLdV6i4cEYDlTJ7g-mY94l1u6F16t5QT');
-const LIQUIDITY = Address.parse('UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq');
-const DEPLOYER = Address.parse('UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq');
+const VC_JETTON = parseAddressEnv('VC_JETTON');
+const FUND = parseAddressEnv('FUND');
+const STRATEGIC = parseAddressEnv('STRATEGIC');
+const EARLY_FUNDRAISING = parseAddressEnv('EARLY_FUNDRAISING');
+const LIQUIDITY = parseAddressEnv('LIQUIDITY');
+const VC_REWARD_POOL = parseAddressEnv('VC_REWARD_POOL');
+const DEPLOYER = parseAddressEnv('DEPLOYER_WALLET');
 
-const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
+const TONCENTER_KEY = requireEnv('TONCENTER_API_KEY');
+
+function requireEnv(name: string): string {
+  const value = process.env[name]?.replace(/\u00a0/g, ' ').trim();
+  if (!value) {
+    throw new Error(`Missing required env ${name}. Refusing to mint with a fallback or stale address.`);
+  }
+  return value;
+}
+
+function parseAddressEnv(name: string): Address {
+  try {
+    return Address.parse(requireEnv(name));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Invalid TON address in env ${name}: ${message}`);
+  }
+}
 
 async function main() {
   const endpoint = `https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_KEY}`;
@@ -27,9 +45,9 @@ async function main() {
   const dist = [
     { name: 'Fund (720M)',      to: FUND,      amount: 720_000_000n },
     { name: 'Strategic (72M)',  to: STRATEGIC,  amount: 72_000_000n },
-    { name: 'Early Sub (45M)',  to: EARLY_SUB,  amount: 45_000_000n },
-    { name: 'Liquidity (45M)',  to: LIQUIDITY,  amount: 45_000_000n },
-    { name: 'Support (18M)',    to: DEPLOYER,   amount: 18_000_000n },
+    { name: 'Early Fundraising (45M)', to: EARLY_FUNDRAISING, amount: 45_000_000n },
+    { name: 'Liquidity (45M)',         to: LIQUIDITY,          amount: 45_000_000n },
+    { name: 'VC Reward Pool (18M)',    to: VC_REWARD_POOL,     amount: 18_000_000n },
   ];
 
   // Verify total
@@ -87,4 +105,7 @@ async function clientRetry<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 function sleep(ms: number) { return new Promise(r => setTimeout(r, ms)); }
-main().catch(console.error);
+main().catch((error: unknown) => {
+  console.error(error);
+  process.exitCode = 1;
+});

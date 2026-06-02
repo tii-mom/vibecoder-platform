@@ -111,7 +111,7 @@ async function main() {
   console.log(`VC_JETTON=${vcAddr}`);
   console.log(`FUND=${fund.toString({bounceable: false})}`);
   console.log(`STRATEGIC=${strategic.toString({bounceable: false})}`);
-  console.log(`EARLY_SUB=${earlySub.toString({bounceable: false})}`);
+  console.log(`EARLY_FUNDRAISING=${earlySub.toString({bounceable: false})}`);
   console.log(`LAUNCH_FEE=${launchFee.toString({bounceable: false})}`);
   console.log(`TOKEN_LAUNCHER=${tokenLauncher.toString({bounceable: false})}`);
 }
