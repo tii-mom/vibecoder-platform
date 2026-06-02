@@ -1,6 +1,8 @@
-# VibeCoder 阶段执行计划 v3.0
+# VibeCoder 阶段执行计划 v3.1
 
-> 给执行线程的完整工作计划。基于 `CONTRACTS.md` v2.0 最终合约方案 + TON 生态调研。
+> **当前唯一执行计划文档。** 给执行线程的完整工作计划。基于 `CONTRACTS.md` v2.0 最终合约方案 + TON 生态调研。
+>
+> 执行线程必须以本文档为任务入口；`VIBECODER_COMPLETE_TASKS_PROMPT.md` 已冻结为历史 Prompt，不再作为开发指令。
 
 ---
 
@@ -12,8 +14,37 @@
 | `VIBECODER_PLAN.md` | 产品方案+执行计划 | 部分过时（合约模型已更新） |
 | `VIBECODER_FRONTEND_PROMPTS.md` | 前端生成提示词 | 需更新对齐新模型 |
 | `VIBECODER_REMAINING_WORK.md` | 旧版剩余工作计划 | 已被本文档替代 |
+| `VIBECODER_COMPLETE_TASKS_PROMPT.md` | 历史执行 Prompt | 已冻结，不再执行；有效需求已迁移到本文档 |
 
 **核心原则**：合约部分已确认完毕，不动代码。只做前后端 + 工具链升级。
+
+---
+
+## 全局产品与执行约束（从历史 Prompt 迁移）
+
+### 产品定位
+
+VibeCoder = AI 项目发现与 Launch 平台。开发者一次填表发起 Launch（三段式募资），用户用 TON Spark 支持项目；达到 55% 阈值后进入代币部署、分配和治理流程。
+
+### 两层命名体系
+
+- 平台层名词：`Launch`（例如：去 Launch 页面、这个 Launch 快满了）
+- 用户层动词：`Spark`（例如：我 Spark 了这个项目、按钮文案 `✦ Spark`）
+- 用户端文案优先使用“支持 / 共建 / Spark”，避免把早期 sandbox 功能描述成“投资”。
+
+### 当前前端技术栈与路由基线
+
+- 技术栈：React 19 + Vite 6 + TypeScript + Tailwind CSS 4 + React Router DOM + Zustand + `@tonconnect/ui-react` + Recharts + Motion + Lucide React。
+- 前端目录：`vc/`；后端目录：`worker/`；合约目录：`contracts/`。
+- 当前前端路由基线：`/feed`、`/launch`、`/launch/:id`、`/launch/create`、`/copilot`、`/portfolio`、`/invite`、`/settings`、`/devhub`、`/devhub/docs`。
+- Sidebar 已收敛为核心入口：`Explore / Launch / Copilot / Portfolio / Invite / Settings`；Studio、DevHub 等开发者入口放入 Settings 或 Header 用户菜单，不再恢复旧 Launchpad/Studio 侧边栏入口。
+
+### UI 与交互基线
+
+- 主色：`#635BFF`；背景：`#0A0B14`；卡片：`#121620`。
+- Spark 弹窗保留三段式定价、阶段预览、快选金额、单人/团队切换。后续只把数据源从 mock 迁移到 Worker API，不回退交互规格。
+- Project Health / Governance / Exit 相关 UI 已存在；后续优先对齐新合约模型和 API 数据，不重复按历史 Prompt 重建旧版 30/50/20 UI。
+- Portfolio 已包含上市前代币效用入口；后续新增功能需延续“项目内消耗 / Backer Pool / 治理入口”的信息架构。
 
 ---
 
