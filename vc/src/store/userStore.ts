@@ -23,7 +23,7 @@ interface UserState {
   addFunds: (tonAmount: number, vcAmount?: number) => void;
   setTonConnectUI: (instance: any) => void;
   addToken: (masterAddress: string) => Promise<boolean>;
-  updateTokenBalances: (tonBalance: number, jettonBalances: any[]) => void;
+  updateTokenBalances: (tonBalance: number, jettonBalances: any[], vcBalance?: number) => void;
 }
 
 // Helper to normalize TON addresses for comparison

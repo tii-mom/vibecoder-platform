@@ -283,15 +283,14 @@ export default function BountyPage() {
           throw new Error(t('bounty.errQueryTokenAccount'));
         }
         const jettonsData = await jettonsRes.json() as any;
-        // Detect VC jetton by symbol or known jetton master addresses
+        // Detect VC jetton by Worker API address (current network), symbol, or legacy addresses
         const KNOWN_VC_MASTERS = [
-          // Current VC_JETTON (testnet v2)
-          'UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf',
-          'EQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMg',
+          // Current VC_JETTON from Worker API (testnet or mainnet)
+          vcMasterContract?.address,
           // Legacy VC jettons (previous testnet deployments)
           'EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ',
           'UQBvMw7pDIw8XuAXUagcrxjJyGG-6sVKU08D8JhO7JIAyPVI',
-        ];
+        ].filter(Boolean) as string[];
         const vcJettonByAddress = jettonsData.balances?.find((b: any) => {
           const addr = b.jetton.address?.toLowerCase();
           return KNOWN_VC_MASTERS.some(m => m.toLowerCase() === addr);

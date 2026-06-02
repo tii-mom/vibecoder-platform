@@ -169,7 +169,23 @@ export default function TonConnectSync() {
         console.error('Failed to fetch jetton balances:', e);
       }
 
-      // 3. Update store
+      // 3. Fetch on-chain VC balance via Worker
+      let vcBalance = 0;
+      try {
+        const vcRes = await fetch(`${API_BASE}/api/v1/user/vc-balance?address=${encodeURIComponent(address)}`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (vcRes.ok) {
+          const vcData = await vcRes.json() as any;
+          if (vcData.success && vcData.data) {
+            vcBalance = vcData.data.balanceVC;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch on-chain VC balance:', e);
+      }
+
+      // 4. Update store
       useUserStore.getState().updateTokenBalances(tonBalance, jettonBalances);
     };
 

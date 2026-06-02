@@ -3,7 +3,7 @@ import './polyfill';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { sign, verify } from 'hono/jwt';
-import { Address, Cell } from '@ton/core';
+import { Address, Cell, beginCell } from '@ton/core';
 import { verifyExchangeAffiliate, verifyOnchainDeposit } from './services/onramp-verifier';
 
 function tgEscape(text: string): string {
@@ -1068,6 +1068,132 @@ app.get('/api/v1/platform/contracts', async (c) => {
       'SELECT contract_name, address, network FROM platform_contracts WHERE network = ? ORDER BY contract_name ASC'
     ).bind(network).all();
     return c.json({ success: true, network, data: results });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// ============================================================
+// User VC Balance — read VC jetton balance from chain
+app.get('/api/v1/user/vc-balance', async (c) => {
+  try {
+    const ownerAddress = c.req.query('address');
+    if (!ownerAddress) return c.json({ success: false, error: 'address query param required' }, 400);
+
+    const network = currentTonNetwork(c);
+    const vcRow = await c.env.DB.prepare(
+      "SELECT address FROM platform_contracts WHERE contract_name = 'VC_JETTON' AND network = ?"
+    ).bind(network).first() as any;
+    if (!vcRow?.address) return c.json({ success: false, error: 'VC_JETTON not registered for ' + network }, 500);
+
+    const tcBase = network === 'mainnet' ? 'https://toncenter.com' : 'https://testnet.toncenter.com';
+    const tcHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (c.env.TONCENTER_API_KEY) tcHeaders['X-API-Key'] = c.env.TONCENTER_API_KEY;
+
+    async function runMethod(address: string, method: string, stack: any[]): Promise<any> {
+      const res = await fetch(`${tcBase}/api/v3/runGetMethod`, {
+        method: 'POST', headers: tcHeaders,
+        body: JSON.stringify({ address, method, stack }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) throw new Error(`TON Center HTTP ${res.status}`);
+      const data = await res.json() as any;
+      if (data.exit_code !== 0) throw new Error(`exit_code=${data.exit_code}`);
+      return data;
+    }
+
+    let ownerAddr;
+    try { ownerAddr = Address.parse(ownerAddress); }
+    catch { return c.json({ success: false, error: 'Invalid TON address' }, 400); }
+
+    const addrCell = beginCell()
+      .storeUint(0, 2).storeUint(0, 1)
+      .storeInt(ownerAddr.workChain, 8)
+      .storeBuffer(ownerAddr.hash)
+      .endCell();
+    const addrCellB64 = Buffer.from(await addrCell.toBoc()).toString('base64');
+
+    const walletResult = await runMethod(vcRow.address, 'get_wallet_address', [
+      { type: 'slice', cell: addrCellB64 }
+    ]);
+
+    if (!walletResult.stack || walletResult.stack.length < 1) {
+      return c.json({ success: false, error: 'get_wallet_address returned empty stack' }, 502);
+    }
+    const walletAddrRaw = walletResult.stack[0].value || walletResult.stack[0].num;
+    const walletAddr = `0:${String(walletAddrRaw).replace('0x', '')}`;
+
+    const walletData = await runMethod(walletAddr, 'get_wallet_data', []);
+    if (!walletData.stack || walletData.stack.length < 1) {
+      return c.json({ success: false, error: 'get_wallet_data returned empty stack' }, 502);
+    }
+    const balanceNano = BigInt(walletData.stack[0].value || walletData.stack[0].num || '0');
+    const balanceVC = Number(balanceNano) / 1e9;
+
+    return c.json({
+      success: true,
+      data: { owner: ownerAddress, vcMaster: vcRow.address, wallet: walletAddr, balanceNano: balanceNano.toString(), balanceVC, network }
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// ============================================================
+// Platform Stats — read Fund + VCRewardPool + EarlyFundraising chain state
+app.get('/api/v1/platform/stats', async (c) => {
+  try {
+    const network = currentTonNetwork(c);
+    const tcBase = network === 'mainnet' ? 'https://toncenter.com' : 'https://testnet.toncenter.com';
+    const tcHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (c.env.TONCENTER_API_KEY) tcHeaders['X-API-Key'] = c.env.TONCENTER_API_KEY;
+
+    async function tcRun(address: string, method: string): Promise<any> {
+      const res = await fetch(`${tcBase}/api/v3/runGetMethod`, {
+        method: 'POST', headers: tcHeaders,
+        body: JSON.stringify({ address, method, stack: [] }),
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json() as any;
+      if (data.exit_code !== 0) throw new Error(`exit_code=${data.exit_code}`);
+      return data;
+    }
+
+    const contracts = await c.env.DB.prepare(
+      "SELECT contract_name, address FROM platform_contracts WHERE network = ?"
+    ).bind(network).all();
+    const addr: Record<string, string> = {};
+    for (const r of contracts.results as any[]) addr[r.contract_name] = r.address;
+
+    const stats: any = { network };
+
+    if (addr.FUND) {
+      try {
+        const fd = await tcRun(addr.FUND, 'getFundData');
+        stats.fund = { accumulatedTon: Number(BigInt(fd.stack?.[3]?.value || fd.stack?.[3]?.num || '0')) / 1e9 };
+      } catch (e: any) { stats.fundError = e.message; }
+    }
+    if (addr.VC_REWARD_POOL) {
+      try {
+        const rp = await tcRun(addr.VC_REWARD_POOL, 'getRewardPoolData');
+        stats.rewardPool = {
+          developerRemaining: (rp.stack?.[3]?.value || rp.stack?.[3]?.num || '0'),
+          ecosystemRemaining: (rp.stack?.[4]?.value || rp.stack?.[4]?.num || '0'),
+        };
+      } catch (e: any) { stats.rewardPoolError = e.message; }
+    }
+    if (addr.EARLY_FUNDRAISING) {
+      try {
+        const ef = await tcRun(addr.EARLY_FUNDRAISING, 'getFundraisingData');
+        stats.earlyFundraising = {
+          totalTon: Number(BigInt(ef.stack?.[4]?.value || ef.stack?.[4]?.num || '0')) / 1e9,
+          totalAllocatedVC: Number(BigInt(ef.stack?.[5]?.value || ef.stack?.[5]?.num || '0')) / 1e9,
+        };
+      } catch (e: any) { stats.earlyFundraisingError = e.message; }
+    }
+
+    return c.json({ success: true, data: stats });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
