@@ -15,7 +15,7 @@ global projectTokens: cell;
 global accumulatedTon: int;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     adminAddr = ds.loadAddress();
     vcMaster = ds.loadAddress();
     vcWalletCode = ds.loadRef();
@@ -26,7 +26,7 @@ fun loadData() {
     ds.assertEndOfSlice();
 }
 fun saveData() {
-    setContractData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster)
+    contract.setData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster)
         .storeRef(vcWalletCode).storeSlice(myWallet).storeDict(allowedProjects)
         .storeDict(projectTokens).storeCoins(accumulatedTon).endCell());
 }
@@ -91,7 +91,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(amt)
             .storeSlice(wa).storeSlice(adminAddr).storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         return;
     }
@@ -100,7 +100,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val amt = msgBody.loadCoins();
         val dest = msgBody.loadAddress();
         assert(amt > 0 && amt <= myBalance - 10000000, 804);
-        sendMessage(beginCell().storeUint(0x10, 6).storeSlice(dest).storeCoins(amt)
+        sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(dest).storeCoins(amt)
             .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
         accumulatedTon -= amt;
         saveData();
@@ -119,7 +119,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(amt)
             .storeSlice(dest).storeSlice(adminAddr).storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(dest).storeCoins(50000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(dest).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         val nb = bal - amt;
         if (nb > 0) {

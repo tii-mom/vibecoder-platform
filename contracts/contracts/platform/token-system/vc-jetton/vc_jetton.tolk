@@ -11,7 +11,7 @@ global content: cell;
 global walletCode: cell;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     totalSupply = ds.loadCoins();
     adminAddr = ds.loadAddress();
     content = ds.loadRef();
@@ -19,12 +19,12 @@ fun loadData() {
     ds.assertEndOfSlice();
 }
 fun saveData() {
-    setContractData(beginCell().storeCoins(totalSupply).storeSlice(adminAddr)
+    contract.setData(beginCell().storeCoins(totalSupply).storeSlice(adminAddr)
         .storeRef(content).storeRef(walletCode).endCell());
 }
 fun getWalletInit(owner: slice): cell {
     return beginCell().storeUint(6, 5).storeRef(walletCode)
-        .storeRef(beginCell().storeCoins(0).storeSlice(owner).storeSlice(getMyAddress()).storeRef(walletCode).endCell())
+        .storeRef(beginCell().storeCoins(0).storeSlice(owner).storeSlice(contract.getAddress()).storeRef(walletCode).endCell())
         .endCell();
 }
 fun getWalletAddr(owner: slice): slice {
@@ -36,8 +36,8 @@ fun mintTokens(qid: int, to: slice, amount: int, resp: slice, fwd: int, payload:
     val wa = getWalletAddr(to);
     val wi = getWalletInit(to);
     val body = beginCell().storeUint(0x178d4519, 32).storeUint(qid, 64).storeCoins(amount)
-        .storeSlice(getMyAddress()).storeSlice(resp).storeCoins(fwd).storeSlice(payload).endCell();
-    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(wa).storeCoins(0)
+        .storeSlice(contract.getAddress()).storeSlice(resp).storeCoins(fwd).storeSlice(payload).endCell();
+    sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(wa).storeCoins(0)
         .storeUint(1, 1+4+4+64+32+1+1).storeRef(wi).storeRef(body).endCell(), 64);
     totalSupply += amount;
     saveData();
@@ -68,7 +68,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         totalSupply -= amt;
         saveData();
         if (!addressIsNone(respAddr)) {
-            sendMessage(beginCell().storeUint(0x10, 6).storeSlice(respAddr).storeCoins(0)
+            sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(respAddr).storeCoins(0)
                 .storeUint(0, 1+4+4+64+32+1+1).storeUint(0xd53276db, 32).storeUint(qid, 64).endCell(), 64);
         }
         return;

@@ -5,7 +5,7 @@ global initialPrice: int; global roundsUnlocked: int;
 global roundAmounts: cell; global matchedAt: cell; global isUnlocked: cell;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     tokenMaster = ds.loadAddress(); beneficiary = ds.loadAddress();
     oracleAddr = ds.loadAddress(); myJettonWallet = ds.loadAddress();
     initialPrice = ds.loadCoins(); roundsUnlocked = ds.loadUint(8);
@@ -13,7 +13,7 @@ fun loadData() {
     ds.assertEndOfSlice();
 }
 fun saveData() {
-    setContractData(beginCell().storeSlice(tokenMaster).storeSlice(beneficiary)
+    contract.setData(beginCell().storeSlice(tokenMaster).storeSlice(beneficiary)
         .storeSlice(oracleAddr).storeSlice(myJettonWallet).storeCoins(initialPrice)
         .storeUint(roundsUnlocked, 8).storeDict(roundAmounts).storeDict(matchedAt)
         .storeDict(isUnlocked).endCell());
@@ -27,7 +27,7 @@ fun transferTokens(amt: int, qid: int) {
     val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(amt)
         .storeSlice(beneficiary).storeSlice(beneficiary).storeMaybeRef(null).storeCoins(0)
         .storeSlice(beginCell().endCell().beginParse()).endCell();
-    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myJettonWallet).storeCoins(50000000)
+    sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(myJettonWallet).storeCoins(50000000)
         .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
 }
 fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: slice) {

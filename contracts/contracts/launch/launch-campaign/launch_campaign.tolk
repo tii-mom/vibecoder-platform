@@ -14,7 +14,7 @@ global investors: cell; global proposals: cell; global votesDict: cell; global e
 global propCount: int; global govRemaining: int; global govInitial: int; global totalSqrtWeight: int;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     owner = ds.loadAddress(); target = ds.loadCoins(); threshold = ds.loadCoins(); raised = ds.loadCoins();
     deadline = ds.loadUint(32); deployed = ds.loadBool(); status = ds.loadUint(8);
     s1Target = ds.loadCoins(); s1Rate = ds.loadUint(32); s1Bonus = ds.loadUint(32);
@@ -34,7 +34,7 @@ fun saveData() {
     var dd = beginCell().storeDict(investors).storeDict(proposals).storeDict(votesDict).storeDict(exits)
         .storeUint(propCount, 32).storeCoins(govRemaining).storeCoins(govInitial).storeCoins(totalSqrtWeight).endCell();
     var ad = beginCell().storeSlice(tokenAddr).storeSlice(platformAddr).storeSlice(oracleAddr).endCell();
-    setContractData(beginCell().storeSlice(owner).storeCoins(target).storeCoins(threshold).storeCoins(raised)
+    contract.setData(beginCell().storeSlice(owner).storeCoins(target).storeCoins(threshold).storeCoins(raised)
         .storeUint(deadline, 32).storeBool(deployed).storeUint(status, 8)
         .storeCoins(s1Target).storeUint(s1Rate, 32).storeUint(s1Bonus, 32)
         .storeCoins(s2Target).storeUint(s2Rate, 32).storeUint(s3Rate, 32)
@@ -65,10 +65,10 @@ fun calcTokens(dep: int, r: int): int {
 }
 fun deployContracts() {
     val content = beginCell().storeUint(0, 8).endCell();
-    val masterData = beginCell().storeCoins(0).storeSlice(getMyAddress()).storeRef(content).storeRef(walletCode).endCell();
+    val masterData = beginCell().storeCoins(0).storeSlice(contract.getAddress()).storeRef(content).storeRef(walletCode).endCell();
     val masterInit = beginCell().storeUint(6, 5).storeRef(jettonCode).storeRef(masterData).endCell();
     tokenAddr = beginCell().storeUint(4, 3).storeInt(0, 8).storeUint(cellHash(masterInit), 256).endCell().beginParse();
-    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(50000000)
+    sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(50000000)
         .storeUint(1, 1+4+4+64+32+1+1).storeRef(masterInit).storeUint(0, 32).endCell(), 1);
     deployed = 1; status = STATUS_SUCCESS;
     govRemaining = mulDivFloor(raised, 5, 10); govInitial = govRemaining;
@@ -83,7 +83,7 @@ fun deployContracts() {
             .endCell();
         val wa = beginCell().storeUint(4, 3).storeInt(0, 8).storeUint(cellHash(wi), 256).endCell().beginParse();
         saveData();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(30000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(30000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeUint(21, 32).storeUint(0, 64)
             .storeSlice(inv).storeCoins(tokens).storeSlice(inv).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell(), 1);
@@ -93,20 +93,20 @@ fun deployContracts() {
     saveData();
 
     val teamShare = mulDivFloor(raised, 3, 10);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(teamShare)
+    sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(teamShare)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
     val projectShare = mulDivFloor(raised, 18, 100);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(projectShare)
+    sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(owner).storeCoins(projectShare)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
     val platformFee = mulDivFloor(raised, 2, 100);
-    sendMessage(beginCell().storeUint(0x10, 6).storeSlice(platformAddr).storeCoins(platformFee)
+    sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(platformAddr).storeCoins(platformFee)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
     val platformTokens = mulDivFloor(raised, 8, 100) * 100;
-    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(platformAddr).storeCoins(30000000)
+    sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(platformAddr).storeCoins(30000000)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(21, 32).storeUint(0, 64)
         .storeSlice(platformAddr).storeCoins(platformTokens).storeSlice(platformAddr).storeCoins(0)
         .storeSlice(beginCell().endCell().beginParse()).endCell(), 1);
-    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(10000000)
+    sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(10000000)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(3, 32).storeUint(0, 64)
         .storeSlice(owner).endCell(), 1);
 }
@@ -141,7 +141,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val spent = rs.loadCoins();
         assert(spent > 0, 805);
         investors.uDictSetBuilder(256, sh, beginCell().storeCoins(0).storeCoins(0));
-        sendMessage(beginCell().storeUint(0x10, 6).storeSlice(sender).storeCoins(spent - 10000000)
+        sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(sender).storeCoins(spent - 10000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
         saveData();
         return;
@@ -197,7 +197,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val passed = (yv > nv) && (tv >= quorum) && (now() >= exp || yv > totalSqrtWeight / 2);
         if (passed) {
             ps = 1; govRemaining -= pAmt;
-            sendMessage(beginCell().storeUint(0x18, 6).storeSlice(owner).storeCoins(pAmt)
+            sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(owner).storeCoins(pAmt)
                 .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
         } else {
             if (now() >= exp) { ps = 2; } else { throw 815; }
@@ -219,7 +219,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         investors.uDictSetBuilder(256, sh, beginCell().storeCoins(0).storeCoins(0));
         exits.sDictSet(267, sender, beginCell().storeCoins(redeem).storeCoins(tl).storeUint(1, 8).endCell().beginParse());
         govRemaining -= redeem;
-        sendMessage(beginCell().storeUint(0x10, 6).storeSlice(sender)
+        sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(sender)
             .storeCoins(redeem - 10000000).storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
         saveData();
         return;

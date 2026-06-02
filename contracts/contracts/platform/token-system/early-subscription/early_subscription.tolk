@@ -14,7 +14,7 @@ global totalSub: int;
 global subs: cell;
 
 fun loadData() {
-    var ds = getContractData().beginParse();
+    var ds = contract.getData().beginParse();
     adminAddr = ds.loadAddress();
     vcMaster = ds.loadAddress();
     vcWalletCode = ds.loadRef();
@@ -25,7 +25,7 @@ fun loadData() {
     ds.assertEndOfSlice();
 }
 fun saveData() {
-    setContractData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster).storeRef(vcWalletCode)
+    contract.setData(beginCell().storeSlice(adminAddr).storeSlice(vcMaster).storeRef(vcWalletCode)
         .storeSlice(myWallet).storeUint(subRate, 32).storeCoins(totalSub).storeDict(subs).endCell());
 }
 fun calcWallet(owner: slice): slice {
@@ -59,7 +59,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(vcAmt)
             .storeSlice(wa).storeSlice(sender).storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         saveData();
         return;
@@ -72,7 +72,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         val body = beginCell().storeUint(0x0f8a7ea5, 32).storeUint(qid, 64).storeCoins(amt)
             .storeSlice(wa).storeSlice(adminAddr).storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
-        sendMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
+        sendRawMessage(beginCell().storeUint(0x18, 6).storeSlice(myWallet).storeCoins(50000000)
             .storeUint(0, 1+4+4+64+32+1+1).storeRef(body).endCell(), 1);
         return;
     }
@@ -80,7 +80,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(isSliceBitsEqual(sender, adminAddr), 1003);
         val amt = msgBody.loadCoins();
         assert(amt > 0 && amt <= myBalance - 10000000, 1004);
-        sendMessage(beginCell().storeUint(0x10, 6).storeSlice(adminAddr).storeCoins(amt)
+        sendRawMessage(beginCell().storeUint(0x10, 6).storeSlice(adminAddr).storeCoins(amt)
             .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
         return;
     }
