@@ -1,5 +1,6 @@
 # VibeCoder 剩余工作计划 v1.0
 
+> **历史交接记录，旧地址不可使用。**
 > 给执行线程。当前项目已上线运营，以下是剩余待完成任务。
 
 ---
@@ -11,7 +12,7 @@
 | 前端 | `https://app.72h.lol` |
 | API | `https://api.72h.lol` |
 | GitHub | `https://github.com/tii-mom/vibecoder-platform` |
-| .env | `/Users/yudeyou/Desktop/VC/.env`（前端）/ `.env.example`（模板）|
+| .env | `.env`（本地，勿提交）/ `.env.example`（模板）|
 | D1 数据库 | `vibecoder-db-new`（17 张表） |
 
 ---
@@ -23,11 +24,13 @@
 ### 任务 1.1：验证 VC 总供应链上数据
 
 ```bash
-cd /Users/yudeyou/Desktop/VC/contracts && node -e "
+cd contracts && node -r dotenv/config -e "
 const {TonClient,Address}=require('@ton/ton');
+const {VC_JETTON,TONCENTER_API_KEY}=process.env;
+if(!VC_JETTON||!TONCENTER_API_KEY) throw new Error('Set VC_JETTON and TONCENTER_API_KEY in .env');
 (async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
-  const r=await c.runMethod(Address.parse('UQDwO6ai0zr0UVekU-NIqI_eCTKCICrkt2zGMnAzNJrk58dO'),'getJettonData');
+  const c=new TonClient({endpoint:`https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_API_KEY}`});
+  const r=await c.runMethod(Address.parse(VC_JETTON),'getJettonData');
   console.log('Total Supply:', r.stack.readBigNumber().toString());
   console.log('Mintable:', r.stack.readBigNumber().toString());
   console.log('Admin:', r.stack.readAddressOpt()?.toString({bounceable:false})||'(burned)');
@@ -39,16 +42,18 @@ const {TonClient,Address}=require('@ton/ton');
 
 ### 任务 1.2：验证 Launch Campaign 55% 触发
 
-部署的 Campaign 地址：`UQDbbI9HYci2ClRsSKhchBywAqRhBAQKfiYsAP5v-swi4aHi`
+Campaign 地址需使用当前 `.env` 中配置的新地址；历史旧地址不可使用。
 
-已发送 2 笔 Spark（30 TON + 40 TON = 70 TON > 55 TON 阈值）。验证：
+已发送 Spark 的历史描述仅供参考，验证时以当前 Campaign 地址链上数据为准：
 
 ```bash
-cd /Users/yudeyou/Desktop/VC/contracts && node -e "
+cd contracts && node -r dotenv/config -e "
 const {TonClient,Address}=require('@ton/ton');
+const {CAMPAIGN_ADDRESS,TONCENTER_API_KEY}=process.env;
+if(!CAMPAIGN_ADDRESS||!TONCENTER_API_KEY) throw new Error('Set CAMPAIGN_ADDRESS and TONCENTER_API_KEY in .env');
 (async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
-  const r=await c.runMethod(Address.parse('UQDbbI9HYci2ClRsSKhchBywAqRhBAQKfiYsAP5v-swi4aHi'),'getCampaignData');
+  const c=new TonClient({endpoint:`https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_API_KEY}`});
+  const r=await c.runMethod(Address.parse(CAMPAIGN_ADDRESS),'getCampaignData');
   console.log('Raised:', Number(r.stack.readBigNumber())/1e9,'TON');
   r.stack.readBigNumber();r.stack.readBigNumber();r.stack.readBigNumber();
   console.log('Token Deployed:', r.stack.readBoolean());
@@ -185,7 +190,7 @@ acton --version
 ### 任务 4.2：初始化
 
 ```bash
-cd /Users/yudeyou/Desktop/VC/contracts
+cd contracts
 acton init
 ```
 
@@ -273,7 +278,7 @@ build: {
 ### 任务 5.2：部署前端
 
 ```bash
-cd /Users/yudeyou/Desktop/VC/vc
+cd vc
 npx vite build
 npx wrangler pages deploy dist --project-name vibecoder --branch main
 ```
