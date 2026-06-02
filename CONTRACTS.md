@@ -57,7 +57,42 @@
 
 ---
 
-## 三、各合约关键设计
+## 三、测试网部署状态
+
+> 平台对外地址名以本节为准；代码目录或旧文案可能保留历史命名。
+
+### 已部署
+
+| 平台地址名 | 说明 | 备注 |
+|------------|------|------|
+| `VC_JETTON` | 平台 VC Jetton 主合约 | 已在测试网部署 |
+| `FUND` | 平台 Fund 合约 | 已在测试网部署 |
+| `VC_REWARD_POOL` | VC 奖励池 / 储备池 | 已在测试网部署 |
+| `EARLY_FUNDRAISING` | 早期募资 / 早期认购合约 | 已在测试网部署；统一替代旧地址名 `EARLY_SUB` |
+| `LAUNCH_FEE` | Launch Fee 合约 | 已在测试网部署 |
+| `TOKEN_LAUNCHER` | Token Launcher 工厂合约 | 已在测试网部署 |
+
+### 未提供地址或待写
+
+| 平台地址名 / 合约 | 状态 | 说明 |
+|-------------------|------|------|
+| `Governance` | 待写 / 未提供测试网地址 | 每个 Launch 或治理实例需后续补齐 |
+| `Oracle` | 待写 / 未提供测试网地址 | 第一期手动喂价或备用价格源需后续补齐 |
+| per-launch `Campaign` | 未提供测试网地址 | 每个项目一个 Launch Campaign 实例，地址随项目生成 |
+| `Project Token` | 未提供测试网地址 | 每个项目成功后部署，地址随项目生成 |
+| `Vesting` | 待写 / 未提供测试网地址 | 每个项目团队锁仓实例需后续补齐 |
+
+### 命名映射
+
+| 旧名称 / 旧地址名 | 新平台地址名 | 说明 |
+|-------------------|--------------|------|
+| `Early Subscription` | `EARLY_FUNDRAISING` | 文案统一使用“早期募资 / Early Fundraising”语义 |
+| `EARLY_SUB` | `EARLY_FUNDRAISING` | 平台地址名统一使用 `EARLY_FUNDRAISING` |
+| `early-subscription` | `EARLY_FUNDRAISING` | 代码路径仍可能叫 `contracts/contracts/platform/token-system/early-subscription/`，但平台地址名统一用 `EARLY_FUNDRAISING` |
+
+---
+
+## 四、各合约关键设计
 
 ### Vesting（价格解锁，固定模板）
 
@@ -88,7 +123,7 @@
 
 ---
 
-## 四、目录结构
+## 五、目录结构
 
 ```
 contracts/
@@ -121,7 +156,7 @@ contracts/
 
 ---
 
-## 五、TGE 流通量
+## 六、TGE 流通量
 
 | 来源 | 比例 | 说明 |
 |------|------|------|
