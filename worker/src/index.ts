@@ -1061,13 +1061,31 @@ app.post('/api/v1/launches/:id/spark', authMiddleware, async (c) => {
 
 // ============================================================
 // Platform Contracts — returns deployed contract addresses
+// with completeness validation for required platform contracts.
 app.get('/api/v1/platform/contracts', async (c) => {
   try {
     const network = currentTonNetwork(c);
     const { results } = await c.env.DB.prepare(
       'SELECT contract_name, address, network FROM platform_contracts WHERE network = ? ORDER BY contract_name ASC'
     ).bind(network).all();
-    return c.json({ success: true, network, data: results });
+
+    const data = (results || []) as any[];
+    const presentNames = new Set(data.map((r: any) => r.contract_name));
+    const missing = REQUIRED_PLATFORM_CONTRACTS.filter((n: string) => !presentNames.has(n));
+
+    // Validate addresses
+    const invalid: string[] = [];
+    for (const row of data) {
+      try { Address.parse(row.address); } catch { invalid.push(row.contract_name); }
+    }
+
+    return c.json({
+      success: missing.length === 0 && invalid.length === 0,
+      network,
+      data,
+      ...(missing.length > 0 ? { missing } : {}),
+      ...(invalid.length > 0 ? { invalidAddresses: invalid } : {}),
+    });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
