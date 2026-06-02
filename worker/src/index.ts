@@ -280,7 +280,7 @@ app.get('/api/v1/launches/:id', async (c) => {
 app.get('/api/v1/platform/contracts', async (c) => {
   try {
     const { results } = await c.env.DB.prepare(
-      'SELECT contract_name, address FROM platform_contracts ORDER BY contract_name ASC'
+      'SELECT contract_name, address, network, deployed_at FROM platform_contracts ORDER BY contract_name ASC'
     ).all();
     return c.json({ success: true, data: results });
   } catch (error: any) {
