@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { UserProfile } from '../types';
+import { getTonapiBase } from '../services/tonNetwork';
 
 export interface TokenInfo {
   masterAddress: string;
@@ -60,7 +61,7 @@ export const useUserStore = create<UserState>((set, get) => {
         balance: 0,
       },
       {
-        masterAddress: 'EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ', // Deployed VC Jetton address
+        masterAddress: 'UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf', // Current testnet VC Jetton address
         symbol: 'VC',
         name: 'VibeCoder',
         decimals: 9,
@@ -239,8 +240,8 @@ export const useUserStore = create<UserState>((set, get) => {
       if (exists) return true;
 
       try {
-        // Fetch token metadata from testnet.tonapi.io
-        const res = await fetch(`https://testnet.tonapi.io/v2/jettons/${cleanMaster}`);
+        const tonapiBase = getTonapiBase();
+        const res = await fetch(`${tonapiBase}/v2/jettons/${cleanMaster}`);
         if (!res.ok) {
           throw new Error('Failed to fetch token metadata');
         }
@@ -260,7 +261,7 @@ export const useUserStore = create<UserState>((set, get) => {
 
         // Try to fetch initial balance for this specific account
         try {
-          const balRes = await fetch(`https://testnet.tonapi.io/v2/accounts/${walletAddress}/jettons`);
+          const balRes = await fetch(`${tonapiBase}/v2/accounts/${walletAddress}/jettons`);
           if (balRes.ok) {
             const balData = await balRes.ok ? await balRes.json() : null;
             if (balData && balData.balances) {

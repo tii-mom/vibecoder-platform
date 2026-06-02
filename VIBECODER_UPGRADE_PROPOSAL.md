@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Proposal/rationale document, not current spec. Use DOCS_FREEZE.md before applying any recommendation from this file.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 3.0: 极简低门槛、病毒裂变与代币深度捆绑的系统级升级方案
 
 作为加密行业的资深产品经理，在深度审计与梳理了当前项目的智能合约（`contracts/`）、前端（`vc/`）以及后端 Worker 服务（`worker/`）的架构与代码实现后，我认为当前系统具备良好的技术底座，但在**用户与项目方操作门槛、社交病毒式传播、以及平台代币 $VC 与生态的价值绑定**上，仍带有较重的 Web3 极客属性，难以实现真正的傻瓜化操作与爆发式增长。

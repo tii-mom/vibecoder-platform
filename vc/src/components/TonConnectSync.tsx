@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useTonAddress, useTonWallet, useTonConnectUI } from '@tonconnect/ui-react';
 import { useUserStore } from '../store/userStore';
+import { getTonapiBase, getToncenterBase } from '../services/tonNetwork';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
 const ALLOW_DEV_WALLET_FALLBACK = import.meta.env.DEV || import.meta.env.VITE_ALLOW_WALLET_PROOF_FALLBACK === 'true';
@@ -133,7 +134,7 @@ export default function TonConnectSync() {
     }
   }, [address, walletAddress, connectWallet, disconnectWallet]);
 
-  // 4. Poll real blockchain balance on testnet (TON + Jettons)
+  // 4. Poll real blockchain balance (TON + Jettons)
   useEffect(() => {
     if (!address) return;
 
@@ -143,7 +144,7 @@ export default function TonConnectSync() {
 
       // 1. Fetch TON balance
       try {
-        const response = await fetch(`https://testnet.toncenter.com/api/v2/getAddressBalance?address=${address}`);
+        const response = await fetch(`${getToncenterBase()}/api/v2/getAddressBalance?address=${address}`);
         if (response.ok) {
           const data = await response.json();
           if (data.ok) {
@@ -152,12 +153,12 @@ export default function TonConnectSync() {
           }
         }
       } catch (e) {
-        console.error('Failed to fetch testnet TON balance:', e);
+        console.error('Failed to fetch TON balance:', e);
       }
 
       // 2. Fetch Jettons
       try {
-        const response = await fetch(`https://testnet.tonapi.io/v2/accounts/${address}/jettons`);
+        const response = await fetch(`${getTonapiBase()}/v2/accounts/${address}/jettons`);
         if (response.ok) {
           const data = await response.json();
           if (data && data.balances) {

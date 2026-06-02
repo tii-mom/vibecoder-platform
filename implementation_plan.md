@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Phase-specific implementation plan already executed or superseded. Use IMPLEMENTATION_STATUS.md and REMAINING_TASKS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 第二阶段：社交裂变与 AI 自动验收增强 (implementation_plan.md)
 
 本文档定义了 Phase 2 中 **Telegram 裂变分享、Bot 推送以及 DeepSeek AI 自动验收** 的具体实现方案。

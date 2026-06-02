@@ -1,6 +1,6 @@
 # Pre-Mainnet Readiness
 
-Last updated: 2026-06-02
+Last updated: 2026-06-03
 
 ## Testnet Deployment
 
@@ -21,7 +21,7 @@ Removed legacy contracts: `EarlySubscription`, `Strategic`.
 
 Admin has not been revoked on testnet. Current chain check returns `adminRevoked: false`, `mintable: -1`, and admin `UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq`.
 
-This is intentional for testnet verification. For mainnet, decide the final admin policy explicitly. If admin must be revoked, run the final verification with `EXPECT_VC_ADMIN_REVOKED=1`.
+This is intentional for testnet verification. The current mainnet dry-run policy retains `VC_JETTON` admin on the personal admin wallet. No admin revoke is planned in this preparation batch.
 
 | Recipient | VC |
 | --- | ---: |
@@ -64,7 +64,14 @@ Additional chain checks completed:
 ## Mainnet Blockers
 
 - Do not deploy mainnet from `scripts/deploy-platform-testnet.ts`; it refuses `TON_NETWORK=mainnet` by design.
-- Mainnet needs a separate deploy script or an explicit reviewed mainnet variant.
+- Mainnet has a dry-run planning script only: `npm run plan:mainnet`. It does not broadcast transactions.
+- Mainnet VC distribution has a dry-run planning script only: `npm run plan:vc-distribution`. It does not mint.
+- `contracts/deployments/mainnet.platform.dry-run.json` and `contracts/deployments/mainnet.vc-distribution.dry-run.json` are review artifacts. Regenerate them with final mainnet addresses before approval.
+- D1 sync is dry-run by default through `node tools/sync-platform-contracts.mjs`; do not pass `--apply` until remote D1 update is explicitly approved.
 - Run a final external security review over Tolk contracts before mainnet.
-- Decide whether/when to revoke `VC_JETTON` admin after mainnet distribution. Current testnet admin is not revoked.
+- Current policy retains `VC_JETTON` admin on a personal wallet for mainnet dry-run planning.
 - Deprecated `EarlySubscription`/`Strategic` wrappers, compile entries, tests, old deployment scripts, and source files have been removed.
+
+## Preparation Runbook
+
+See `contracts/docs/pre-mainnet-runbook.md`.

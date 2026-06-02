@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical whitepaper draft. Do not use as current public positioning, allocation model, or protocol spec without reconciling against DOCS_FREEZE.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder：基于 TON 链的 AI 项目去信任化微众筹与自动代币化协议
 
 **作者：** VibeCoder 核心贡献者（VibeCoder Core Contributors）

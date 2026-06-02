@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical product whitepaper. Do not use for current allocation, route, or implementation decisions. Use DOCS_FREEZE.md and IMPLEMENTATION_STATUS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 产品白皮书 v2.0
 
 > 让全球 AI 开发者获得资金、用户和收入。

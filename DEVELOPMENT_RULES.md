@@ -1,6 +1,7 @@
 # VibeCoder 开发执行规则
 
-> 依据文档：`VIBECODER_UPGRADE_PROPOSAL.md`（唯一产品与架构依据）
+> 文档入口：`DOCS_FREEZE.md`
+> 当前依据：`CONTRACTS.md`、`tools/contract-interface-freeze.md`、`IMPLEMENTATION_STATUS.md`、`REMAINING_TASKS.md`
 > 适用环境：`vc/` 前端 + `worker/` 后端 + `contracts/` 合约
 
 ## 执行纪律

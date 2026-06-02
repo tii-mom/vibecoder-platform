@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Generated scan output, not source documentation. Re-run the scan for current results.
+> Registry: [DOCS_FREEZE.md](../DOCS_FREEZE.md)
+
 FILE: vc/src/pages/BountyPage.tsx (29 matches)
   Line 27: { id: 'b1', creatorName: 'OmniSocial', creatorTier: 0, creatorType: 'PROJECT', taskType: 'FOLLOW_X', title: '关注 @OmniSocial 官方 X 账号', reward: '2 VC', rewardToken: 'VC', totalSlots: 200, completedSlots: 87, url: 'https://x.com/omnisocial' },
   Line 28: { id: 'b2', creatorName: 'CodeVibe', creatorTier: 0, creatorType: 'PROJECT', taskType: 'JOIN_TG', title: '加入 CodeVibe Telegram 开发者社区', reward: '3 VC', rewardToken: 'VC', totalSlots: 150, completedSlots: 42, url: 'https://t.me/codevibe' },

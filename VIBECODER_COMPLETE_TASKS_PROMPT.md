@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical one-shot execution prompt with stale task state. Use REMAINING_TASKS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 你现在是 VibeCoder 项目的全栈开发工程师。请阅读以下完整背景后，按照优先级执行剩余的开发工作。
 
 ---

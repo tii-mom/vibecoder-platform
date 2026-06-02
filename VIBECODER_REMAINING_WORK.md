@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Old remaining-work report. Use REMAINING_TASKS.md for active work.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 剩余工作计划与文档对齐报告
 
 日期: 2026-05-28 | 基于 VIBECODER_PLAN.md v2.0（最新基准）

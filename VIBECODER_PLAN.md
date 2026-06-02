@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical product/execution plan. Do not use as current implementation source. Use DOCS_FREEZE.md, CONTRACTS.md, IMPLEMENTATION_STATUS.md, and REMAINING_TASKS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 产品整合方案与执行计划 v2.0
 
 > 合并两份方案，去重取精。核心原则：先验证增长闭环，再上链，再发币。

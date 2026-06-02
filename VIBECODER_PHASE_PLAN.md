@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical phase plan. Some milestones and allocation assumptions are superseded. Use DOCS_FREEZE.md and REMAINING_TASKS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 阶段执行计划 v3.0
 
 > 给执行线程的完整工作计划。基于 `CONTRACTS.md` v2.0 最终合约方案 + TON 生态调研。

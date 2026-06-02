@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Ideation memo only. Do not treat as product or implementation spec.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 创始人视角推演
 
 > ⚠️ 本文档的核心思想已整合至 [`VIBECODER_PLAN.md`](./VIBECODER_PLAN.md)（第七节 Launch 治理与资金模型 + 第十三节 关键指标）。

@@ -37,6 +37,18 @@ type Variables = {
 };
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
+const REQUIRED_PLATFORM_CONTRACTS = [
+  'VC_JETTON',
+  'FUND',
+  'VC_REWARD_POOL',
+  'EARLY_FUNDRAISING',
+  'LAUNCH_FEE',
+  'TOKEN_LAUNCHER',
+];
+
+function currentTonNetwork(c: any): string {
+  return c.env.TON_NETWORK || 'testnet';
+}
 
 async function sha256(buffer: Uint8Array): Promise<Uint8Array> {
   const hash = await crypto.subtle.digest('SHA-256', buffer);
@@ -325,7 +337,7 @@ app.use('/api/*', async (c, next) => {
 
     try {
       const { results } = await c.env.DB.prepare(
-        "SELECT address FROM platform_contracts WHERE network = 'mainnet'"
+        "SELECT contract_name, address FROM platform_contracts WHERE network = 'mainnet'"
       ).all();
 
       if (!results || results.length === 0) {
@@ -335,6 +347,11 @@ app.use('/api/*', async (c, next) => {
       const hasEmptyAddress = results.some((r: any) => !r.address || r.address.trim() === '');
       if (hasEmptyAddress) {
         return c.json({ success: false, error: 'Mainnet Configuration Error: One or more platform contracts have empty mainnet addresses' }, 500);
+      }
+      const names = new Set(results.map((r: any) => r.contract_name));
+      const missing = REQUIRED_PLATFORM_CONTRACTS.filter((name) => !names.has(name));
+      if (missing.length > 0) {
+        return c.json({ success: false, error: `Mainnet Configuration Error: Missing platform contracts: ${missing.join(', ')}` }, 500);
       }
     } catch (dbErr: any) {
       return c.json({ success: false, error: `Database error during mainnet validation: ${dbErr.message}` }, 500);
@@ -1046,10 +1063,11 @@ app.post('/api/v1/launches/:id/spark', authMiddleware, async (c) => {
 // Platform Contracts — returns deployed contract addresses
 app.get('/api/v1/platform/contracts', async (c) => {
   try {
+    const network = currentTonNetwork(c);
     const { results } = await c.env.DB.prepare(
-      'SELECT contract_name, address FROM platform_contracts ORDER BY contract_name ASC'
-    ).all();
-    return c.json({ success: true, data: results });
+      'SELECT contract_name, address, network FROM platform_contracts WHERE network = ? ORDER BY contract_name ASC'
+    ).bind(network).all();
+    return c.json({ success: true, network, data: results });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
@@ -2014,16 +2032,16 @@ app.post('/api/v1/bounty/stake', authMiddleware, async (c) => {
       }
     } else {
       // 2. Fetch platform contract addresses
+      const tcNetwork = currentTonNetwork(c);
       const launchFeeRow = await c.env.DB.prepare(
-        "SELECT address FROM platform_contracts WHERE contract_name = 'LAUNCH_FEE'"
-      ).first() as any;
+        "SELECT address FROM platform_contracts WHERE contract_name = 'LAUNCH_FEE' AND network = ?"
+      ).bind(tcNetwork).first() as any;
       const launchFeeAddr = launchFeeRow?.address;
       if (!launchFeeAddr) {
         return c.json({ success: false, error: 'LAUNCH_FEE contract address not registered' }, 500);
       }
 
-      // Query testnet.toncenter.com to verify transaction success
-      const tcNetwork = c.env.TON_NETWORK || 'testnet';
+      // Query Toncenter on the configured TON network to verify transaction success
       const tcUrl = `https://${tcNetwork === 'mainnet' ? '' : 'testnet.'}toncenter.com/api/v3/transactions?hash=${encodeURIComponent(tx_hash)}`;
       const res = await fetch(tcUrl, {
         headers: c.env.TONCENTER_API_KEY ? { 'X-API-Key': c.env.TONCENTER_API_KEY } : {}

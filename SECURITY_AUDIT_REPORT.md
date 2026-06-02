@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Point-in-time audit report. Findings may be remediated or stale; re-audit before using as current risk register.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder Security Audit Report
 
 日期: 2026-05-29

@@ -5,6 +5,7 @@ import { getWalletJwt, getReadonlyJwt } from '../services/telegramAuth';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 import { beginCell, Address, toNano, Cell } from '@ton/core';
 import { useTranslation } from '../hooks/useTranslation';
+import { getTonapiBase } from '../services/tonNetwork';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
 
@@ -273,12 +274,10 @@ export default function BountyPage() {
         }
         const contractsData = await contractsRes.json() as any;
         const launchFeeContract = contractsData.data?.find((c: any) => c.contract_name === 'LAUNCH_FEE');
+        const vcMasterContract = contractsData.data?.find((c: any) => c.contract_name === 'VC_JETTON');
         const launchFeeAddress = launchFeeContract?.address || 'UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-';
 
-        const tonNetwork = import.meta.env.VITE_TON_NETWORK || 'testnet';
-        const tonapiBase = tonNetwork === 'mainnet'
-          ? 'https://tonapi.io'
-          : 'https://testnet.tonapi.io';
+        const tonapiBase = getTonapiBase();
         const jettonsRes = await fetch(`${tonapiBase}/v2/accounts/${walletAddress}/jettons`);
         if (!jettonsRes.ok) {
           throw new Error(t('bounty.errQueryTokenAccount'));
@@ -286,22 +285,18 @@ export default function BountyPage() {
         const jettonsData = await jettonsRes.json() as any;
         // Detect VC jetton by symbol or known jetton master addresses
         const KNOWN_VC_MASTERS = [
-          // Current VC_JETTON (testnet)
+          // Current VC_JETTON (testnet v2)
           'UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf',
-          'EQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvN7a',
-          '0:1480f3493a4d0e44df5502008db869f05e8fea91b0583a55ecf3cf06f7a7b2bc',
+          'EQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMg',
           // Legacy VC jettons (previous testnet deployments)
-          'UQBa2k6T3B2HObh9SmxmVCPlQtLUUucflgsJrUqqLuT0HmU3',
-          'EQBa2k6T3B2HObh9SmxmVCPlQtLUUucflgsJrUqqLuT0Hjjy',
-          '0:5ada4e93dc1d8739b87d4a6c665423e542d2d452e71f960b09ad4aaa2ee4f41e',
           'EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ',
           'UQBvMw7pDIw8XuAXUagcrxjJyGG-6sVKU08D8JhO7JIAyPVI',
         ];
-        const vcJetton = jettonsData.balances?.find((b: any) => {
-          if (b.jetton.symbol === 'VC') return true;
+        const vcJettonByAddress = jettonsData.balances?.find((b: any) => {
           const addr = b.jetton.address?.toLowerCase();
           return KNOWN_VC_MASTERS.some(m => m.toLowerCase() === addr);
         });
+        const vcJetton = vcJettonByAddress || jettonsData.balances?.find((b: any) => b.jetton.symbol === 'VC');
 
         if (!vcJetton || !vcJetton.wallet_address?.address) {
           throw new Error(t('bounty.errNoTokenWallet'));

@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical verification report. Re-run current checks instead of relying on these point-in-time results.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 升级方案执行与验证报告 (walkthrough.md)
 
 本文档总结了本次任务中所有的交付成果、测试执行结果和设计输出。

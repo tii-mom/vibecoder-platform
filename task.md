@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical completed checklist. Use IMPLEMENTATION_STATUS.md for current status.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 升级剩余任务执行清单 (task.md)
 
 - [x] **切片 1 (Phase 0): Jetton / Launch 合约资金路径审计报告**

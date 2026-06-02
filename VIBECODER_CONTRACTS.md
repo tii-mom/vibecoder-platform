@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Superseded contract design. Use CONTRACTS.md and tools/contract-interface-freeze.md as the current contract sources.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 合约体系设计 v3.0
 
 > 基于 TON 链，使用 Tolk/Acton 语言。

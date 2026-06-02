@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: References ignored external SkillOpt checkout paths. Reinstall/update SkillOpt before following this guide.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder Prompt Optimization Guide (using Microsoft SkillOpt)
 
 This guide explains how to use the integrated **Microsoft SkillOpt** framework inside the VibeCoder repository to automatically optimize, test, and audit prompts for our AI features.

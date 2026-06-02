@@ -1,0 +1,54 @@
+{
+  "network": "mainnet",
+  "dryRun": true,
+  "generatedAt": "2026-06-02T16:04:48.357Z",
+  "adminPolicy": "personal-wallet-retained",
+  "vcJetton": "UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf",
+  "totalVc": "980000000",
+  "totalNano": "980000000000000000",
+  "distributions": [
+    {
+      "name": "Developer Incentives",
+      "to": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+      "amountVc": "100000000",
+      "amountNano": "100000000000000000"
+    },
+    {
+      "name": "Platform Fund",
+      "to": "UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q",
+      "amountVc": "250000000",
+      "amountNano": "250000000000000000"
+    },
+    {
+      "name": "Ecosystem Incentives",
+      "to": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+      "amountVc": "350000000",
+      "amountNano": "350000000000000000"
+    },
+    {
+      "name": "Team Lockup",
+      "to": "UQBFKyg4osbhB7pRtzwcTmyCBuyPn4H3LJdHaWJ6HqIj5eH8",
+      "amountVc": "100000000",
+      "amountNano": "100000000000000000"
+    },
+    {
+      "name": "Liquidity Pool",
+      "to": "UQDsx-vPapMJyIh3LYEQXAF_wp0iAWk8I6ZN7Vw79zqTDDNi",
+      "amountVc": "50000000",
+      "amountNano": "50000000000000000"
+    },
+    {
+      "name": "Early Fundraising",
+      "to": "UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD",
+      "amountVc": "100000000",
+      "amountNano": "100000000000000000"
+    },
+    {
+      "name": "Early Operations and Support",
+      "to": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+      "amountVc": "30000000",
+      "amountNano": "30000000000000000"
+    }
+  ],
+  "adminRevocationPlanned": false
+}

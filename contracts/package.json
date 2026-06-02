@@ -12,6 +12,8 @@
     "verify:get-methods": "tsx scripts/verify-get-methods.ts",
     "verify:vc-jetton": "tsx scripts/verify-vc-jetton-compat.ts",
     "premainnet:check": "node ../tools/premainnet-check.mjs",
+    "plan:mainnet": "tsx scripts/plan-platform-mainnet.ts",
+    "plan:vc-distribution": "tsx scripts/plan-vc-distribution.ts",
     "deploy:testnet:plan": "tsx scripts/deploy-platform-testnet.ts --dry-run",
     "deploy:testnet": "tsx scripts/deploy-platform-testnet.ts",
     "mint:vc": "tsx scripts/mint-vc.ts"

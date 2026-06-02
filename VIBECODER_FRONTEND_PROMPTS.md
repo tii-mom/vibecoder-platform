@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical generation prompts. Current UI decisions must come from live vc/src code and REMAINING_TASKS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder 前端生成提示词 v3.0
 
 > 对齐 VIBECODER_PLAN.md v2.0。新增 P3/P4 治理与代币闭环功能。

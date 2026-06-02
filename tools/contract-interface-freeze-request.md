@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Historical request document. Use tools/contract-interface-freeze.md for the current frozen interface.
+> Registry: [DOCS_FREEZE.md](../DOCS_FREEZE.md)
+
 # 合约接口冻结请求清单
 
 本文档向合约线程索取必须的信息。在合约接口冻结之前，本线程**不执行**基于未冻结接口的适配工作。

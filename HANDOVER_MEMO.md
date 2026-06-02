@@ -1,3 +1,7 @@
+> [!WARNING]
+> FROZEN: Point-in-time handover snapshot from 2026-05-29. Verify addresses and status against current manifests and IMPLEMENTATION_STATUS.md.
+> Registry: [DOCS_FREEZE.md](./DOCS_FREEZE.md)
+
 # VibeCoder Project Handover Memo (2026-05-29)
 
 This document summarizes the development and integration work completed recently. It serves as a guide for colleagues taking over the project to quickly understand the current status, verified addresses, code changes, and testing instructions.
