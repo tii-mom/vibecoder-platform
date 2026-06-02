@@ -1,6 +1,26 @@
 import { create } from 'zustand';
 import { SparkProject, TokenInfo, TeamSpark } from '../types';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://api.72h.lol';
+
+const recordOnchainSpark = async (projectId: string, amount: number, wallet: string) => {
+  try {
+    await fetch(`${API_BASE}/api/v1/launches/${projectId}/spark/record`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        wallet,
+        amount,
+        tx_hash: `local-${projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        status: 'pending',
+      }),
+      signal: AbortSignal.timeout(5000),
+    });
+  } catch {
+    // Keep sandbox Spark UX available when the Worker API is offline.
+  }
+};
+
 interface SparkState {
   projects: SparkProject[];
   tokens: TokenInfo[];
@@ -403,6 +423,9 @@ export const useSparkStore = create<SparkState>((set, get) => {
         }
         return { projects: nextProjects };
       });
+      if (isSuccess) {
+        void recordOnchainSpark(projectId, amount, address);
+      }
       return isSuccess;
     },
 

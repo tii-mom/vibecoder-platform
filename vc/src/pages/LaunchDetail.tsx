@@ -22,7 +22,7 @@ export default function SparkDetail() {
   const location = useLocation();
   const { walletAddress, isConnected, profile, connectWallet, addFunds, updateProfile } = useUserStore();
   const { projects, upvoteProject, addComment, advanceProjectMilestone, investInProject, teams } = useSparkStore();
-  const { proposals, votes, exitRequests, voteOnProposal, createProposal, createExitRequest } = useGovernanceStore();
+  const { proposals, votes, exitRequests, loadProjectGovernance, voteOnProposal, createProposal, createExitRequest } = useGovernanceStore();
   const { rounds, loadRounds } = useVestingStore();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'spark' | 'health' | 'vesting' | 'operations' | 'governance' | 'proof' | 'discussion'>('overview');
@@ -63,12 +63,19 @@ export default function SparkDetail() {
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const tabParam = queryParams.get('tab');
-    if (tabParam === 'proof' || tabParam === 'spark' || tabParam === 'overview' || tabParam === 'discussion' || tabParam === 'health' || tabParam === 'governance') {
+    if (tabParam === 'proof' || tabParam === 'spark' || tabParam === 'overview' || tabParam === 'discussion' || tabParam === 'health' || tabParam === 'vesting' || tabParam === 'operations' || tabParam === 'governance') {
       setActiveTab(tabParam as any);
     } else if (location.state && (location.state as any).activeTab) {
       setActiveTab((location.state as any).activeTab);
     }
   }, [location]);
+
+  useEffect(() => {
+    if (id) {
+      void loadProjectGovernance(id);
+    }
+  }, [id, loadProjectGovernance]);
+
   const [newCommentText, setNewCommentText] = useState('');
   const [commentSuccess, setCommentSuccess] = useState(false);
 
@@ -147,7 +154,7 @@ export default function SparkDetail() {
     }
 
     setWithdrawError('');
-    createProposal(project.id, amount, withdrawPurpose.trim());
+    createProposal(project.id, amount, withdrawPurpose.trim(), walletAddress);
     setWithdrawAmount('');
     setWithdrawPurpose('');
     setWithdrawSuccess(true);

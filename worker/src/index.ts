@@ -7,6 +7,112 @@ type Bindings = {
 
 const app = new Hono<{ Bindings: Bindings }>();
 
+
+type AnyRecord = Record<string, any>;
+
+const nowIso = () => new Date().toISOString();
+const makeId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+const toBool = (value: unknown) => value === 1 || value === true;
+
+const normalizeProposal = (row: AnyRecord) => ({
+  id: row.id,
+  projectId: row.launch_id,
+  amount: Number(row.amount || 0),
+  purpose: row.purpose,
+  yesWeight: Number(row.yes_weight || 0),
+  noWeight: Number(row.no_weight || 0),
+  status: String(row.status || 'active').toLowerCase(),
+  createdAt: row.created_at,
+  expiresAt: row.expires_at,
+  votedAddresses: row.voted_addresses ? String(row.voted_addresses).split(',').filter(Boolean) : [],
+  votesCount: {
+    yes: Number(row.yes_count || 0),
+    no: Number(row.no_count || 0),
+  },
+});
+
+const normalizeVote = (row: AnyRecord) => ({
+  id: row.id,
+  proposalId: row.proposal_id,
+  userAddress: row.user_id,
+  weight: Number(row.weight || 0),
+  vote: String(row.vote || '').toLowerCase(),
+  createdAt: row.created_at,
+});
+
+const normalizeVestingRound = (row: AnyRecord) => ({
+  round: Number(row.round),
+  locked: Number(row.locked),
+  unlocked: toBool(row.unlocked),
+  priceThreshold: row.price_threshold,
+  currentPrice: row.current_price,
+  matched: toBool(row.matched),
+  matchedAt: row.matched_at,
+});
+
+const normalizeOperation = (row: AnyRecord) => ({
+  id: row.id,
+  projectId: row.launch_id,
+  requesterWallet: row.requester_wallet,
+  amount: Number(row.amount || 0),
+  amountUnit: row.amount_unit || 'PERCENT',
+  purpose: row.purpose,
+  yesWeight: Number(row.yes_weight || 0),
+  noWeight: Number(row.no_weight || 0),
+  status: String(row.status || 'active').toLowerCase(),
+  txHash: row.tx_hash,
+  createdAt: row.created_at,
+  expiresAt: row.expires_at,
+  votesCount: {
+    yes: Number(row.yes_count || 0),
+    no: Number(row.no_count || 0),
+  },
+});
+
+const ensureVestingRounds = async (db: D1Database, launchId: string, avgPrice: number) => {
+  const existing = await db.prepare(
+    'SELECT * FROM vesting_rounds WHERE launch_id = ? ORDER BY round ASC'
+  ).bind(launchId).all<AnyRecord>();
+
+  if (existing.results.length > 0) {
+    return existing.results;
+  }
+
+  const createdAt = nowIso();
+  const totalShare = 0.38;
+  const perRound = (totalShare / 10) * 100;
+  const inserts = [];
+  for (let i = 1; i <= 10; i++) {
+    const matched = i <= 1 ? 1 : 0;
+    const unlocked = i <= 1 ? 1 : 0;
+    inserts.push(
+      db.prepare(
+        `INSERT OR IGNORE INTO vesting_rounds
+        (id, launch_id, round, locked, price_threshold, current_price, matched, matched_at, unlocked, unlocked_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        `${launchId}-vesting-${i}`,
+        launchId,
+        i,
+        i === 1 ? 2 : perRound,
+        (avgPrice * Math.pow(1.5, i)).toFixed(4),
+        (avgPrice * (i <= 2 ? 1 : Math.pow(1.3, i - 1))).toFixed(4),
+        matched,
+        matched ? createdAt : null,
+        unlocked,
+        unlocked ? createdAt : null,
+        createdAt,
+        createdAt
+      )
+    );
+  }
+  await db.batch(inserts);
+  const { results } = await db.prepare(
+    'SELECT * FROM vesting_rounds WHERE launch_id = ? ORDER BY round ASC'
+  ).bind(launchId).all<AnyRecord>();
+  return results;
+};
+
 // Enable CORS for frontend integration
 app.use('/api/*', cors({
   origin: '*',
@@ -270,6 +376,300 @@ app.get('/api/v1/launches/:id', async (c) => {
           milestones: mockMilestones
       }
     });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+
+// 3. GET /api/v1/launches/:id/health - Get launch on-chain and treasury health
+app.get('/api/v1/launches/:id/health', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const launch = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(id).first<AnyRecord>();
+    if (!launch) return c.json({ success: false, error: 'Project not found' }, 404);
+
+    const contracts = await c.env.DB.prepare('SELECT * FROM launch_contracts WHERE launch_id = ?').bind(id).first<AnyRecord>();
+    const sparkStats = await c.env.DB.prepare(
+      `SELECT COUNT(*) as backers_count, COALESCE(SUM(amount), 0) as total_amount
+       FROM spark_records WHERE launch_id = ?`
+    ).bind(id).first<AnyRecord>();
+    const onchainStats = await c.env.DB.prepare(
+      `SELECT COUNT(*) as records_count,
+              COALESCE(SUM(CASE WHEN status = 'confirmed' THEN amount ELSE 0 END), 0) as confirmed_amount,
+              COALESCE(SUM(amount), 0) as recorded_amount
+       FROM onchain_spark_records WHERE launch_id = ?`
+    ).bind(id).first<AnyRecord>();
+    const opsStats = await c.env.DB.prepare(
+      `SELECT COUNT(*) as requests_count,
+              COALESCE(SUM(CASE WHEN status = 'passed' THEN amount ELSE 0 END), 0) as used_percent
+       FROM operations_requests WHERE launch_id = ?`
+    ).bind(id).first<AnyRecord>();
+
+    const raisedTotal = Number(launch.raised_total || 0);
+    const targetTotal = Number(launch.target_total || 0);
+    return c.json({
+      success: true,
+      data: {
+        launchId: id,
+        status: launch.status,
+        tokenDeployed: toBool(launch.token_deployed),
+        deployThreshold: Number(launch.deploy_threshold || 0.55),
+        raisedTotal,
+        targetTotal,
+        progress: targetTotal > 0 ? Number(((raisedTotal / targetTotal) * 100).toFixed(2)) : 0,
+        contracts: contracts || null,
+        spark: {
+          backersCount: Number(sparkStats?.backers_count || 0),
+          totalAmount: Number(sparkStats?.total_amount || 0),
+          onchainRecordsCount: Number(onchainStats?.records_count || 0),
+          onchainRecordedAmount: Number(onchainStats?.recorded_amount || 0),
+          onchainConfirmedAmount: Number(onchainStats?.confirmed_amount || 0),
+        },
+        operations: {
+          poolPercent: Number(launch.ops_token_share || 10),
+          usedPercent: Number(opsStats?.used_percent || 0),
+          requestsCount: Number(opsStats?.requests_count || 0),
+        },
+      },
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 4. GET /api/v1/launches/:id/vesting - Get or seed 10 vesting rounds
+app.get('/api/v1/launches/:id/vesting', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const launch = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(id).first<AnyRecord>();
+    if (!launch) return c.json({ success: false, error: 'Project not found' }, 404);
+    const targetTotal = Number(launch.target_total || 0);
+    const raisedTotal = Number(launch.raised_total || 0);
+    const avgPrice = targetTotal > 0 ? 0.01 + (raisedTotal / targetTotal) * 0.005 : 0.01;
+    const rounds = await ensureVestingRounds(c.env.DB, id, avgPrice);
+    return c.json({ success: true, data: rounds.map(normalizeVestingRound) });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 5. GET /api/v1/launches/:id/operations - List operation token requests
+app.get('/api/v1/launches/:id/operations', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const { results } = await c.env.DB.prepare(
+      'SELECT * FROM operations_requests WHERE launch_id = ? ORDER BY created_at DESC'
+    ).bind(id).all<AnyRecord>();
+    const usedPercent = results
+      .filter((row) => String(row.status).toLowerCase() === 'passed')
+      .reduce((sum, row) => sum + Number(row.amount || 0), 0);
+    return c.json({
+      success: true,
+      data: {
+        poolPercent: 10,
+        usedPercent,
+        availablePercent: Math.max(0, 10 - usedPercent),
+        requests: results.map(normalizeOperation),
+      },
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 6. POST /api/v1/launches/:id/operations - Create operation token request
+app.post('/api/v1/launches/:id/operations', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const body = await c.req.json<AnyRecord>();
+    const amount = Number(body.amount);
+    const purpose = String(body.purpose || '').trim();
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return c.json({ success: false, error: 'valid amount required' }, 400);
+    }
+    if (!purpose) return c.json({ success: false, error: 'purpose required' }, 400);
+
+    const launch = await c.env.DB.prepare('SELECT id FROM launches WHERE id = ?').bind(id).first();
+    if (!launch) return c.json({ success: false, error: 'Project not found' }, 404);
+
+    const requestId = makeId('ops');
+    const createdAt = nowIso();
+    const expiresAt = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+    await c.env.DB.prepare(
+      `INSERT INTO operations_requests
+       (id, launch_id, requester_wallet, amount, amount_unit, purpose, status, created_at, updated_at, expires_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      requestId,
+      id,
+      body.requester_wallet || body.userAddress || null,
+      amount,
+      body.amount_unit || 'PERCENT',
+      purpose,
+      'active',
+      createdAt,
+      createdAt,
+      expiresAt
+    ).run();
+
+    const row = await c.env.DB.prepare('SELECT * FROM operations_requests WHERE id = ?').bind(requestId).first<AnyRecord>();
+    return c.json({ success: true, data: normalizeOperation(row!) }, 201);
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 7. GET /api/v1/launches/:id/governance/stats - Get launch governance aggregates
+app.get('/api/v1/launches/:id/governance/stats', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const { results: proposalRows } = await c.env.DB.prepare(
+      `SELECT p.*,
+              GROUP_CONCAT(v.user_id) as voted_addresses,
+              SUM(CASE WHEN LOWER(v.vote) = 'yes' THEN 1 ELSE 0 END) as yes_count,
+              SUM(CASE WHEN LOWER(v.vote) = 'no' THEN 1 ELSE 0 END) as no_count
+       FROM governance_proposals p
+       LEFT JOIN governance_votes v ON v.proposal_id = p.id
+       WHERE p.launch_id = ?
+       GROUP BY p.id
+       ORDER BY p.created_at DESC`
+    ).bind(id).all<AnyRecord>();
+    const { results: voteRows } = await c.env.DB.prepare(
+      `SELECT v.* FROM governance_votes v
+       INNER JOIN governance_proposals p ON p.id = v.proposal_id
+       WHERE p.launch_id = ?
+       ORDER BY v.created_at DESC`
+    ).bind(id).all<AnyRecord>();
+    const { results: exitRows } = await c.env.DB.prepare(
+      'SELECT * FROM exit_requests WHERE launch_id = ? ORDER BY created_at DESC'
+    ).bind(id).all<AnyRecord>();
+    const { results: operationsRows } = await c.env.DB.prepare(
+      'SELECT * FROM operations_requests WHERE launch_id = ? ORDER BY created_at DESC'
+    ).bind(id).all<AnyRecord>();
+
+    return c.json({
+      success: true,
+      data: {
+        proposals: proposalRows.map(normalizeProposal),
+        votes: voteRows.map(normalizeVote),
+        exitRequests: exitRows.map((row) => ({
+          id: row.id,
+          projectId: row.launch_id,
+          userAddress: row.user_id,
+          redeemedTON: Number(row.redeemed_ton || 0),
+          burnedTokens: Number(row.burned_tokens || 0),
+          createdAt: row.created_at,
+        })),
+        operations: operationsRows.map(normalizeOperation),
+        stats: {
+          activeProposals: proposalRows.filter((row) => String(row.status).toLowerCase() === 'active').length,
+          passedProposals: proposalRows.filter((row) => String(row.status).toLowerCase() === 'passed').length,
+          rejectedProposals: proposalRows.filter((row) => String(row.status).toLowerCase() === 'rejected').length,
+          votesCount: voteRows.length,
+          exitRequestsCount: exitRows.length,
+        },
+      },
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 8. POST /api/v1/launches/:id/governance/vote - Record governance vote
+app.post('/api/v1/launches/:id/governance/vote', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const body = await c.req.json<AnyRecord>();
+    const proposalId = String(body.proposal_id || body.proposalId || '').trim();
+    const userId = String(body.user_id || body.userAddress || '').trim();
+    const vote = String(body.vote || '').toLowerCase();
+    const weight = Number(body.weight || 0);
+    if (!proposalId || !userId || !['yes', 'no'].includes(vote) || !Number.isFinite(weight) || weight <= 0) {
+      return c.json({ success: false, error: 'proposal_id, user_id, vote and positive weight required' }, 400);
+    }
+
+    const proposal = await c.env.DB.prepare(
+      'SELECT * FROM governance_proposals WHERE id = ? AND launch_id = ?'
+    ).bind(proposalId, id).first<AnyRecord>();
+    if (!proposal) return c.json({ success: false, error: 'Proposal not found' }, 404);
+
+    const existing = await c.env.DB.prepare(
+      'SELECT id FROM governance_votes WHERE proposal_id = ? AND user_id = ?'
+    ).bind(proposalId, userId).first();
+    if (existing) return c.json({ success: false, error: 'User already voted' }, 409);
+
+    const voteId = makeId('vote');
+    const createdAt = nowIso();
+    await c.env.DB.prepare(
+      'INSERT INTO governance_votes (id, proposal_id, user_id, weight, vote, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(voteId, proposalId, userId, weight, vote.toUpperCase(), createdAt).run();
+    await c.env.DB.prepare(
+      `UPDATE governance_proposals
+       SET yes_weight = yes_weight + ?, no_weight = no_weight + ?
+       WHERE id = ? AND launch_id = ?`
+    ).bind(vote === 'yes' ? weight : 0, vote === 'no' ? weight : 0, proposalId, id).run();
+
+    const updated = await c.env.DB.prepare(
+      `SELECT p.*,
+              GROUP_CONCAT(v.user_id) as voted_addresses,
+              SUM(CASE WHEN LOWER(v.vote) = 'yes' THEN 1 ELSE 0 END) as yes_count,
+              SUM(CASE WHEN LOWER(v.vote) = 'no' THEN 1 ELSE 0 END) as no_count
+       FROM governance_proposals p
+       LEFT JOIN governance_votes v ON v.proposal_id = p.id
+       WHERE p.id = ? AND p.launch_id = ?
+       GROUP BY p.id`
+    ).bind(proposalId, id).first<AnyRecord>();
+
+    return c.json({
+      success: true,
+      data: {
+        vote: { id: voteId, proposalId, userAddress: userId, weight, vote, createdAt },
+        proposal: normalizeProposal(updated!),
+      },
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 9. POST /api/v1/launches/:id/spark/record - Record on-chain Spark transaction
+app.post('/api/v1/launches/:id/spark/record', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const body = await c.req.json<AnyRecord>();
+    const wallet = String(body.wallet || body.user_id || '').trim();
+    const txHash = String(body.tx_hash || body.txHash || '').trim();
+    const amount = Number(body.amount);
+    if (!wallet || !txHash || !Number.isFinite(amount) || amount <= 0) {
+      return c.json({ success: false, error: 'wallet, tx_hash and positive amount required' }, 400);
+    }
+
+    const launch = await c.env.DB.prepare('SELECT id FROM launches WHERE id = ?').bind(id).first();
+    if (!launch) return c.json({ success: false, error: 'Project not found' }, 404);
+
+    const status = String(body.status || 'pending').toLowerCase();
+    const createdAt = nowIso();
+    const recordId = makeId('spark-tx');
+    await c.env.DB.prepare(
+      `INSERT OR REPLACE INTO onchain_spark_records
+       (id, launch_id, wallet, amount, tx_hash, status, confirmed_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, COALESCE((SELECT created_at FROM onchain_spark_records WHERE tx_hash = ?), ?), ?)`
+    ).bind(
+      recordId,
+      id,
+      wallet,
+      amount,
+      txHash,
+      status,
+      status === 'confirmed' ? createdAt : null,
+      txHash,
+      createdAt,
+      createdAt
+    ).run();
+
+    const row = await c.env.DB.prepare('SELECT * FROM onchain_spark_records WHERE tx_hash = ?').bind(txHash).first<AnyRecord>();
+    return c.json({ success: true, data: row }, 201);
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);
   }
