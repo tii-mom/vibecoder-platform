@@ -16,6 +16,27 @@
 
 ---
 
+## 安全处理（凭据泄露后立即执行）
+
+> ⚠️ DeepSeek、Cloudflare、TonCenter 等凭据曾出现在已提交文件中。即使后续提交已删除，也必须按已泄露处理。
+
+1. **立即轮换凭据**
+   - DeepSeek：在控制台撤销已提交过的 API Key，并创建新 Key。
+   - Cloudflare：撤销已提交过的 API Token，并创建最小权限的新 Token。
+   - TonCenter：撤销已提交过的 API Key，并创建新 Key。
+2. **Worker 使用 Wrangler secrets**
+   - 不要在 `worker/wrangler.toml` 的 `[vars]` 中保存 `TONCENTER_API_KEY`。
+   - 在 `worker/` 目录执行：
+
+     ```bash
+     wrangler secret put TONCENTER_API_KEY
+     ```
+
+3. **公开或多人可访问仓库按泄露事件处理**
+   - 检查 Cloudflare API Token 的权限范围，改为仅保留 Worker/D1 部署所需的最小权限。
+   - 检查 Cloudflare 审计日志、Token 使用记录和近期部署记录。
+   - 如发现异常调用，继续轮换相关账号、D1、域名和 Worker 访问凭据，并记录事件时间线。
+
 ## 一、链上验证（TonCenter RPC 恢复后执行）
 
 目前 TonCenter 测试网节点不稳定（`LITE_SERVER_NOTREADY`），等恢复后验证：
@@ -26,7 +47,7 @@
 cd /Users/yudeyou/Desktop/VC/contracts && node -e "
 const {TonClient,Address}=require('@ton/ton');
 (async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
+  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_API_KEY}'});
   const r=await c.runMethod(Address.parse('UQDwO6ai0zr0UVekU-NIqI_eCTKCICrkt2zGMnAzNJrk58dO'),'getJettonData');
   console.log('Total Supply:', r.stack.readBigNumber().toString());
   console.log('Mintable:', r.stack.readBigNumber().toString());
@@ -47,7 +68,7 @@ const {TonClient,Address}=require('@ton/ton');
 cd /Users/yudeyou/Desktop/VC/contracts && node -e "
 const {TonClient,Address}=require('@ton/ton');
 (async()=>{
-  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=061f4bf26320172112a42b870c02de9a235a795d52960bd80c3fbcdfa8d08891'});
+  const c=new TonClient({endpoint:'https://testnet.toncenter.com/api/v2/jsonRPC?api_key=${TONCENTER_API_KEY}'});
   const r=await c.runMethod(Address.parse('UQDbbI9HYci2ClRsSKhchBywAqRhBAQKfiYsAP5v-swi4aHi'),'getCampaignData');
   console.log('Raised:', Number(r.stack.readBigNumber())/1e9,'TON');
   r.stack.readBigNumber();r.stack.readBigNumber();r.stack.readBigNumber();
