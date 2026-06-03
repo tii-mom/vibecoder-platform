@@ -197,7 +197,7 @@
 | P0-1 | TokenLauncher admin gate | PR-A |
 | P0-2 | LaunchFee Jetton-only | PR-A2 |
 | P0-3 | ProjectToken mint cap / disable mint | #21 (PR-C) |
-| P0-4 | VC_JETTON mainnet 固定供应策略 | 待决策 |
+| P0-4 | VC_JETTON mainnet 固定供应策略 | PR-K 进行中 |
 
 ### P1（VC v3 新合约）
 
@@ -206,10 +206,10 @@
 | P1-1 | VC Tokenomics v3 文档 | #22 (PR-D) |
 | P1-2 | SaleVesting 300M | #23 (PR-E) |
 | P1-3 | TeamVesting 200M | #24 (PR-F) |
-| P1-4 | DeveloperRewardPool 100M | PR-G 进行中 |
-| P1-5 | EcosystemRewardPool 100M | PR-H 进行中 |
-| P1-6 | DevelopmentFund 100M | PR-I 进行中 |
-| P1-7 | ReserveVault 100M | PR-J 进行中 |
+| P1-4 | DeveloperRewardPool 100M | #32 (PR-G) |
+| P1-5 | EcosystemRewardPool 100M | #33 (PR-H) |
+| P1-6 | DevelopmentFund 100M | #34 (PR-I) |
+| P1-7 | ReserveVault 100M | #35 (PR-J) |
 
 ### P2（治理 + 基础设施）
 
@@ -236,13 +236,14 @@
 - #22 PR-D: VC Tokenomics v3 文档（本文件）
 - #23 PR-E: SaleVesting v1
 - #24 PR-F: TeamVesting v1
+- #32 PR-G: DeveloperRewardPool v1
+- #33 PR-H: EcosystemRewardPool v1
+- #34 PR-I: DevelopmentFund v1
+- #35 PR-J: ReserveVault v1
 
 ### 未完成
 
-- DeveloperRewardPool **PR-G 进行中**
-- EcosystemRewardPool **PR-H 进行中**
-- DevelopmentFund **PR-I 进行中**
-- ReserveVault **PR-J 进行中**
+- VC_JETTON mainnet fixed supply final execution plan **PR-K 进行中**
 - Governance **未实现**
 - Oracle **未实现**
 
