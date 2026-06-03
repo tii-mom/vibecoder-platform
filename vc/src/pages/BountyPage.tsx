@@ -273,9 +273,15 @@ export default function BountyPage() {
           throw new Error(t('bounty.errGetContract'));
         }
         const contractsData = await contractsRes.json() as any;
+        if (!contractsData.success || (contractsData.missing && contractsData.missing.length)) {
+          throw new Error(t('bounty.errGetContract'));
+        }
         const launchFeeContract = contractsData.data?.find((c: any) => c.contract_name === 'LAUNCH_FEE');
         const vcMasterContract = contractsData.data?.find((c: any) => c.contract_name === 'VC_JETTON');
-        const launchFeeAddress = launchFeeContract?.address || 'UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-';
+        if (!launchFeeContract?.address || !vcMasterContract?.address) {
+          throw new Error(t('bounty.errGetContract'));
+        }
+        const launchFeeAddress = launchFeeContract.address;
 
         const tonapiBase = getTonapiBase();
         const jettonsRes = await fetch(`${tonapiBase}/v2/accounts/${walletAddress}/jettons`);

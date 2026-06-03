@@ -74,7 +74,7 @@ async function fetchJson(url, opts = {}) {
       check('no invalid addresses', !body.invalidAddresses || body.invalidAddresses.length === 0,
         body.invalidAddresses ? `invalid: ${body.invalidAddresses.join(', ')}` : '');
     } else {
-      fail('data is not an array');
+      check('data is array', false, 'data is not an array');
     }
   } catch (e) {
     warn('contracts endpoint unreachable', e.message);
