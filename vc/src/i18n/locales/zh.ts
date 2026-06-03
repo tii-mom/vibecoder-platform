@@ -651,7 +651,15 @@ export const zh: TranslationSchema = {
     "supporterExtraPerks": "支持者额外专属福利与权益说明 (Perks)",
     "supporterExtraPerksPlaceholder": "描述除了代币以外给支持者的额外福利（如：赠送终身会员、专属周边、服务折扣等，由项目方自主说明）",
     "saveChangesSync": "保存修改并同步",
-    "rollbackSimulationStage": "↩️ 模拟阶段回滚至第 {hour} 小时。"
+    "rollbackSimulationStage": "↩️ 模拟阶段回滚至第 {hour} 小时。",
+    "userCancelledTransaction": "交易已在钱包取消。"
+  },
+  "spark": {
+    "preparing": "准备链上交易...",
+    "walletConfirming": "请在钱包确认",
+    "submitting": "提交链上索引...",
+    "pendingOnchain": "已提交，等待链上确认",
+    "retry": "重试"
   },
   "create": {
     "stepTitle": "发起全新 AI 智能体 Launch 筹款",

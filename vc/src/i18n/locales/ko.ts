@@ -651,7 +651,15 @@ export const ko: TranslationSchema = {
     "supporterExtraPerks": "지지자 전용 추가 혜택 및 권리 설명 (Perks)",
     "supporterExtraPerksPlaceholder": "토큰 외에 지지자에게 제공될 수 있는 추가 혜택을 입력하세요 (예: 평생 회원권, 독점 굿즈 제공, 서비스 할인 등, 프로젝트 측에서 자율 입력)",
     "saveChangesSync": "수정사항 저장 및 동기화",
-    "rollbackSimulationStage": "rollbackSimulationStage"
+    "rollbackSimulationStage": "rollbackSimulationStage",
+    "userCancelledTransaction": "지갑에서 거래가 취소되었습니다."
+  },
+  "spark": {
+    "preparing": "온체인 거래 준비 중...",
+    "walletConfirming": "지갑에서 확인해주세요",
+    "submitting": "인덱스에 제출 중...",
+    "pendingOnchain": "제출 완료, 온체인 확인 대기 중",
+    "retry": "재시도"
   },
   "create": {
     "stepTitle": "새로운 AI 에이전트 Launch 펀딩 시작하기",

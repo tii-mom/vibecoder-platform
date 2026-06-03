@@ -652,6 +652,14 @@ export interface TranslationSchema {
     supporterExtraPerksPlaceholder: string;
     saveChangesSync: string;
     rollbackSimulationStage: string;
+    userCancelledTransaction: string;
+  };
+  spark: {
+    preparing: string;
+    walletConfirming: string;
+    submitting: string;
+    pendingOnchain: string;
+    retry: string;
   };
   create: {
     stepTitle: string;
