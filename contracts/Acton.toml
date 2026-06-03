@@ -39,6 +39,11 @@ display-name = "Sale Vesting"
 src = "contracts/platform/token-system/sale-vesting/sale_vesting.tolk"
 depends = []
 
+[contracts.team_vesting]
+display-name = "Team Vesting"
+src = "contracts/platform/token-system/team-vesting/team_vesting.tolk"
+depends = []
+
 [contracts.token_launcher]
 display-name = "Token Launcher"
 src = "contracts/platform/infra/token-launcher/token_launcher.tolk"
