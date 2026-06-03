@@ -273,9 +273,15 @@ export default function BountyPage() {
           throw new Error(t('bounty.errGetContract'));
         }
         const contractsData = await contractsRes.json() as any;
+        if (!contractsData.success || (contractsData.missing && contractsData.missing.length)) {
+          throw new Error(t('bounty.errGetContract'));
+        }
         const launchFeeContract = contractsData.data?.find((c: any) => c.contract_name === 'LAUNCH_FEE');
         const vcMasterContract = contractsData.data?.find((c: any) => c.contract_name === 'VC_JETTON');
-        const launchFeeAddress = launchFeeContract?.address || 'UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-';
+        if (!launchFeeContract?.address || !vcMasterContract?.address) {
+          throw new Error(t('bounty.errGetContract'));
+        }
+        const launchFeeAddress = launchFeeContract.address;
 
         const tonapiBase = getTonapiBase();
         const jettonsRes = await fetch(`${tonapiBase}/v2/accounts/${walletAddress}/jettons`);
@@ -283,19 +289,29 @@ export default function BountyPage() {
           throw new Error(t('bounty.errQueryTokenAccount'));
         }
         const jettonsData = await jettonsRes.json() as any;
-        // Detect VC jetton by Worker API address (current network), symbol, or legacy addresses
-        const KNOWN_VC_MASTERS = [
-          // Current VC_JETTON from Worker API (testnet or mainnet)
-          vcMasterContract?.address,
-          // Legacy VC jettons (previous testnet deployments)
-          'EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ',
-          'UQBvMw7pDIw8XuAXUagcrxjJyGG-6sVKU08D8JhO7JIAyPVI',
-        ].filter(Boolean) as string[];
+
+        // VC detection: Worker API VC_JETTON address is the primary source of truth.
+        // Legacy addresses and symbol fallback are only enabled in local development.
+        const apiVcMaster = vcMasterContract?.address;
+        const vcMasters: string[] = [];
+        if (apiVcMaster) vcMasters.push(apiVcMaster);
+
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        if (isLocalDev) {
+          vcMasters.push(
+            'EQA7LqItmr4HWs2Ot9OIDvMOtsCTNz0C4leB-x0WHh56DKAZ',
+            'UQBvMw7pDIw8XuAXUagcrxjJyGG-6sVKU08D8JhO7JIAyPVI',
+          );
+        }
+
         const vcJettonByAddress = jettonsData.balances?.find((b: any) => {
           const addr = b.jetton.address?.toLowerCase();
-          return KNOWN_VC_MASTERS.some(m => m.toLowerCase() === addr);
+          return vcMasters.some(m => m.toLowerCase() === addr);
         });
-        const vcJetton = vcJettonByAddress || jettonsData.balances?.find((b: any) => b.jetton.symbol === 'VC');
+        const vcJetton = vcJettonByAddress || (isLocalDev
+          ? jettonsData.balances?.find((b: any) => b.jetton.symbol === 'VC')
+          : undefined
+        );
 
         if (!vcJetton || !vcJetton.wallet_address?.address) {
           throw new Error(t('bounty.errNoTokenWallet'));
