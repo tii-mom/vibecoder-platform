@@ -2,6 +2,7 @@ import { Address, beginCell, Cell, Contract, contractAddress, ContractProvider, 
 
 export type ProjectTokenConfig = {
     adminAddress: Address;
+    maxSupply: bigint;
     content: Cell;
     jettonWalletCode: Cell;
 };
@@ -9,7 +10,9 @@ export type ProjectTokenConfig = {
 export function projectTokenConfigToCell(config: ProjectTokenConfig): Cell {
     return beginCell()
         .storeCoins(0)
+        .storeCoins(config.maxSupply)
         .storeAddress(config.adminAddress)
+        .storeBit(false)
         .storeRef(config.content)
         .storeRef(config.jettonWalletCode)
         .endCell();
@@ -51,6 +54,17 @@ export class ProjectToken implements Contract {
                 .storeAddress(via.address!)
                 .storeCoins(0)
                 .storeSlice(beginCell().endCell().beginParse())
+                .endCell(),
+        });
+    }
+
+    async sendDisableMint(provider: ContractProvider, via: Sender, value: bigint) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell()
+                .storeUint(5, 32)
+                .storeUint(0, 64)
                 .endCell(),
         });
     }

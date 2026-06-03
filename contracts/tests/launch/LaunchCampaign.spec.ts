@@ -1,6 +1,7 @@
 import { Blockchain, SandboxContract, TreasuryContract } from '@ton/sandbox';
 import { Cell, toNano, beginCell, contractAddress } from '@ton/core';
 import { LaunchCampaign } from '../../wrappers/LaunchCampaign';
+import { ProjectToken } from '../../wrappers/ProjectToken';
 import '@ton/test-utils';
 import { compileActonCode } from '../helpers/actonArtifacts';
 
@@ -222,5 +223,44 @@ describe('LaunchCampaign', () => {
 
         const data = await campaign.getCampaignData();
         expect(data.platformFeeRate).toBe(800);
+    });
+
+    it('should prevent owner minting after deploy even with admin', async () => {
+        await campaign.sendSpark(investor1.getSender(), toNano('2000'));
+        await campaign.sendSpark(investor2.getSender(), toNano('4000'));
+        await campaign.sendMintBatch(deployer.getSender(), toNano('0.1'), 10);
+
+        const data = await campaign.getCampaignData();
+        expect(data.campaignStatus).toBe(2);
+        expect(data.tokenDeployed).toBe(true);
+        const tokenAddress = data.tokenAddress;
+        expect(tokenAddress).not.toBeNull();
+
+        const token = blockchain.openContract(ProjectToken.createFromAddress(tokenAddress!));
+
+        const mintRes = await token.sendMint(deployer.getSender(), toNano('0.2'), {
+            toAddress: oracle.address,
+            amount: toNano('100'),
+        });
+        expect(mintRes.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: tokenAddress!,
+            success: false,
+            exitCode: 705,
+        });
+
+        const newContent = beginCell().storeUint(1, 8).storeBuffer(Buffer.from('new-metadata')).endCell();
+        const contentBody = beginCell()
+            .storeUint(4, 32).storeUint(0, 64).storeRef(newContent).endCell();
+        const contentRes = await deployer.send({
+            to: tokenAddress!,
+            value: toNano('0.1'),
+            body: contentBody,
+        });
+        expect(contentRes.transactions).toHaveTransaction({
+            from: deployer.address,
+            to: tokenAddress!,
+            success: true,
+        });
     });
 });
