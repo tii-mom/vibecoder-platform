@@ -1,6 +1,6 @@
 # VC v3 Testnet Funding / Flow Evidence
 
-> **Status:** Funding executed via VC_JETTON mint. Flow tests dry-run passed.
+> **Status:** Funding verified on-chain. Flow dry-run passes against the current already-partially-executed testnet state.
 
 ---
 
@@ -13,9 +13,11 @@
 | Total supply before | 1,480,010,002 VC |
 | Total supply after | 1,980,010,002 VC (+500M) |
 | SaleVesting self VC wallet | `UQANAqwlEmVLjKB4PfiIDo0HVLtuGmPOID-nbpW3SKd9IN2p` |
-| SaleVesting mint amount | 300,000,000 VC |
+| SaleVesting funding target | 300,000,000 VC |
+| SaleVesting verified balance | 900,000,000 VC |
 | TeamVesting self VC wallet | `UQBFi75JuzGEboqywouPJKGRZSiRmKpVk0nxPTt0tNsmM7lO` |
-| TeamVesting mint amount | 200,000,000 VC |
+| TeamVesting funding target | 200,000,000 VC |
+| TeamVesting verified balance | 560,000,000 VC |
 | Funding tx hashes | not captured by script |
 
 ---
@@ -26,10 +28,10 @@
 |------|------|
 | build:all | ✓ |
 | typecheck | ✓ |
-| tests | 76 passed |
+| tests | 86 passed |
 | verify:get-methods | 9/9 |
 | verify:vc-v3:testnet | 10/10 OK |
-| verify:vc-v3:balances | FAIL (verify script may need wallet creation step) |
+| verify:vc-v3:balances | OK — SaleVesting 900,000,000 VC; TeamVesting 560,000,000 VC |
 
 ---
 
@@ -40,7 +42,9 @@
 | 项目 | 结果 |
 |------|------|
 | TeamVesting: Round 1 unlocked | ✓ |
-| TeamVesting: claimable 20M VC | ✓ |
+| TeamVesting: claimable | 0 VC; accepted because current vested 40M VC has already been claimed |
+| TeamVesting: claimedAmount | 40,000,000 VC |
+| TeamVesting: claimedAmount cap | ✓ claimedAmount <= 200,000,000 VC |
 | TeamVesting: round thresholds | ✓ |
 | SaleVesting: getSaleTier(1/2/3) | ✓ |
 
@@ -69,5 +73,5 @@
 ---
 
 ## Next Steps
-- Execute flow tests: `CONFIRM_TESTNET_FLOW_TEST=YES npm run test:vc-v3:flows`
+- Complete the remaining SaleVesting 99 TON buyer buy/claim flow when a funded testnet buyer wallet is available.
 - Begin DeveloperRewardPool implementation
