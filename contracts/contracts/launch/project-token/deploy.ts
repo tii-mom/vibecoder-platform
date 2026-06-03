@@ -8,6 +8,7 @@ export async function run(provider: NetworkProvider) {
 
     const projectToken = provider.open(ProjectToken.createFromConfig({
         adminAddress,
+        maxSupply: toNano('1000000000'),
         content: beginCell().storeUint(1, 8).storeBuffer(Buffer.from('https://example.com/project-token.json')).endCell(),
         jettonWalletCode: await compile('ProjectTokenWallet'),
     }, await compile('ProjectToken')));

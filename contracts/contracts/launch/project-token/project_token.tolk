@@ -35,12 +35,12 @@ fun isEndOfSlice(s: slice): int {
 
 import "@stdlib/tvm-dicts"
 
-const OP_MINT = 21; const OP_BURN = 0x7bdd97de; const OP_ADMIN = 3; const OP_CONTENT = 4;
+const OP_MINT = 21; const OP_BURN = 0x7bdd97de; const OP_ADMIN = 3; const OP_CONTENT = 4; const OP_DISABLE_MINT = 5;
 
-global totalSupply: int; global adminAddr: slice; global content: cell; global walletCode: cell;
+global totalSupply: int; global maxSupply: int; global adminAddr: slice; global mintDisabled: int; global content: cell; global walletCode: cell;
 
-fun loadData() { var ds = getContractData().beginParse(); totalSupply = ds.loadCoins(); adminAddr = ds.loadAddress() as slice; content = ds.loadRef(); walletCode = ds.loadRef(); ds.assertEnd(); }
-fun saveData() { setContractData(beginCell().storeCoins(totalSupply).storeSlice(adminAddr).storeRef(content).storeRef(walletCode).endCell()); }
+fun loadData() { var ds = getContractData().beginParse(); totalSupply = ds.loadCoins(); maxSupply = ds.loadCoins(); adminAddr = ds.loadAddress() as slice; mintDisabled = ds.loadBool() ? 1 : 0; content = ds.loadRef(); walletCode = ds.loadRef(); ds.assertEnd(); }
+fun saveData() { setContractData(beginCell().storeCoins(totalSupply).storeCoins(maxSupply).storeSlice(adminAddr).storeBool(mintDisabled != 0).storeRef(content).storeRef(walletCode).endCell()); }
 fun getWalletInit(owner: slice): cell { return beginCell().storeUint(6,5).storeRef(walletCode).storeRef(beginCell().storeCoins(0).storeSlice(owner).storeSlice(getMyAddress()).storeRef(walletCode).endCell()).endCell(); }
 fun getWalletAddr(owner: slice): slice { val i = getWalletInit(owner); return beginCell().storeUint(4,3).storeInt(0,8).storeUint(cellHash(i),256).endCell().beginParse(); }
 
@@ -55,7 +55,9 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
 
     if (op == OP_MINT) {
         assert(isSliceBitsEqual(s, adminAddr) != 0, 701);
+        assert(mintDisabled == 0, 705);
         val to = msgBody.loadAddress() as slice; val amt = msgBody.loadCoins();
+        assert(totalSupply + amt <= maxSupply, 706);
         val resp = msgBody.loadAddress() as slice; val fwd = msgBody.loadCoins(); val pl = msgBody;
         val wa = getWalletAddr(to); val wi = getWalletInit(to);
         val body = beginCell().storeUint(0x178d4519, 32).storeUint(qid, 64).storeCoins(amt)
@@ -84,13 +86,17 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(isSliceBitsEqual(s, adminAddr) != 0, 701);
         content = msgBody.loadRef(); saveData(); return;
     }
+    if (op == OP_DISABLE_MINT) {
+        assert(isSliceBitsEqual(s, adminAddr) != 0, 701);
+        mintDisabled = 1; saveData(); return;
+    }
     throw 0xffff;
 }
 get fun getJettonData(): (int, int, slice, cell, cell) {
-    loadData(); return (totalSupply, -1, adminAddr, content, walletCode);
+    loadData(); val mintable = mintDisabled != 0 ? 0 : -1; return (totalSupply, mintable, adminAddr, content, walletCode);
 }
 get fun get_jetton_data(): (int, int, slice, cell, cell) {
-    loadData(); return (totalSupply, -1, adminAddr, content, walletCode);
+    loadData(); val mintable = mintDisabled != 0 ? 0 : -1; return (totalSupply, mintable, adminAddr, content, walletCode);
 }
 get fun getWalletAddress(o: slice): slice {
     loadData(); return getWalletAddr(o);

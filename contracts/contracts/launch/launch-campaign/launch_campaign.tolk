@@ -131,8 +131,19 @@ fun calcTokens(dep: int, r: int): int {
     return tok;
 }
 fun deployContracts() {
+    val platformTokens = mulDivFloor(raised, 8, 100) * 100;
+    var maxSupply = platformTokens;
+    var (key1, valSlice1, ok1) = investors.uDictGetFirst(256);
+    while (ok1) {
+        var r1 = valSlice1!;
+        r1.loadCoins();
+        val tokens = r1.loadCoins();
+        maxSupply += tokens;
+        var (nk1, nvs1, ns1) = investors.uDictGetNext(256, key1!);
+        key1 = nk1; valSlice1 = nvs1; ok1 = ns1;
+    }
     val content = beginCell().storeUint(0, 8).endCell();
-    val masterData = beginCell().storeCoins(0).storeSlice(getMyAddress()).storeRef(content).storeRef(walletCode).endCell();
+    val masterData = beginCell().storeCoins(0).storeCoins(maxSupply).storeSlice(getMyAddress()).storeBool(false).storeRef(content).storeRef(walletCode).endCell();
     val masterInit = beginCell().storeUint(6, 5).storeRef(jettonCode).storeRef(masterData).endCell();
     tokenAddr = beginCell().storeUint(4, 3).storeInt(0, 8).storeUint(cellHash(masterInit), 256).endCell().beginParse();
     sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(50000000)
@@ -173,13 +184,15 @@ fun deployContracts() {
     val platformFee = mulDivFloor(raised, platformFeeRate, 10000);
     sendMessage(beginCell().storeUint(0x10, 6).storeSlice(platformAddr).storeCoins(platformFee)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(0, 32).endCell(), 1);
-    val platformTokens = mulDivFloor(raised, 8, 100) * 100;
     val platformMintBody = beginCell().storeUint(21, 32).storeUint(0, 64)
         .storeSlice(platformAddr).storeCoins(platformTokens).storeSlice(platformAddr).storeCoins(0)
         .storeSlice(beginCell().endCell().beginParse()).endCell();
     sendMessage(beginCell().storeUint(0x18, 6).storeSlice(platformAddr).storeCoins(30000000)
         .storeUint(0, 1+4+4+64+32).storeBool(false).storeBool(true)
         .storeRef(platformMintBody).endCell(), 1);
+    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(10000000)
+        .storeUint(0, 1+4+4+64+32+1+1).storeUint(5, 32).storeUint(0, 64)
+        .endCell(), 1);
     sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(10000000)
         .storeUint(0, 1+4+4+64+32+1+1).storeUint(3, 32).storeUint(0, 64)
         .storeSlice(owner).endCell(), 1);
