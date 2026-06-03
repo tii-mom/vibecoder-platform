@@ -44,6 +44,14 @@ const REQUIRED_PLATFORM_CONTRACTS = [
   'EARLY_FUNDRAISING',
   'LAUNCH_FEE',
   'TOKEN_LAUNCHER',
+  'SALE_VESTING',
+  'TEAM_VESTING',
+  'DEVELOPER_REWARD_POOL',
+  'ECOSYSTEM_REWARD_POOL',
+  'DEVELOPMENT_FUND',
+  'RESERVE_VAULT',
+  'LAUNCH_ESCROW',
+  'SIMPLE_LAUNCH_CAMPAIGN',
 ];
 
 function currentTonNetwork(c: any): string {
@@ -1328,6 +1336,70 @@ app.get('/api/v1/platform/stats', async (c) => {
           totalAllocatedVC: Number(BigInt(ef.stack?.[5]?.value || ef.stack?.[5]?.num || '0')) / 1e9,
         };
       } catch (e: any) { stats.earlyFundraisingError = e.message; }
+    }
+    if (addr.SALE_VESTING) {
+      try {
+        const sv = await tcRun(addr.SALE_VESTING, 'getSaleVestingData');
+        stats.saleVesting = {
+          rawStackDepth: Array.isArray(sv.stack) ? sv.stack.length : 0,
+        };
+      } catch (e: any) { stats.saleVestingError = e.message; }
+    }
+    if (addr.TEAM_VESTING) {
+      try {
+        const tv = await tcRun(addr.TEAM_VESTING, 'getTeamVestingData');
+        stats.teamVesting = {
+          rawStackDepth: Array.isArray(tv.stack) ? tv.stack.length : 0,
+        };
+      } catch (e: any) { stats.teamVestingError = e.message; }
+    }
+    if (addr.DEVELOPER_REWARD_POOL) {
+      try {
+        const dp = await tcRun(addr.DEVELOPER_REWARD_POOL, 'getDeveloperPoolData');
+        stats.developerRewardPool = {
+          rawStackDepth: Array.isArray(dp.stack) ? dp.stack.length : 0,
+        };
+      } catch (e: any) { stats.developerRewardPoolError = e.message; }
+    }
+    if (addr.ECOSYSTEM_REWARD_POOL) {
+      try {
+        const ep = await tcRun(addr.ECOSYSTEM_REWARD_POOL, 'getEcosystemPoolData');
+        stats.ecosystemRewardPool = {
+          rawStackDepth: Array.isArray(ep.stack) ? ep.stack.length : 0,
+        };
+      } catch (e: any) { stats.ecosystemRewardPoolError = e.message; }
+    }
+    if (addr.DEVELOPMENT_FUND) {
+      try {
+        const df = await tcRun(addr.DEVELOPMENT_FUND, 'getDevelopmentFundData');
+        stats.developmentFund = {
+          rawStackDepth: Array.isArray(df.stack) ? df.stack.length : 0,
+        };
+      } catch (e: any) { stats.developmentFundError = e.message; }
+    }
+    if (addr.RESERVE_VAULT) {
+      try {
+        const rv = await tcRun(addr.RESERVE_VAULT, 'getReserveVaultData');
+        stats.reserveVault = {
+          rawStackDepth: Array.isArray(rv.stack) ? rv.stack.length : 0,
+        };
+      } catch (e: any) { stats.reserveVaultError = e.message; }
+    }
+    if (addr.LAUNCH_ESCROW) {
+      try {
+        const le = await tcRun(addr.LAUNCH_ESCROW, 'getLaunchEscrowData');
+        stats.launchEscrow = {
+          rawStackDepth: Array.isArray(le.stack) ? le.stack.length : 0,
+        };
+      } catch (e: any) { stats.launchEscrowError = e.message; }
+    }
+    if (addr.SIMPLE_LAUNCH_CAMPAIGN) {
+      try {
+        const slc = await tcRun(addr.SIMPLE_LAUNCH_CAMPAIGN, 'getSimpleLaunchCampaignData');
+        stats.simpleLaunchCampaign = {
+          rawStackDepth: Array.isArray(slc.stack) ? slc.stack.length : 0,
+        };
+      } catch (e: any) { stats.simpleLaunchCampaignError = e.message; }
     }
 
     return c.json({ success: true, data: stats });
