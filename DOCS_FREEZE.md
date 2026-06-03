@@ -16,6 +16,7 @@ This registry defines which documents can be used as current implementation sour
 | `IMPLEMENTATION_STATUS.md` | Implementation status | Current implemented modules and simulator/mock caveats. |
 | `REMAINING_TASKS.md` | Open execution work | Current remaining task queue, subject to the source-of-truth documents above. |
 | `DEVELOPMENT_RULES.md` | Execution rules | Coding and data discipline for future work. |
+| `contracts/docs/vc-tokenomics-v3-contract-plan.md` | Pending decision — v3 contract plan | Target 9.8 亿 VC model, contract split, implementation order. Not yet implemented on-chain. Use alongside `CONTRACTS.md` for current active boundary. |
 
 ## Frozen Documents
 
