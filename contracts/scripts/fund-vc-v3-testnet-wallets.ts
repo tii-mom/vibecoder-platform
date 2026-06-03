@@ -82,7 +82,7 @@ async function sendVc(
         const seqno = await wallet.getSeqno();
         const body = beginCell()
             .storeUint(0x0f8a7ea5, 32).storeUint(0, 64).storeCoins(amount)
-            .storeAddress(computedWallet).storeAddress(wallet.address)
+            .storeAddress(owner).storeAddress(wallet.address)
             .storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
         await wallet.sendTransfer({
