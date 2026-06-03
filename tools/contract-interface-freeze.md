@@ -42,6 +42,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `DeveloperRewardPool` | `getDeveloperPoolData`, `getProjectDeveloperReward(project)`, `hasDeveloperClaimed(project)` |
 | `DevelopmentFund` | `getDevelopmentFundData`, `isAllowedDestination(destination)`, `getInvestmentRecord(id)` |
 | `EcosystemRewardPool` | `getEcosystemPoolData`, `getUserEcosystemAllocation(project, user)`, `getEcosystemUnlockState` |
+| `ReserveVault` | `getReserveVaultData`, `getReserveTransferRecord(id)` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
 | `TeamVesting` | `getTeamVestingData`, `getTeamVestingRound(r)`, `getTeamClaimable` |
@@ -102,6 +103,12 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `1` | `destination:address` add allowed investment destination | admin only |
 | `2` | `destination:address` remove allowed investment destination | admin only |
 | `3` | `destination:address amount:coins purposeHash:uint256` invest VC and record purpose | admin only, destination must be allowed |
+
+### ReserveVault
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `destination:address amount:coins purposeHash:uint256` transfer reserve VC and record purpose | admin only |
 
 ### EarlyFundraising
 
