@@ -30,6 +30,11 @@
     "mint:vc-v3:full:testnet": "tsx scripts/mint-vc-v3-full-testnet.ts --execute",
     "test:vc-v3:flows:plan": "tsx scripts/test-vc-v3-flows.ts",
     "test:vc-v3:flows": "tsx scripts/test-vc-v3-flows.ts --execute",
+    "deploy:simple-launch:testnet:plan": "tsx scripts/deploy-simple-launch-testnet.ts",
+    "deploy:simple-launch:testnet": "tsx scripts/deploy-simple-launch-testnet.ts --execute",
+    "verify:simple-launch:testnet": "tsx scripts/verify-simple-launch-testnet.ts",
+    "test:simple-launch:flow:plan": "tsx scripts/test-simple-launch-flow.ts",
+    "test:simple-launch:flow": "tsx scripts/test-simple-launch-flow.ts --execute",
     "mint:vc": "tsx scripts/mint-vc.ts"
   },
   "dependencies": {
