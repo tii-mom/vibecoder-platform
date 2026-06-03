@@ -2,6 +2,8 @@
 
 > 合约唯一事实来源。已对齐全部用户决策。
 
+> **v3 通知:** 平台 VC 经济模型正在向 9.8 亿 VC v3 模型迁移。当前本文档仍为 active contract boundary 的事实来源。v3 目标合约拆分详见 `contracts/docs/vc-tokenomics-v3-contract-plan.md`，尚未实现，请勿作为当前执行依据。
+
 ---
 
 ## 一、最终分配模型
