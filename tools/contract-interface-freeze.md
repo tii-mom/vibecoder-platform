@@ -40,6 +40,8 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `Fund` | `getFundData`, `isProjectWhitelisted(project)`, `getProjectTokenBalance(tokenMaster)`, `getUserDeposit(user)`, `getFundStats`, `getProjectReward(project)`, `getFundUnlockState` |
 | `VCRewardPool` | `getRewardPoolData`, `getProjectRewardState(project)` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
+| `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
+| `TeamVesting` | `getTeamVestingData`, `getTeamVestingRound(r)`, `getTeamClaimable` |
 | `LaunchFee` | `getLaunchFeeData`, `getProjectStake(project)`, `getCreatorProjectCount(creator)` |
 | `TokenLauncher` | `getLauncherData` |
 | `ProjectToken` | `get_jetton_data`, `getJettonData`, `get_wallet_address(owner)`, `getWalletAddress(owner)` |
@@ -92,6 +94,26 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `4` | `deploymentFee antiSpamStake fundAddress` set params |
 | `5` | `amount destination` emergency TON withdrawal |
 | `6` | `amount destination` emergency VC withdrawal |
+
+### SaleVesting
+
+| Op | Body |
+| --- | --- |
+| `1` | `tier:uint8` buy with TON value |
+| `2` | `price:coins` feed price |
+| `3` | Claim unlocked VC |
+| `4` | `amount destination` withdraw TON |
+| `5` | `amount destination` withdraw VC |
+| `6` | Close sale |
+
+### TeamVesting
+
+| Op | Body |
+| --- | --- |
+| `1` | `price:coins` feed price |
+| `2` | Claim unlocked VC |
+| `3` | `amount destination` withdraw TON |
+| `4` | `amount destination` withdraw VC |
 
 ### LaunchCampaign
 
