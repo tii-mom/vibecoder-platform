@@ -651,7 +651,15 @@ export const en: TranslationSchema = {
     "supporterExtraPerks": "Extra Supporter Perks (Perks)",
     "supporterExtraPerksPlaceholder": "Describe extra perks other than tokens (e.g. lifetime access, exclusive merch, service discounts)",
     "saveChangesSync": "Save Changes & Sync",
-    "rollbackSimulationStage": "↩️ Rollback simulation stage to Hour {hour}."
+    "rollbackSimulationStage": "↩️ Rollback simulation stage to Hour {hour}.",
+    "userCancelledTransaction": "Transaction cancelled in wallet."
+  },
+  "spark": {
+    "preparing": "Preparing on-chain transaction...",
+    "walletConfirming": "Confirm in wallet",
+    "submitting": "Submitting to index...",
+    "pendingOnchain": "Submitted, awaiting on-chain confirmation",
+    "retry": "Retry"
   },
   "create": {
     "stepTitle": "Create New Launch Campaign",

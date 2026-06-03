@@ -1001,58 +1001,210 @@ app.patch('/api/v1/launches/:id', authMiddleware, async (c) => {
   }
 });
 
-// 2b. POST /api/v1/launches/:id/spark - Invest in a project
+// 2b. POST /api/v1/launches/:id/spark — DEPRECATED, replaced by on-chain flow.
+// Returns error directing to /spark/prepare + /spark/submit.
 app.post('/api/v1/launches/:id/spark', authMiddleware, async (c) => {
+  if (c.env.ENVIRONMENT === 'development') {
+    // Legacy mock path for local dev only
+    const launchId = c.req.param('id');
+    try {
+      const userAddress = c.get('user_id');
+      const { amount } = await c.req.json();
+      if (!amount || amount <= 0) return c.json({ success: false, error: 'Invalid amount' }, 400);
+      const project = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(launchId).first() as any;
+      if (!project) return c.json({ success: false, error: 'Project not found' }, 404);
+      const amountNano = Math.round(Number(amount) * 1e9);
+      const eventId = `spark-onchain-dev-${Date.now()}`;
+      const now = new Date().toISOString();
+      await c.env.DB.prepare(
+        "INSERT INTO spark_onchain_events (id, launch_id, user_id, campaign_address, amount_nano, status, source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      ).bind(eventId, launchId, userAddress, project.campaign_address || 'DEV_MOCK', amountNano, 'PENDING_ONCHAIN', 'DEV_MOCK', now).run();
+      return c.json({ success: true, mock: true, data: { eventId, status: 'PENDING_ONCHAIN', amountNano: amountNano.toString() } });
+    } catch (error: any) {
+      return c.json({ success: false, error: error.message }, 500);
+    }
+  }
+  return c.json({ success: false, error: 'Direct off-chain Spark is disabled. Use TonConnect on-chain Spark flow: POST /api/v1/launches/:id/spark/prepare then /spark/submit.' }, 400);
+});
+
+// 2c. GET /api/v1/launches/:id/spark/prepare — prepare on-chain Spark transaction
+app.get('/api/v1/launches/:id/spark/prepare', authMiddleware, async (c) => {
+  const launchId = c.req.param('id');
+  try {
+    const amount = Number(c.req.query('amount') || '0');
+    if (!amount || amount <= 0) return c.json({ success: false, error: 'amount query param required and must be > 0' }, 400);
+
+    const project = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(launchId).first() as any;
+    if (!project) return c.json({ success: false, error: 'Project not found' }, 404);
+
+    const campaignAddress = project.campaign_address;
+    if (!campaignAddress) {
+      if (c.env.ENVIRONMENT === 'development') {
+        return c.json({ success: true, mock: true, data: { launchId, campaignAddress: 'DEV_NO_CAMPAIGN', amountNano: '0', op: '0x111', message: { address: 'DEV_NO_CAMPAIGN', amount: '0', payload: '' } } });
+      }
+      return c.json({ success: false, error: 'Project has no on-chain campaign address registered' }, 400);
+    }
+
+    // Validate campaign address
+    try { Address.parse(campaignAddress); } catch {
+      return c.json({ success: false, error: 'Invalid campaign address in database' }, 500);
+    }
+
+    const amountNano = BigInt(Math.round(amount * 1e9));
+    const validUntil = Math.floor(Date.now() / 1000) + 3600; // 1 hour
+
+    // Build payload: op=0x111 (SPARK), no extra body needed for simple TON value transfer
+    const { beginCell } = await import('@ton/core');
+    const payload = beginCell().storeUint(0x111, 32).endCell();
+    const boc = await payload.toBoc();
+    const payloadBase64 = Buffer.from(boc).toString('base64');
+
+    return c.json({
+      success: true,
+      data: {
+        launchId,
+        campaignAddress,
+        amountNano: amountNano.toString(),
+        op: '0x111',
+        validUntil,
+        payloadBase64,
+        message: {
+          address: campaignAddress,
+          amount: amountNano.toString(),
+          payload: payloadBase64,
+        }
+      }
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 2d. POST /api/v1/launches/:id/spark/submit — record on-chain Spark transaction
+app.post('/api/v1/launches/:id/spark/submit', authMiddleware, async (c) => {
   const launchId = c.req.param('id');
   try {
     const userAddress = c.get('user_id');
-    const { amount, referrer } = await c.req.json();
-    if (!amount || amount <= 0) return c.json({ success: false, error: 'Invalid amount' }, 400);
+    const { amountNano, txHash, txBoc, teamId, referrer } = await c.req.json();
 
-    const project = await c.env.DB.prepare(
-      'SELECT * FROM launches WHERE id = ?'
-    ).bind(launchId).first() as any;
+    if (!amountNano) return c.json({ success: false, error: 'amountNano required' }, 400);
+    if (!txHash && !txBoc) return c.json({ success: false, error: 'txHash or txBoc required' }, 400);
+
+    const amountNanoBig = BigInt(amountNano);
+    if (amountNanoBig <= 0n) return c.json({ success: false, error: 'amountNano must be > 0' }, 400);
+
+    const project = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(launchId).first() as any;
     if (!project) return c.json({ success: false, error: 'Project not found' }, 404);
 
-    const amountNano = Math.round(Number(amount) * 1e9);
+    const campaignAddress = project.campaign_address;
+    if (!campaignAddress) {
+      return c.json({ success: false, error: 'Project has no campaign address' }, 400);
+    }
+
+    // Check duplicate txHash
+    if (txHash) {
+      const existing = await c.env.DB.prepare(
+        'SELECT id, status FROM spark_onchain_events WHERE tx_hash = ?'
+      ).bind(txHash).first() as any;
+      if (existing) {
+        return c.json({ success: true, data: { status: existing.status, eventId: existing.id, txHash, duplicate: true } });
+      }
+    }
+
+    const eventId = `spark-onchain-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const now = new Date().toISOString();
+
+    await c.env.DB.prepare(
+      `INSERT INTO spark_onchain_events (id, launch_id, user_id, campaign_address, tx_hash, tx_boc, amount_nano, status, source, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING_ONCHAIN', 'TONCONNECT', ?)`
+    ).bind(eventId, launchId, userAddress, campaignAddress, txHash || null, txBoc || null, amountNanoBig.toString(), now).run();
+
+    return c.json({
+      success: true,
+      data: { status: 'PENDING_ONCHAIN', eventId, txHash: txHash || null }
+    });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// 2e. POST /api/v1/launches/:id/spark/confirm — admin/manual confirm pending Spark
+app.post('/api/v1/launches/:id/spark/confirm', authMiddleware, async (c) => {
+  const launchId = c.req.param('id');
+  try {
+    const userAddress = c.get('user_id');
+    const isAdmin = checkIsAdmin(c, userAddress);
+    const isDev = c.env.ENVIRONMENT === 'development';
+
+    // v1: admin-only or dev mode
+    if (!isAdmin && !isDev) {
+      return c.json({ success: false, error: 'Forbidden: admin access required' }, 403);
+    }
+
+    const { eventId } = await c.req.json();
+    if (!eventId) return c.json({ success: false, error: 'eventId required' }, 400);
+
+    const event = await c.env.DB.prepare(
+      'SELECT * FROM spark_onchain_events WHERE id = ? AND launch_id = ?'
+    ).bind(eventId, launchId).first() as any;
+    if (!event) return c.json({ success: false, error: 'Event not found' }, 404);
+    if (event.status !== 'PENDING_ONCHAIN') {
+      return c.json({ success: false, error: `Event already ${event.status}` }, 400);
+    }
+
+    const now = new Date().toISOString();
+    const project = await c.env.DB.prepare('SELECT * FROM launches WHERE id = ?').bind(launchId).first() as any;
+
+    // v1: basic validation — check campaign address matches project
+    if (event.campaign_address !== project.campaign_address) {
+      await c.env.DB.prepare(
+        "UPDATE spark_onchain_events SET status = 'FAILED', error = ? WHERE id = ?"
+      ).bind('Campaign address mismatch', eventId).run();
+      return c.json({ success: false, error: 'Campaign address mismatch' }, 400);
+    }
+
+    // Confirm: update event + project raised_total + insert spark_records
+    const amountNano = BigInt(event.amount_nano);
     const raisedTotalNano = Number(project.raised_total_nano ?? (project.raised_total || 0) * 1e9);
     const targetTotalNano = Number(project.target_total_nano ?? (project.target_total || 0) * 1e9);
-
-    const newRaisedNano = raisedTotalNano + amountNano;
+    const newRaisedNano = raisedTotalNano + Number(amountNano);
     const newRaised = newRaisedNano / 1e9;
-    const progress = Math.min(100, Number(((newRaisedNano / targetTotalNano) * 100).toFixed(1)));
     const isFinished = newRaisedNano >= targetTotalNano;
 
     // Calculate tokens
-    const tokensNano = calcTokens(amountNano, raisedTotalNano, project);
+    const tokensNano = calcTokens(Number(amountNano), raisedTotalNano, project);
     const tokens = tokensNano / 1e9;
 
-    // Update raised_total and raised_total_nano
+    await c.env.DB.prepare(
+      "UPDATE spark_onchain_events SET status = 'CONFIRMED', confirmed_at = ?, tokens_nano = ? WHERE id = ?"
+    ).bind(now, tokensNano, eventId).run();
+
     await c.env.DB.prepare(
       'UPDATE launches SET raised_total = ?, raised_total_nano = ?, status = ? WHERE id = ?'
     ).bind(newRaised, newRaisedNano, isFinished ? 'success' : project.status === 'DRAFT' ? 'active' : project.status, launchId).run();
 
-    // Record the spark
     const recordId = `spark-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     await c.env.DB.prepare(
       'INSERT INTO spark_records (id, launch_id, user_id, amount, amount_nano, stage, tokens, tokens_nano) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(recordId, launchId, userAddress, amount, amountNano, 1, tokens, tokensNano).run();
+    ).bind(recordId, launchId, event.user_id, newRaised - (raisedTotalNano / 1e9), amountNano.toString(), 1, tokens, tokensNano.toString()).run();
 
-    // Handle referral if provided
-    if (referrer && referrer.toLowerCase() !== userAddress.toLowerCase()) {
+    // Handle referral
+    if (event.user_id) {
       const existingRef = await c.env.DB.prepare(
         'SELECT id FROM referrals WHERE invitee_wallet = ?'
-      ).bind(userAddress).first();
+      ).bind(event.user_id).first();
       if (!existingRef) {
-        await c.env.DB.prepare(
-          'INSERT INTO referrals (id, inviter_wallet, invitee_wallet, reward_status, reward_vc_nano) VALUES (?, ?, ?, ?, ?)'
-        ).bind(`ref-${Date.now()}`, referrer, userAddress, 'pending', 50000000000).run();
+        try {
+          await c.env.DB.prepare(
+            'INSERT INTO referrals (id, inviter_wallet, invitee_wallet, reward_status, reward_vc_nano) VALUES (?, ?, ?, ?, ?)'
+          ).bind(`ref-${Date.now()}`, 'system', event.user_id, 'pending', 50000000000).run();
+        } catch {}
       }
     }
 
     return c.json({
       success: true,
-      data: { id: launchId, raisedAmount: newRaised, progress, status: isFinished ? 'success' : 'active' }
+      data: { status: 'CONFIRMED', eventId, raisedTotal: newRaised, progress: Math.min(100, Number(((newRaisedNano / targetTotalNano) * 100).toFixed(1))) }
     });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);

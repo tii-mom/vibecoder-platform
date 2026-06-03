@@ -1,7 +1,17 @@
 import React, { useState } from 'react';
-import { X, Zap, Users, Sparkles, AlertCircle } from 'lucide-react';
+import { X, Zap, Users, Sparkles, AlertCircle, Loader2 } from 'lucide-react';
+import { useTonConnectUI } from '@tonconnect/ui-react';
 import { useSparkStore } from '../store/sparkStore';
+import { prepareOnchainSpark, submitOnchainSpark } from '../services/onchainSpark';
 import { useTranslation } from '../hooks/useTranslation';
+
+type SparkStatus =
+  | 'idle'
+  | 'preparing'
+  | 'wallet_confirming'
+  | 'submitting'
+  | 'pending_onchain'
+  | 'error';
 
 interface SparkModalProps {
   project: any;
@@ -23,18 +33,22 @@ export default function SparkModal({
   investInProject
 }: SparkModalProps) {
   const { t } = useTranslation();
+  const [tonConnectUI] = useTonConnectUI();
   const [amountInput, setAmountInput] = useState<string>('10');
   const [mode, setMode] = useState<'solo' | 'team'>('solo');
   const [errorMsg, setErrorMsg] = useState<string>('');
+  const [sparkStatus, setSparkStatus] = useState<SparkStatus>('idle');
 
   const totalAvailable = profile?.balanceTON || 0;
+
+  const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
   const handleQuickSelect = (val: number) => {
     setAmountInput(val.toString());
     setErrorMsg('');
   };
 
-  const handleConfirm = (e: React.FormEvent) => {
+  const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -59,47 +73,66 @@ export default function SparkModal({
       return;
     }
 
-    const realCost = finalAmount;
-
-    if (realCost > profile.balanceTON) {
-      setErrorMsg(t('detail.insufficientBalanceDetails', { cost: realCost.toFixed(1), balance: profile.balanceTON }));
+    // Team mode: use existing join/buy flow (non-contract for v1)
+    if (mode === 'team') {
+      if (finalAmount > profile.balanceTON) {
+        setErrorMsg(t('detail.insufficientBalanceDetails', { cost: finalAmount.toFixed(1), balance: profile.balanceTON }));
+        return;
+      }
+      let finalTeamId: string | undefined;
+      if (teamId) {
+        const success = useSparkStore.getState().joinTeamSpark(teamId, profile.walletAddress, finalAmount);
+        if (!success) { setErrorMsg(t('detail.joinTeamFailed')); return; }
+        finalTeamId = teamId;
+      } else {
+        const newTeam = useSparkStore.getState().createTeamSpark(project.id, profile.walletAddress, profile.username, 20, finalAmount);
+        finalTeamId = newTeam.id;
+      }
+      updateProfile({ balanceTON: Number((profile.balanceTON - finalAmount).toFixed(2)), hasGasConsumption: true });
+      onSuccess(finalAmount, finalTeamId);
       return;
     }
 
-    let finalTeamId: string | undefined = undefined;
+    // === On-chain Spark flow (solo) ===
+    // Step 1: Prepare
+    setSparkStatus('preparing');
+    try {
+      const prepared = await prepareOnchainSpark(project.id, finalAmount);
 
-    if (mode === 'team') {
-      if (teamId) {
-        const success = useSparkStore.getState().joinTeamSpark(teamId, profile.walletAddress, finalAmount);
-        if (!success) {
-          setErrorMsg(t('detail.joinTeamFailed'));
-          return;
-        }
-        finalTeamId = teamId;
+      // Step 2: Wallet confirmation via TonConnect
+      setSparkStatus('wallet_confirming');
+      const result = await tonConnectUI.sendTransaction({
+        validUntil: prepared.validUntil,
+        messages: [{
+          address: prepared.campaignAddress,
+          amount: prepared.amountNano,
+          payload: prepared.payloadBase64,
+        }],
+      });
+
+      // Step 3: Submit to Worker
+      setSparkStatus('submitting');
+      const txHash = result?.boc
+        ? (() => { const bytes = Uint8Array.from(window.atob(result.boc), c => c.charCodeAt(0)); return Array.from(bytes.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(''); })()
+        : undefined;
+
+      const submitResult = await submitOnchainSpark(project.id, {
+        amountNano: prepared.amountNano,
+        txHash,
+        txBoc: result?.boc,
+      });
+
+      // Step 4: Pending — no local balance deduction
+      setSparkStatus('pending_onchain');
+      onSuccess(finalAmount, undefined);
+    } catch (err: any) {
+      setSparkStatus('error');
+      if (err.message?.includes('User rejected') || err.message?.includes('cancel')) {
+        setErrorMsg(t('detail.userCancelledTransaction') || 'Transaction cancelled in wallet');
       } else {
-        const newTeam = useSparkStore.getState().createTeamSpark(
-          project.id,
-          profile.walletAddress,
-          profile.username,
-          20, // default target is 20 TON
-          finalAmount
-        );
-        finalTeamId = newTeam.id;
-      }
-    } else {
-      const isInvested = investInProject(project.id, finalAmount, profile.walletAddress);
-      if (!isInvested) {
-        setErrorMsg(t('detail.broadcastFailed'));
-        return;
+        setErrorMsg(err.message || t('detail.broadcastFailed'));
       }
     }
-
-    updateProfile({
-      balanceTON: Number((profile.balanceTON - realCost).toFixed(2)),
-      hasGasConsumption: true
-    });
-
-    onSuccess(finalAmount, finalTeamId);
   };
 
   const [starsLoading, setStarsLoading] = useState(false);
@@ -314,9 +347,16 @@ export default function SparkModal({
         {/* Submit Confirm Button */}
         <button
           onClick={handleConfirm}
-          className="w-full py-3 bg-[#10B981] hover:bg-[#059669] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#10B981]/10 active:scale-98 transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#34D399]/20"
+          disabled={sparkStatus !== 'idle' && sparkStatus !== 'error'}
+          className="w-full py-3 bg-[#10B981] hover:bg-[#059669] text-black font-extrabold text-xs rounded-2xl shadow-xl shadow-[#10B981]/10 active:scale-98 transition flex items-center justify-center gap-1.5 cursor-pointer border border-[#34D399]/20 disabled:opacity-50"
         >
-          <span>{t('detail.confirmSpark')}</span>
+          {sparkStatus === 'preparing' && <Loader2 size={14} className="animate-spin" />}
+          {sparkStatus === 'idle' && <span>{t('detail.confirmSpark')}</span>}
+          {sparkStatus === 'preparing' && <span>{t('spark.preparing')}</span>}
+          {sparkStatus === 'wallet_confirming' && <span>{t('spark.walletConfirming')}</span>}
+          {sparkStatus === 'submitting' && <span>{t('spark.submitting')}</span>}
+          {sparkStatus === 'pending_onchain' && <span>{t('spark.pendingOnchain')}</span>}
+          {sparkStatus === 'error' && <span>{t('spark.retry')}</span>}
         </button>
 
         {/* Stars Payment Button */}
