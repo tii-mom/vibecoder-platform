@@ -39,6 +39,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `VcJetton` | Standard: `get_jetton_data`, `get_wallet_address(owner)`; compatibility: `getJettonData`, `getWalletAddress(owner)` |
 | `Fund` | `getFundData`, `isProjectWhitelisted(project)`, `getProjectTokenBalance(tokenMaster)`, `getUserDeposit(user)`, `getFundStats`, `getProjectReward(project)`, `getFundUnlockState` |
 | `VCRewardPool` | `getRewardPoolData`, `getProjectRewardState(project)` |
+| `DeveloperRewardPool` | `getDeveloperPoolData`, `getProjectDeveloperReward(project)`, `hasDeveloperClaimed(project)` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
 | `TeamVesting` | `getTeamVestingData`, `getTeamVestingRound(r)`, `getTeamClaimable` |
@@ -74,6 +75,14 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `4` | `project` claim user reward |
 | `5` | `amount destination` withdraw TON |
 | `6` | `amount destination` withdraw VC |
+
+### DeveloperRewardPool
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `project:address creator:address participants:uint32` register successful project | admin only |
+| `2` | `project:address` claim 5,000 VC developer reward | creator only |
+| `3` | `amount:coins destination:address` emergency VC withdrawal | admin only |
 
 ### EarlyFundraising
 

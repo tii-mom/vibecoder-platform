@@ -9,6 +9,11 @@ display-name = "Early Fundraising"
 src = "contracts/platform/token-system/early-fundraising/early_fundraising.tolk"
 depends = []
 
+[contracts.developer_reward_pool]
+display-name = "Developer Reward Pool"
+src = "contracts/platform/token-system/developer-reward-pool/developer_reward_pool.tolk"
+depends = []
+
 [contracts.fund]
 display-name = "Fund"
 src = "contracts/platform/token-system/fund/fund.tolk"
