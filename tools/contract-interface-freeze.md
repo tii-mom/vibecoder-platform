@@ -42,6 +42,8 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `LaunchFee` | `getLaunchFeeData`, `getProjectStake(project)`, `getCreatorProjectCount(creator)` |
 | `TokenLauncher` | `getLauncherData` |
+| `ProjectToken` | `get_jetton_data`, `getJettonData`, `get_wallet_address(owner)`, `getWalletAddress(owner)` |
+| `ProjectTokenWallet` | `get_wallet_data`, `getWalletData` |
 | `LaunchCampaign` | `getCampaignData`, `getInvestorRecord(investor)`, `getProposal(id)` |
 
 ## Inbound Ops
@@ -103,6 +105,24 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `0x666` | `proposalId:uint32` settle |
 | `10` | `platformFeeRate:uint16` |
 | `0x7362d09c` | Project-token wallet notification; forward payload op `0x555` exits |
+
+### ProjectToken
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `21` | `to:address amount:coins response:address forwardAmount:coins payload:slice` mint | admin only; requires `totalSupply + amount <= maxSupply` and `mintDisabled == false` |
+| `0x7bdd97de` | `amount:coins from:address response:address` burn | wallet only |
+| `3` | `newAdmin:address` change admin | admin only |
+| `4` | `content:ref` update metadata | admin only |
+| `5` | (no body) disable mint | admin only |
+
+### ProjectTokenWallet
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `0x0f8a7ea5` | `amount:coins destination:address response:address forwardAmount:coins payload:slice` transfer | owner only |
+| `0x178d4519` | `amount:coins from:address response:address forwardAmount:coins payload:slice` internal transfer | wallet or master |
+| `0x595f07bc` | `amount:coins response:address` burn | owner only |
 
 ## Verification Commands
 
