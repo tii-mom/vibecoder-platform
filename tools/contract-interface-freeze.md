@@ -52,6 +52,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `ProjectTokenWallet` | `get_wallet_data`, `getWalletData` |
 | `LaunchCampaign` | `getCampaignData`, `getInvestorRecord(investor)`, `getProposal(id)` |
 | `SimpleLaunchCampaign` | `getSimpleLaunchCampaignData`, `getSimpleLaunchDistribution`, `getSimpleLaunchTokenState`, `getSimpleLaunchUser(user)` |
+| `LaunchEscrow` | `getLaunchEscrowData`, `getLaunchEscrowContribution(user)` |
 
 ## Inbound Ops
 
@@ -175,6 +176,17 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `5` | Cancel campaign | project owner only |
 | `6` | `metadata:ref` update metadata before token deploy | project owner only |
 | `7` | Mark campaign failed | project owner only |
+| `8` | `escrow:address` bind escrow before token deploy and before contributions | project owner only |
+
+### LaunchEscrow
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `contribution:coins` contribute TON and notify campaign | contributor |
+| `2` | Mark campaign success | campaign only |
+| `3` | Mark campaign failed | campaign only |
+| `4` | `amount:coins` withdraw successful raise | project owner only |
+| `5` | Refund recorded contribution after failure | contributor |
 
 ### ProjectToken
 

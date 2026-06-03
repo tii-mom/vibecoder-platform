@@ -52,6 +52,7 @@ export function simpleLaunchCampaignConfigToCell(config: SimpleLaunchCampaignCon
         .storeUint(config.state, 8)
         .storeBit(false)
         .storeUint(0, 32)
+        .storeUint(0, 32)
         .storeCoins(0)
         .storeCoins(0)
         .storeCoins(0)
@@ -122,6 +123,14 @@ export class SimpleLaunchCampaign implements Contract {
             value,
             sendMode: SendMode.PAY_GAS_SEPARATELY,
             body: beginCell().storeUint(7, 32).storeUint(0, 64).endCell(),
+        });
+    }
+
+    async sendSetEscrow(provider: ContractProvider, via: Sender, value: bigint, escrowAddress: Address) {
+        await provider.internal(via, {
+            value,
+            sendMode: SendMode.PAY_GAS_SEPARATELY,
+            body: beginCell().storeUint(8, 32).storeUint(0, 64).storeAddress(escrowAddress).endCell(),
         });
     }
 

@@ -29,6 +29,12 @@ const OP_CLAIM_TOKEN = 4;
 const OP_CANCEL = 5;
 const OP_SET_METADATA = 6;
 const OP_MARK_FAILED = 7;
+const OP_SET_ESCROW = 8;
+
+const OP_ESCROW_MARK_SUCCESS = 2;
+const OP_ESCROW_MARK_FAILED = 3;
+const OP_TOKEN_MINT = 21;
+const OP_TOKEN_DISABLE_MINT = 5;
 
 const PROJECT_TOKEN_TOTAL_SUPPLY = 100000000000000000;
 const PLATFORM_TOKEN_SHARE = 15000000000000000;
@@ -50,6 +56,7 @@ global platformFeeBps: int;
 global state: int;
 global tokenDeployed: int;
 global participantCount: int;
+global claimedCount: int;
 global totalRaisedTon: int;
 global actualUserShare: int;
 global actualTeamShare: int;
@@ -82,6 +89,7 @@ fun loadData() {
     state = ds.loadUint(8);
     tokenDeployed = ds.loadBool() ? 1 : 0;
     participantCount = ds.loadUint(32);
+    claimedCount = ds.loadUint(32);
     totalRaisedTon = ds.loadCoins();
     actualUserShare = ds.loadCoins();
     actualTeamShare = ds.loadCoins();
@@ -114,7 +122,7 @@ fun saveData() {
     setContractData(beginCell()
         .storeRef(addrs1).storeRef(addrs2).storeRef(params)
         .storeUint(state, 8).storeBool(tokenDeployed != 0)
-        .storeUint(participantCount, 32).storeCoins(totalRaisedTon)
+        .storeUint(participantCount, 32).storeUint(claimedCount, 32).storeCoins(totalRaisedTon)
         .storeCoins(actualUserShare).storeCoins(actualTeamShare).storeCoins(platformShare)
         .storeRef(refs)
         .endCell());
@@ -142,6 +150,30 @@ fun sendTokenDeploy() {
     sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(50000000)
         .storeUint(0, 1+4+4+64+32).storeBool(true).storeBool(true).storeRef(init)
         .storeBool(false).endCell(), 1);
+}
+
+fun sendTokenMint(to: slice, amount: int, qid: int) {
+    if (amount == 0) { return; }
+    val body = beginCell()
+        .storeUint(OP_TOKEN_MINT, 32).storeUint(qid, 64)
+        .storeSlice(to).storeCoins(amount)
+        .storeSlice(getMyAddress()).storeCoins(0)
+        .storeSlice(beginCell().endCell().beginParse())
+        .endCell();
+    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(100000000)
+        .storeUint(0, 1+4+4+64+32).storeBool(false).storeBool(true).storeRef(body).endCell(), 1);
+}
+
+fun sendTokenDisableMint(qid: int) {
+    val body = beginCell().storeUint(OP_TOKEN_DISABLE_MINT, 32).storeUint(qid, 64).endCell();
+    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(tokenAddr).storeCoins(50000000)
+        .storeUint(0, 1+4+4+64+32).storeBool(false).storeBool(true).storeRef(body).endCell(), 1);
+}
+
+fun sendEscrowOutcome(op: int, qid: int) {
+    val body = beginCell().storeUint(op, 32).storeUint(qid, 64).endCell();
+    sendMessage(beginCell().storeUint(0x18, 6).storeSlice(escrowAddr).storeCoins(50000000)
+        .storeUint(0, 1+4+4+64+32).storeBool(false).storeBool(true).storeRef(body).endCell(), 1);
 }
 
 fun recomputeAllocations() {
@@ -224,6 +256,9 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(now() >= endTime || totalRaisedTon >= hardCapTon, 5110);
         recomputeAllocations();
         state = STATE_FINALIZED;
+        sendTokenMint(platformFund, platformShare, qid);
+        sendTokenMint(teamWallet, actualTeamShare, qid);
+        sendEscrowOutcome(OP_ESCROW_MARK_SUCCESS, qid);
         saveData();
         return;
     }
@@ -240,6 +275,11 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(allocation > 0 && claimed == 0, 5113);
         users.uDictSetBuilder(256, uh, beginCell()
             .storeCoins(contribution).storeCoins(allocation).storeUint(1, 8));
+        claimedCount += 1;
+        sendTokenMint(sender, allocation, qid);
+        if (claimedCount >= participantCount) {
+            sendTokenDisableMint(qid);
+        }
         saveData();
         return;
     }
@@ -248,6 +288,7 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(isSliceBitsEqual(sender, projectOwner) != 0, 5105);
         assert(state == STATE_DRAFT || state == STATE_FUNDING, 5114);
         state = STATE_CANCELLED;
+        sendEscrowOutcome(OP_ESCROW_MARK_FAILED, qid);
         saveData();
         return;
     }
@@ -264,6 +305,16 @@ fun onInternalMessage(myBalance: int, msgValue: int, msgFull: cell, msgBody: sli
         assert(isSliceBitsEqual(sender, projectOwner) != 0, 5105);
         assert(state == STATE_FUNDING || state == STATE_ACTIVATED, 5116);
         state = STATE_FAILED;
+        sendEscrowOutcome(OP_ESCROW_MARK_FAILED, qid);
+        saveData();
+        return;
+    }
+
+    if (op == OP_SET_ESCROW) {
+        assert(isSliceBitsEqual(sender, projectOwner) != 0, 5105);
+        assert(state == STATE_DRAFT || (state == STATE_FUNDING && participantCount == 0), 5117);
+        assert(tokenDeployed == 0, 5115);
+        escrowAddr = msgBody.loadAddress() as slice;
         saveData();
         return;
     }
