@@ -17,6 +17,7 @@
     "deploy:testnet:plan": "tsx scripts/deploy-platform-testnet.ts --dry-run",
     "deploy:testnet": "tsx scripts/deploy-platform-testnet.ts",
     "deploy:vc-v3:testnet:plan": "tsx scripts/deploy-vc-v3-testnet.ts",
+    "deploy:vc-v3:testnet": "tsx scripts/deploy-vc-v3-testnet.ts --execute",
     "verify:vc-v3:testnet": "tsx scripts/verify-vc-v3-testnet.ts",
     "mint:vc": "tsx scripts/mint-vc.ts"
   },

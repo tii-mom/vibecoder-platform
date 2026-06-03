@@ -51,12 +51,17 @@ npm run deploy:vc-v3:testnet:plan
 
 ---
 
-## 四、执行部署（尚未实现）
+## 四、执行部署（需人工确认）
 
-当前 PR 只支持 dry-run。**Actual testnet deployment execution is not yet implemented.**
+```bash
+CONFIRM_TESTNET_DEPLOY=YES npm run deploy:vc-v3:testnet
+```
 
-部署执行命令将在单独 PR 中添加，并需要人工审批后执行。
-在 execute path 实现前，请勿尝试发送链上交易。
+> Testnet only. Mainnet is rejected regardless of configuration.
+> Requires DEPLOYER_MNEMONIC, VC_JETTON_ADDRESS, VC_TREASURY_ADDRESS,
+> VC_TEAM_BENEFICIARY_ADDRESS, VC_ADMIN_ADDRESS in .env.
+> Script will deploy SaleVesting then TeamVesting, verify get-methods,
+> and save deployed manifest to `deployments/testnet.vc-v3.json`.
 
 ---
 
