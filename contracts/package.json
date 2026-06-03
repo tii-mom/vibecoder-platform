@@ -16,6 +16,8 @@
     "plan:vc-distribution": "tsx scripts/plan-vc-distribution.ts",
     "deploy:testnet:plan": "tsx scripts/deploy-platform-testnet.ts --dry-run",
     "deploy:testnet": "tsx scripts/deploy-platform-testnet.ts",
+    "deploy:vc-v3:testnet:plan": "tsx scripts/deploy-vc-v3-testnet.ts",
+    "verify:vc-v3:testnet": "tsx scripts/verify-vc-v3-testnet.ts",
     "mint:vc": "tsx scripts/mint-vc.ts"
   },
   "dependencies": {

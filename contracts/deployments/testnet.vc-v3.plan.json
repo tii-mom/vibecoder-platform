@@ -1,0 +1,28 @@
+{
+  "network": "testnet",
+  "status": "plan-only",
+  "generatedAt": null,
+  "_comment": "This manifest is a deployment plan. v3 contract addresses are null until deployed. Do not treat as deployed.",
+  "basePlatformContracts": {
+    "VC_JETTON": "UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf",
+    "FUND": "UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q",
+    "VC_REWARD_POOL": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+    "EARLY_FUNDRAISING": "UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD",
+    "LAUNCH_FEE": "UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-",
+    "TOKEN_LAUNCHER": "UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs"
+  },
+  "v3Contracts": {
+    "SALE_VESTING": null,
+    "TEAM_VESTING": null
+  },
+  "recipients": {
+    "treasury": "${VC_TREASURY_ADDRESS}",
+    "teamBeneficiary": "${VC_TEAM_BENEFICIARY_ADDRESS}"
+  },
+  "notes": [
+    "Plan only. Do not treat null v3 contracts as deployed.",
+    "Do not overwrite existing six platform contract addresses.",
+    "SaleVesting and TeamVesting require VC wallet funding after deployment.",
+    "Addresses to be filled after successful deployment and manual verification."
+  ]
+}
