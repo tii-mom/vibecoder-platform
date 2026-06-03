@@ -1,289 +1,251 @@
-# VC Tokenomics v3 合约计划
+# VC Tokenomics v3 — Contract Plan
 
-> 980M VC 总供应模型，7 合约拆分，P0/P1/P2 实施顺序。本文档为 v3 经济模型的目标设计，尚未上链实施。当前 active contract boundary 以 `CONTRACTS.md` 为准。
-
----
-
-## 一、VC 总供应量
-
-| 参数 | 值 |
-|------|-----|
-| 总供应量 | 980,000,000 VC（9.8 亿） |
-| 小数位数 | 9 |
-| nano 总供应量 | 980_000_000_000_000_000 |
-
-### Nano 单位参考
-
-| VC 面值 | nano 值 |
-|---------|---------|
-| 1 VC | 1_000_000_000 |
-| 30M VC | 30_000_000_000_000_000 |
-| 50M VC | 50_000_000_000_000_000 |
-| 100M VC | 100_000_000_000_000_000 |
-| 200M VC | 200_000_000_000_000_000 |
-| 300M VC | 300_000_000_000_000_000 |
-| 980M VC | 980_000_000_000_000_000 |
-
-### 价格精度
-
-价格以 USD × 1_000_000 存储（6 位小数），例如：
-
-| 美元价格 | 合约内存储值 |
-|----------|------------|
-| $0.002000 | 2000 |
-| $0.005000 | 5000 |
-| $0.012500 | 12500 |
+> **Status:** Pending decision. This document freezes the new $VC 9.8 亿 economic model as the target for future contract work. It does not represent current on-chain state. No code, deployment, or ABI changes are included in this plan document.
 
 ---
 
-## 二、分配表（8 项，合计 980M）
+## 一、VC 总供应
 
-| 序号 | 类别 | 数量 | nano 值 | 说明 |
-|------|------|------|---------|------|
-| 1 | 早期募资 (Early Fundraising) | 100M | 100_000_000_000_000_000 | 对用户早期 TON 募资的 VC 回馈 |
-| 2 | 团队激励 (Team Vesting) | 300M | 300_000_000_000_000_000 | 分 10 轮价格解锁，2% TGE 立即释放 |
-| 3 | 开发者奖励 (Developer Rewards) | 200M | 200_000_000_000_000_000 | 开发者提交项目、通过审核后的 VC 激励 |
-| 4 | 生态用户奖励 (Ecosystem Rewards) | 100M | 100_000_000_000_000_000 | 生态用户参与、推广、活跃奖励 |
-| 5 | 平台基金 (Platform Fund) | 80M | 80_000_000_000_000_000 | 平台长期运营、安全预算、合规 |
-| 6 | 运营 (Operations) | 50M | 50_000_000_000_000_000 | 社区运营、活动、合作伙伴 |
-| 7 | 流动性 (Liquidity) | 100M | 100_000_000_000_000_000 | DEX LP 池建设与流动性激励 |
-| 8 | 战略储备 (Strategic Reserve) | 50M | 50_000_000_000_000_000 | 未来战略合作、不可预见需求 |
+| Property | Value |
+| --- | --- |
+| Token symbol | `$VC` |
+| Total supply | **980,000,000 VC** |
+| Decimals | **9** |
+| Base unit | nano VC |
+| nano total supply | **980,000,000,000,000,000 nano VC** |
 
-**合计: 980M = 980_000_000_000_000_000 nano**
+> **Testnet note:** Current testnet total supply is 980,010,002 VC (extra 10,002 VC from Tonkeeper visibility test mint). This is a legacy testnet artefact; the mainnet v3 model uses exactly 980,000,000 VC.
 
 ---
 
-## 三、合约拆分（7 合约 + get-methods）
+## 二、VC v3 分配表
 
-### 合约 1: VCJetton — VC Master Token
+| # | 分配类别 | VC | nano VC |
+| --- | --- | ---: | ---: |
+| 1 | 普通开发者奖励 | 100,000,000 | 100,000,000,000,000,000 |
+| 2 | 发展基金 | 100,000,000 | 100,000,000,000,000,000 |
+| 3 | 生态合约奖励 | 100,000,000 | 100,000,000,000,000,000 |
+| 4 | 团队锁定 | 200,000,000 | 200,000,000,000,000,000 |
+| 5 | 流动性钱包 | 50,000,000 | 50,000,000,000,000,000 |
+| 6 | 早期运营及支持 | 30,000,000 | 30,000,000,000,000,000 |
+| 7 | 投资及预留 | 100,000,000 | 100,000,000,000,000,000 |
+| 8 | 销售和阶段释放 | 300,000,000 | 300,000,000,000,000,000 |
+| **总计** | | **980,000,000** | **980,000,000,000,000,000** |
 
-**职责:** VC 平台代币本身，TEP-74 Jetton master。
+### 价格标尺
 
-**优先级:** P0（所有其他合约的基础依赖）
+价格以 USD × 1,000,000 存储（整数，避免浮点数）：
 
-**关键 get-methods:**
-
-```
-get_jetton_data() -> (totalSupply, admin, ...)
-get_wallet_address(owner: Address) -> Address
-is_minting_allowed() -> Bool
-get_mint_cap() -> Int          // 980M nano 总硬顶
-get_total_minted() -> Int
-```
-
-**v3 变更:** 总供应从 500M → 980M；mint cap 硬编码 980M nano。
-
----
-
-### 合约 2: Fund — 平台金库
-
-**职责:** 平台 TON/VC 托管、用户 VC deposit/withdraw、项目成功奖励、价格解锁资金池。
-
-**优先级:** P0（与 VCJetton 同为核心依赖）
-
-**关键 get-methods:**
-
-```
-get_ton_balance() -> Int
-get_vc_balance() -> Int
-get_deposit_record(user: Address) -> Cell
-get_project_funding(projectId: Int) -> Cell
-get_withdrawal_queue(user: Address) -> Cell
-```
-
-**v3 变更:** 对齐 980M 分配表，新增 developer reward 与 ecosystem reward 的出金逻辑。
+| USD | stored value |
+| --- | ---: |
+| $0.002000 | 2,000 |
+| $0.005000 | 5,000 |
+| $0.012500 | 12,500 |
+| $0.031250 | 31,250 |
+| $0.078125 | 78,125 |
+| $0.195312 | 195,312 |
+| $0.488281 | 488,281 |
+| $1.220703 | 1,220,703 |
+| $3.051758 | 3,051,758 |
+| $7.629395 | 7,629,395 |
 
 ---
 
-### 合约 3: VCRewardPool — 开发者 + 生态奖励分发
+## 三、推荐合约拆分
 
-**职责:** 管理 200M 开发者奖励 + 100M 生态用户奖励。项目 claim cap 控制，防止单项目垄断。
+### 3.1 VC_JETTON
 
-**优先级:** P0（依赖 VCJetton + Fund）
+- **职责：** 平台原生代币 master contract，固定供应 **980,000,000 VC**。
+- **主网策略（待决策）：** revoke / timelock / multisig 三选一。不允许主网保留个人 wallet 无限 mint 权限。
+- **当前状态：** 测试网已有旧版 VC_JETTON，但 admin 未撤销，mintable 仍为 -1。
 
-**关键 get-methods:**
+### 3.2 DeveloperRewardPool — 100,000,000 VC
 
-```
-get_pool_balance() -> Int
-get_developer_pool_remaining() -> Int
-get_ecosystem_pool_remaining() -> Int
-get_claimable(user: Address) -> Int
-get_project_cap(projectId: Int) -> Int
-get_total_claimed() -> Int
-```
+- **职责：** 普通开发者奖励。
+- 每个成功发射项目，至少 5 位用户参与后，开发者可领取 5,000 VC。
+- 必须防重复领取（按 campaign address / project id 唯一绑定）。
+- 不承载生态用户奖励（在 EcosystemRewardPool）。
 
-**v3 变更:** pool 规模从旧 450M 调整为 200M + 100M；新增项目级 claim cap。
+**建议 get methods:**
+- `getDeveloperPoolData` — remaining, totalClaimed, projectCount
+- `getProjectDeveloperReward(project)` — claimed, amount, claimTime
+- `hasDeveloperClaimed(project)` — bool
 
----
+### 3.3 DevelopmentFund — 100,000,000 VC
 
-### 合约 4: EarlyFundraising — 早期募资
+- **职责：** 平台发展基金，管理员决定投资方向。
+- 资金只能转出到合约地址，需要 allowlist 或 contract-only 校验。
+- 必须记录用途、目标合约、金额。
 
-**职责:** 100,000 TON 早期募资，100M VC allocation，3 档 sale tier + 多轮价格解锁。
+**建议 get methods:**
+- `getDevelopmentFundData` — remaining, totalDisbursed
+- `getInvestmentRecord(id)` — amount, destination, purpose, timestamp
 
-**优先级:** P1
+### 3.4 EcosystemRewardPool — 100,000,000 VC
 
-**关键 get-methods:**
+- **职责：** 生态用户奖励（Spark 参与用户 VC 激励）。
+- 每位参与发射用户，每投资 1 TON 得 **1,000 VC**。
+- **单用户上限 100,000 VC**。
+- 首次可领取 **20%**，剩余 **80%** 分 **4 轮**价格解锁：
 
-```
-get_round_data() -> Cell
-get_contribution(user: Address) -> Cell
-get_total_raised() -> Int
-get_remaining_allocation() -> Int
-get_tier_config(tier: Int) -> Cell
-```
+| 轮次 | 比例 | 累积 | 触发价 (stored value) |
+| ---: | ---: | ---: | ---: |
+| 1 | 20% | 40% | 12,500 ($0.012500) |
+| 2 | 20% | 60% | 78,125 ($0.078125) |
+| 3 | 20% | 80% | 488,281 ($0.488281) |
+| 4 | 20% | 100% | 3,051,758 ($3.051758) |
 
-**Sale Tiers:**
+- 必须防重复领取（按 user address + campaign address 绑定）。
+- 必须绑定 Spark / Launch 参与记录。
 
-| Tier | TON 金额 | VC 获得 | 轮数 |
-|------|---------|---------|------|
-| A | 99 TON | 80,000 VC | 3 轮 |
-| B | 299 TON | 250,000 VC | 5 轮 |
-| C | 599 TON | 599,000 VC | 10 轮 |
+**建议 get methods:**
+- `getEcosystemPoolData` — remaining, totalAllocated, totalClaimed
+- `getUserEcosystemAllocation(user)` — totalAllocation, claimed, unlockedRounds
+- `getEcosystemUnlockState` — currentPrice
 
----
+### 3.5 TeamVesting — 200,000,000 VC
 
-### 合约 5: LaunchFee — VC 质押 + 部署费
+- **职责：** 团队锁仓。10 轮，每轮 20,000,000 VC。
+- 第 1 轮发行后立即可释放。
 
-**职责:** 项目部署时 VC 质押要求 + 部署费收取；成功后退至 Fund，失败时 bounce rollback。
+**价格阈值：**
 
-**优先级:** P1
+| 轮次 | VC | stored price | USD price |
+| ---: | ---: | ---: | ---: |
+| 1 | 20,000,000 | — (immediate) | — |
+| 2 | 20,000,000 | 2,000 | $0.002000 |
+| 3 | 20,000,000 | 5,000 | $0.005000 |
+| 4 | 20,000,000 | 12,500 | $0.012500 |
+| 5 | 20,000,000 | 31,250 | $0.031250 |
+| 6 | 20,000,000 | 78,125 | $0.078125 |
+| 7 | 20,000,000 | 195,312 | $0.195312 |
+| 8 | 20,000,000 | 488,281 | $0.488281 |
+| 9 | 20,000,000 | 1,220,703 | $1.220703 |
+| 10 | 20,000,000 | 3,051,758 | $3.051758 |
 
-**关键 get-methods:**
+- **v1 使用 admin feed price**，后续接入 Oracle。
+- **Implemented in PR-F (feat/team-vesting-v1)**。
 
-```
-get_fee_config() -> Cell
-get_stake_requirement() -> Int
-get_stake_balance(project: Address) -> Int
-get_deployment_fee() -> Int
-get_platform_fee_rate() -> Int
-```
+### 3.6 ReserveVault — 100,000,000 VC
 
----
+- **职责：** 投资及预留金库。
+- 管理员可转移到其他钱包或合约，必须记录用途。
+- 建议后续改为 multisig / timelock。
 
-### 合约 6: Vesting — 团队 10 轮价格解锁
+**建议 get methods:**
+- `getReserveVaultData` — remaining, transferCount
+- `getReserveTransferRecord(id)` — amount, destination, purpose, timestamp
 
-**职责:** 团队 300M VC 按 10 轮价格阶梯自动解锁。每轮 30M VC（300M ÷ 10）。
+### 3.7 SaleVesting — 300,000,000 VC
 
-**优先级:** P2
+- **职责：** 新用户销售与阶段释放。
 
-**关键 get-methods:**
+**三档销售：**
 
-```
-get_vesting_schedule(user: Address) -> Cell
-get_claimable_amount(user: Address) -> Int
-get_round_price(round: Int) -> Int
-get_current_round() -> Int
-get_total_vested(user: Address) -> Int
-```
+#### Tier A: 99 TON → 80,000 VC
+| 轮次 | 比例 | 触发价 (stored) |
+| ---: | ---: | ---: |
+| TGE | 30% | immediate |
+| 1 | 35% | 78,125 ($0.078125) |
+| 2 | 35% | 3,051,758 ($3.051758) |
 
-**价格阶梯（每轮 30M VC）:**
+#### Tier B: 299 TON → 250,000 VC
+| 轮次 | 比例 | 触发价 (stored) |
+| ---: | ---: | ---: |
+| TGE | 20% | immediate |
+| 1 | 20% | 12,500 ($0.012500) |
+| 2 | 20% | 78,125 ($0.078125) |
+| 3 | 20% | 488,281 ($0.488281) |
+| 4 | 20% | 3,051,758 ($3.051758) |
 
-| 轮次 | 触发价格 (USD) | 合约内价格值 | 解锁量 |
-|------|---------------|-------------|--------|
-| TGE | — | — | 6M (2%) |
-| 1 | $0.002000 | 2000 | 30M |
-| 2 | $0.005000 | 5000 | 30M |
-| 3 | $0.012500 | 12500 | 30M |
-| 4 | $0.031250 | 31250 | 30M |
-| 5 | $0.078125 | 78125 | 30M |
-| 6 | $0.195312 | 195312 | 30M |
-| 7 | $0.488281 | 488281 | 30M |
-| 8 | $1.220703 | 1220703 | 30M |
-| 9 | $3.051758 | 3051758 | 30M |
-| 10 | $7.629395 | 7629395 | 30M |
+#### Tier C: 599 TON → 599,000 VC
+10 轮，每轮 10%，使用 TeamVesting 相同价格阈值。第 1 轮 immediate。
 
-每轮价格 = 上一轮 × 2.5 倍。维持 24h TWAP 确认后方可 claim。
-
----
-
-### 合约 7: Governance — 治理投票
-
-**职责:** 持有 50% TON + 10% 运营 VC；项目方申请 → 持币人 sqrt 投票。
-
-**优先级:** P2
-
-**关键 get-methods:**
-
-```
-get_proposal(proposalId: Int) -> Cell
-get_voting_power(user: Address) -> Int
-get_proposal_status(proposalId: Int) -> Int
-get_active_proposals() -> [Int]
-get_vote_result(proposalId: Int) -> Cell
-```
+- 总销售 allocation 不得超过 300,000,000 VC。
+- **v1 使用 admin feed price**。
+- **Implemented in PR-E (feat/sale-vesting-v1)**。
 
 ---
 
-## 四、当前合约映射（v2 → v3）
+## 四、当前合约映射
 
-| v3 合约 | v2 现状 | 差距 |
-|---------|---------|------|
-| VCJetton (P0) | P1 VC Jetton (active) | 总供应 500M → 980M，需调整 mint cap |
-| Fund (P0) | P2 Fund (active) | 需对齐 v3 分配金额与新出金路径 |
-| VCRewardPool (P0) | P3 VCRewardPool (active) | 池子规模需重新分配，新增项目 cap 逻辑 |
-| EarlyFundraising (P1) | P4 EarlyFundraising (active) | 100M allocation 对齐；sale tier 需调整 |
-| LaunchFee (P1) | P5 Launch Fee (active) | 基本对齐，可能微调 fee rate |
-| Vesting (P2) | L3 Vesting (已写，需改写) | 价格阶梯 2.5× 每轮 vs 原 1.5×；总量 300M |
-| Governance (P2) | L4 Governance (待写) | 全新实现 |
-
----
-
-## 五、实施顺序（P0 → P1 → P2）
-
-### P0 — 核心基础（必须先完成）
-
-1. **VCJetton** — mint cap 调整为 980M nano
-2. **Fund** — 对齐 v3 分配表，新增出金逻辑
-3. **VCRewardPool** — pool 重新分配（200M + 100M），项目 cap
-
-### P1 — 平台核心功能
-
-4. **EarlyFundraising** — 100M allocation + 3 档 sale tier
-5. **LaunchFee** — 确认 fee 参数对齐
-
-### P2 — 增强功能
-
-6. **Vesting** — 10 轮 2.5× 价格阶梯解锁
-7. **Governance** — sqrt 投票治理
+| 当前合约 | v3 状态 | 说明 |
+| --- | --- | --- |
+| `VC_JETTON` | **沿用** | v3 mainnet 需要固定供应策略。 |
+| `FUND` | **需要重构** | 拆成 `DevelopmentFund` + `ReserveVault`。 |
+| `VC_REWARD_POOL` | **需要重构** | 拆成 `DeveloperRewardPool` + `EcosystemRewardPool`。 |
+| `EARLY_FUNDRAISING` | **建议冻结** | 由 `SaleVesting` 替换。 |
+| `LAUNCH_FEE` | **沿用** | VC stake / deployment fee。 |
+| `TOKEN_LAUNCHER` | **沿用** | 受控部署 ProjectToken。 |
+| `LaunchCampaign` | **沿用** | Spark / 55% 触发 / 治理投票。 |
+| `ProjectToken` | **沿用** | fixed supply / disable mint (PR-C)。 |
+| `ProjectTokenWallet` | **沿用** | 标准 Jetton wallet。 |
+| `Vesting` | **冻结或重写** | 不匹配新模型。 |
+| `Governance` | **暂不实现** | D1 / off-chain。 |
+| `Oracle` | **暂不实现** | admin feed + 后端 indexer。 |
+| `EarlySubscription` | **不恢复** | 已移除。 |
+| `Strategic` | **不恢复** | 已移除。 |
 
 ---
 
-## 六、完成状态
+## 五、实施顺序
 
-| 任务 | 状态 | 备注 |
-|------|------|------|
-| v3 合约计划文档 | ✅ 完成 | 本文档 |
-| PR-C (project token mint cap) | 进行中 | 在父分支上已实现，用于 Launch 侧 mint cap |
-| VCJetton mint cap 调整 | ❌ 未开始 | P0 |
-| Fund v3 对齐 | ❌ 未开始 | P0 |
-| VCRewardPool v3 对齐 | ❌ 未开始 | P0 |
-| EarlyFundraising v3 对齐 | ❌ 未开始 | P1 |
-| LaunchFee 参数确认 | ❌ 未开始 | P1 |
-| Vesting v3 重写 | ❌ 未开始 | P2 |
-| Governance 实现 | ❌ 未开始 | P2 |
+### P0（安全修复 — 已完成或进行中）
+
+| # | 任务 | PR |
+| --- | --- | --- |
+| P0-1 | TokenLauncher admin gate | PR-A |
+| P0-2 | LaunchFee Jetton-only | PR-A2 |
+| P0-3 | ProjectToken mint cap / disable mint | #21 (PR-C) |
+| P0-4 | VC_JETTON mainnet 固定供应策略 | 待决策 |
+
+### P1（VC v3 新合约）
+
+| # | 任务 | PR / 状态 |
+| --- | --- | --- |
+| P1-1 | VC Tokenomics v3 文档 | #22 (PR-D) |
+| P1-2 | SaleVesting 300M | #23 (PR-E) |
+| P1-3 | TeamVesting 200M | #24 (PR-F) |
+| P1-4 | DeveloperRewardPool 100M | 待实现 |
+| P1-5 | EcosystemRewardPool 100M | 待实现 |
+| P1-6 | DevelopmentFund 100M | 待实现 |
+| P1-7 | ReserveVault 100M | 待实现 |
+
+### P2（治理 + 基础设施）
+
+| # | 任务 |
+| --- | --- |
+| P2-1 | Governance（独立合约） |
+| P2-2 | Oracle（独立合约或链下过渡） |
+| P2-3 | multisig / timelock |
+| P2-4 | Dune / indexer / analytics |
 
 ---
 
-## 七、验收标准
+## 六、完成/未完成状态
 
-### P0 验收
+### 已完成（main 分支）
 
-- [ ] VCJetton 部署且 mint cap = 980_000_000_000_000_000 nano
-- [ ] Fund 可正确处理 v3 分配金额的进出金
-- [ ] VCRewardPool 池子为 200M + 100M，项目 cap 功能正常
+- testnet 6 个旧版平台合约部署
+- Spark On-chain Gate v1 (PR #20 merged)
+- EarlySubscription / Strategic 移除
 
-### P1 验收
+### 进行中（PR 待合并）
 
-- [ ] EarlyFundraising 100M allocation 正确，3 档 tier 正常募资
-- [ ] LaunchFee 质押 + 部署费 + rollback 全路径通过
+- #21 PR-C: ProjectToken mint cap / disable mint
+- #22 PR-D: VC Tokenomics v3 文档（本文件）
+- #23 PR-E: SaleVesting v1
+- #24 PR-F: TeamVesting v1
 
-### P2 验收
+### 未完成
 
-- [ ] Vesting 每轮价格 2.5× 阶梯，12 轮（含 TGE 6M + 10 轮 × 30M）总计 306M 中的 300M 价格解锁部分验证通过
-- [ ] Governance 投票权重 = sqrt(持仓)，投票率 ≥ 15%，同意 > 50% 通过
+- DeveloperRewardPool **未实现**
+- EcosystemRewardPool **未实现**
+- DevelopmentFund **未实现**
+- ReserveVault **未实现**
+- Governance **未实现**
+- Oracle **未实现**
 
-### 全局
+> **注意：** 本 PR-D 文档本身不实现任何上述未完成内容。
 
-- [ ] 全部分配合计 nano = 980_000_000_000_000_000
-- [ ] 所有 get-methods 返回正确值
-- [ ] P0/P1/P2 按顺序部署，不破坏现有 testnet 状态
+---
