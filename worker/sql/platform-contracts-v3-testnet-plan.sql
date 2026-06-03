@@ -2,35 +2,31 @@
 -- PLAN ONLY. Do not execute against production database.
 -- Requires manual review before execution.
 -- Execute only after:
---   1. SaleVesting / TeamVesting are deployed to testnet.
---   2. Get-method verification passes:
---      npm run verify:vc-v3:testnet
---   3. Addresses are reviewed and confirmed.
+--   1. SaleVesting / TeamVesting deployed to testnet (DONE 2026-06-03)
+--   2. Get-method verification passes (DONE: npm run verify:vc-v3:testnet)
+--   3. Addresses reviewed and confirmed
 -- ============================================================
 -- VC v3 Platform Contracts — Testnet D1 Insert Plan
 -- ============================================================
 
 -- ============================================================
 -- SALE_VESTING
--- Execute after deployment confirmed:
+-- Address: UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm
+-- Self VC wallet: UQANAqwlEmVLjKB4PfiIDo0HVLtuGmPOID-nbpW3SKd9IN2p
 -- ============================================================
 -- INSERT OR REPLACE INTO platform_contracts (contract_name, network, address, created_at)
--- VALUES ('SALE_VESTING', 'testnet', '<FILL_AFTER_DEPLOY>', datetime('now'));
+-- VALUES ('SALE_VESTING', 'testnet', 'UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm', datetime('now'));
 
 -- ============================================================
 -- TEAM_VESTING
--- Execute after deployment confirmed:
+-- Address: UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF
+-- Self VC wallet: UQBFi75JuzGEboqywouPJKGRZSiRmKpVk0nxPTt0tNsmM7lO
 -- ============================================================
 -- INSERT OR REPLACE INTO platform_contracts (contract_name, network, address, created_at)
--- VALUES ('TEAM_VESTING', 'testnet', '<FILL_AFTER_DEPLOY>', datetime('now'));
+-- VALUES ('TEAM_VESTING', 'testnet', 'UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF', datetime('now'));
 
 -- ============================================================
--- After deployment, update the placeholders with actual addresses
--- from deployments/testnet.vc-v3.json / v3Contracts.
--- ============================================================
-
--- ============================================================
--- Verification query (read-only, safe):
+-- Verification query (read-only, safe to run):
 -- ============================================================
 -- SELECT contract_name, network, address FROM platform_contracts
 -- WHERE network = 'testnet' AND contract_name IN ('SALE_VESTING', 'TEAM_VESTING')
