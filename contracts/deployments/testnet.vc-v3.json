@@ -1,0 +1,31 @@
+{
+  "network": "testnet",
+  "status": "deployed",
+  "generatedAt": "2026-06-03T13:14:55.051Z",
+  "deployer": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+  "basePlatformContracts": {
+    "VC_JETTON": "UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf",
+    "FUND": "UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q",
+    "VC_REWARD_POOL": "UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN",
+    "EARLY_FUNDRAISING": "UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD",
+    "LAUNCH_FEE": "UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-",
+    "TOKEN_LAUNCHER": "UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs"
+  },
+  "v3Contracts": {
+    "SALE_VESTING": "UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm",
+    "TEAM_VESTING": "UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF"
+  },
+  "selfVcWallets": {
+    "SALE_VESTING": "UQANAqwlEmVLjKB4PfiIDo0HVLtuGmPOID-nbpW3SKd9IN2p",
+    "TEAM_VESTING": "UQBFi75JuzGEboqywouPJKGRZSiRmKpVk0nxPTt0tNsmM7lO"
+  },
+  "recipients": {
+    "treasury": "0QCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQU_g",
+    "teamBeneficiary": "0QCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQU_g"
+  },
+  "notes": [
+    "Testnet only. Do not use these addresses for mainnet.",
+    "D1 SQL not executed automatically.",
+    "SaleVesting and TeamVesting VC wallets must be funded before claim tests."
+  ]
+}
