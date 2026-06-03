@@ -8,6 +8,8 @@ const NETWORK = process.env.TON_NETWORK || 'testnet';
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
 const MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.vc-v3.plan.json');
 
+let failedCount = 0;
+
 if (NETWORK === 'mainnet' && process.env.ALLOW_MAINNET_VERIFY !== '1') {
     throw new Error('Refusing mainnet verification unless ALLOW_MAINNET_VERIFY=1 is set.');
 }
@@ -17,7 +19,12 @@ function endpoint(): string {
     return TONCENTER_KEY ? base + '/api/v2/jsonRPC?api_key=' + TONCENTER_KEY : base + '/api/v2/jsonRPC';
 }
 
-async function verify(client: TonClient, label: string, address: string | null | undefined, methods: [string, ...string[]][]) {
+async function verify(
+    client: TonClient,
+    label: string,
+    address: string | null | undefined,
+    methods: [string, ...string[]][]
+): Promise<void> {
     if (!address) {
         console.log('PENDING ' + label + ': not yet deployed');
         return;
@@ -27,13 +34,17 @@ async function verify(client: TonClient, label: string, address: string | null |
         try {
             const stackArgs = args.map(a => {
                 if (a.startsWith('addr:')) {
-                    return { type: 'slice' as const, cell: beginCell().storeAddress(Address.parse(a.slice(5))).endCell() };
+                    return {
+                        type: 'slice' as const,
+                        cell: beginCell().storeAddress(Address.parse(a.slice(5))).endCell(),
+                    };
                 }
                 return { type: 'int' as const, value: BigInt(a) };
             });
             await client.runMethod(addr, method, stackArgs);
             console.log('OK ' + label + '.' + method + ' ' + addr.toString({ bounceable: false }));
         } catch (e: any) {
+            failedCount += 1;
             console.log('FAIL ' + label + '.' + method + ': ' + String(e.message || e).slice(0, 120));
         }
     }
@@ -73,6 +84,10 @@ async function main() {
     }
 
     console.log();
+    if (failedCount > 0) {
+        console.log('FAILED: ' + failedCount + ' get-method(s) failed.');
+        process.exit(1);
+    }
     console.log('Done.');
 }
 

@@ -51,13 +51,12 @@ npm run deploy:vc-v3:testnet:plan
 
 ---
 
-## 四、执行部署（需人工确认）
+## 四、执行部署（尚未实现）
 
-```bash
-CONFIRM_TESTNET_DEPLOY=YES npm run deploy:vc-v3:testnet
-```
+当前 PR 只支持 dry-run。**Actual testnet deployment execution is not yet implemented.**
 
-> ⚠️ 必须有人工确认。脚本默认 dry-run，只有显式传 `CONFIRM_TESTNET_DEPLOY=YES` 才允许发送交易。
+部署执行命令将在单独 PR 中添加，并需要人工审批后执行。
+在 execute path 实现前，请勿尝试发送链上交易。
 
 ---
 
