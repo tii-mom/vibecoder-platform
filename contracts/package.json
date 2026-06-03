@@ -19,6 +19,11 @@
     "deploy:vc-v3:testnet:plan": "tsx scripts/deploy-vc-v3-testnet.ts",
     "deploy:vc-v3:testnet": "tsx scripts/deploy-vc-v3-testnet.ts --execute",
     "verify:vc-v3:testnet": "tsx scripts/verify-vc-v3-testnet.ts",
+    "verify:vc-v3:balances": "tsx scripts/verify-vc-v3-balances.ts",
+    "fund:vc-v3:testnet:plan": "tsx scripts/fund-vc-v3-testnet-wallets.ts",
+    "fund:vc-v3:testnet": "tsx scripts/fund-vc-v3-testnet-wallets.ts --execute",
+    "test:vc-v3:flows:plan": "tsx scripts/test-vc-v3-flows.ts",
+    "test:vc-v3:flows": "tsx scripts/test-vc-v3-flows.ts --execute",
     "mint:vc": "tsx scripts/mint-vc.ts"
   },
   "dependencies": {
