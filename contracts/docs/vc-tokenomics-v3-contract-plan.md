@@ -207,7 +207,7 @@
 | P1-2 | SaleVesting 300M | #23 (PR-E) |
 | P1-3 | TeamVesting 200M | #24 (PR-F) |
 | P1-4 | DeveloperRewardPool 100M | PR-G 进行中 |
-| P1-5 | EcosystemRewardPool 100M | 待实现 |
+| P1-5 | EcosystemRewardPool 100M | PR-H 进行中 |
 | P1-6 | DevelopmentFund 100M | 待实现 |
 | P1-7 | ReserveVault 100M | 待实现 |
 
@@ -240,7 +240,7 @@
 ### 未完成
 
 - DeveloperRewardPool **PR-G 进行中**
-- EcosystemRewardPool **未实现**
+- EcosystemRewardPool **PR-H 进行中**
 - DevelopmentFund **未实现**
 - ReserveVault **未实现**
 - Governance **未实现**
