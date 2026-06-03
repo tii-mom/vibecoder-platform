@@ -49,6 +49,11 @@ display-name = "Project Token Wallet"
 src = "contracts/launch/project-token/project_token_wallet.tolk"
 depends = []
 
+[contracts.reserve_vault]
+display-name = "Reserve Vault"
+src = "contracts/platform/token-system/reserve-vault/reserve_vault.tolk"
+depends = []
+
 [contracts.sale_vesting]
 display-name = "Sale Vesting"
 src = "contracts/platform/token-system/sale-vesting/sale_vesting.tolk"
