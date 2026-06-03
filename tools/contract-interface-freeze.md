@@ -40,6 +40,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `Fund` | `getFundData`, `isProjectWhitelisted(project)`, `getProjectTokenBalance(tokenMaster)`, `getUserDeposit(user)`, `getFundStats`, `getProjectReward(project)`, `getFundUnlockState` |
 | `VCRewardPool` | `getRewardPoolData`, `getProjectRewardState(project)` |
 | `DeveloperRewardPool` | `getDeveloperPoolData`, `getProjectDeveloperReward(project)`, `hasDeveloperClaimed(project)` |
+| `DevelopmentFund` | `getDevelopmentFundData`, `isAllowedDestination(destination)`, `getInvestmentRecord(id)` |
 | `EcosystemRewardPool` | `getEcosystemPoolData`, `getUserEcosystemAllocation(project, user)`, `getEcosystemUnlockState` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
@@ -93,6 +94,14 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `2` | `price:coins` feed current VC price | admin only |
 | `3` | `project:address` claim unlocked ecosystem reward | recorded user only |
 | `4` | `amount:coins destination:address` emergency VC withdrawal | admin only |
+
+### DevelopmentFund
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `destination:address` add allowed investment destination | admin only |
+| `2` | `destination:address` remove allowed investment destination | admin only |
+| `3` | `destination:address amount:coins purposeHash:uint256` invest VC and record purpose | admin only, destination must be allowed |
 
 ### EarlyFundraising
 
