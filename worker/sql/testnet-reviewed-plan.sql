@@ -1,9 +1,8 @@
 -- ============================================================
--- PLAN ONLY. Do not execute against production database.
--- Requires manual review before execution.
+-- TESTNET REVIEWED PLAN ONLY. NOT EXECUTED.
+-- Do not execute against production D1.
+-- Execute only after manual review and explicit environment approval.
 -- Source manifest: contracts/deployments/testnet.vc-v3.full.json
--- ============================================================
--- VC v3 Platform Contracts — Testnet D1 Insert Plan
 -- ============================================================
 
 BEGIN TRANSACTION;
@@ -30,4 +29,6 @@ ORDER BY contract_name;
 
 ROLLBACK;
 
--- Replace ROLLBACK with COMMIT only in a separately approved testnet D1 execution task.
+-- Review note:
+-- This plan intentionally ends with ROLLBACK. Replace ROLLBACK with COMMIT only in an approved
+-- non-production execution task. Production D1 SQL remains out of scope here.
