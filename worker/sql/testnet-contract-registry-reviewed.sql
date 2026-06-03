@@ -34,20 +34,26 @@ VALUES
   ('testnet-RESERVE_VAULT', 'RESERVE_VAULT', 'UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw', 'testnet', datetime('now'));
 
 -- ============================================================
--- Section 2: SimpleLaunch v1 Contracts (planned, testnet)
+-- Section 2: SimpleLaunch v1 Contracts (PENDING — NOT DEPLOYED)
 -- Source: contracts/deployments/testnet.simple-launch.plan.json
--- Status: planned, deployment pending RPC recovery
--- Note: Addresses are predicted; may change after actual deployment.
+-- Status: planned only. Deployment pending RPC recovery (PR #44).
+-- WARNING: Addresses below are predicted from dry-run. They WILL
+-- change after real deployment. DO NOT INSERT predicted addresses.
 -- ============================================================
-INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
-VALUES
-  ('testnet-LAUNCH_ESCROW', 'LAUNCH_ESCROW', 'UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo', 'testnet', datetime('now')),
-  ('testnet-SIMPLE_LAUNCH_CAMPAIGN', 'SIMPLE_LAUNCH_CAMPAIGN', 'UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y', 'testnet', datetime('now'));
-
--- ProjectToken is created by campaign activation, not deployed directly.
--- Add after deployment when activation is complete:
+-- PENDING: Execute only after SimpleLaunch real testnet deploy + verify.
+-- Use the deployed manifest at contracts/deployments/testnet.simple-launch.json
+-- to populate the real addresses after PR #44 passes.
+--
 -- INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
--- VALUES ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', 'TBD_AFTER_ACTIVATION', 'testnet', datetime('now'));
+-- VALUES
+--   ('testnet-LAUNCH_ESCROW', 'LAUNCH_ESCROW', '<REAL_ADDRESS_AFTER_DEPLOY>', 'testnet', datetime('now')),
+--   ('testnet-SIMPLE_LAUNCH_CAMPAIGN', 'SIMPLE_LAUNCH_CAMPAIGN', '<REAL_ADDRESS_AFTER_DEPLOY>', 'testnet', datetime('now')),
+--   ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', '<REAL_ADDRESS_AFTER_ACTIVATION>', 'testnet', datetime('now'));
+
+-- For reference only (predicted, may change):
+-- LAUNCH_ESCROW predicted:        UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo
+-- SIMPLE_LAUNCH_CAMPAIGN predicted: UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y
+-- PROJECT_TOKEN predicted:        UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV
 
 -- ============================================================
 -- Section 3: Self VC Wallets (testnet)
@@ -81,12 +87,10 @@ ROLLBACK;
 -- Rollback SQL (if COMMIT was executed)
 -- ============================================================
 -- DELETE FROM platform_contracts WHERE id LIKE 'testnet-%';
--- Or selectively:
--- DELETE FROM platform_contracts WHERE id = 'testnet-LAUNCH_ESCROW';
--- DELETE FROM platform_contracts WHERE id = 'testnet-SIMPLE_LAUNCH_CAMPAIGN';
 --
 -- Note: deleting VC v3 contracts would break existing integrations.
 -- Only delete if superseded by a new registry.
+-- SimpleLaunch rollback: not applicable (not yet inserted; see Section 2).
 -- ============================================================
 
 -- ============================================================
@@ -94,9 +98,14 @@ ROLLBACK;
 -- 1. VC_JETTON, FUND, VC_REWARD_POOL, EARLY_FUNDRAISING, LAUNCH_FEE,
 --    TOKEN_LAUNCHER are v2 platform contracts. They remain active on
 --    testnet alongside v3 contracts.
--- 2. SimpleLaunch addresses are predicted from dry-run and may change
---    when real deployment occurs (deployer nonce may differ).
+-- 2. SimpleLaunch addresses are NOT INSERTed. They are commented out
+--    because addresses are predicted from dry-run and will change
+--    after real deployment (PR #44 pending, RPC 504 blocked).
+--    A separate follow-up must add real addresses from the deployed
+--    manifest (contracts/deployments/testnet.simple-launch.json).
 -- 3. Self VC wallets are derived from contract addresses and hold
 --    VC tokens for contract operations.
 -- 4. Production D1 execution remains out of scope here.
+-- 5. This file ends with ROLLBACK. It is safe to run as-is in any
+--    D1 environment without causing data changes.
 -- ============================================================
