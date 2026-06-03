@@ -35,6 +35,8 @@
     "verify:simple-launch:testnet": "tsx scripts/verify-simple-launch-testnet.ts",
     "test:simple-launch:flow:plan": "tsx scripts/test-simple-launch-flow.ts",
     "test:simple-launch:flow": "tsx scripts/test-simple-launch-flow.ts --execute",
+    "test:sale-vesting:buyer:flow:plan": "tsx scripts/test-sale-vesting-buyer-flow.ts",
+    "test:sale-vesting:buyer:flow": "tsx scripts/test-sale-vesting-buyer-flow.ts --execute",
     "mint:vc": "tsx scripts/mint-vc.ts"
   },
   "dependencies": {

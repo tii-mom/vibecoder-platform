@@ -55,7 +55,31 @@
 | TeamVesting Round 1 claim | **YES** — 40M VC claimed (2 rounds) |
 | TeamVesting feed price → 5000 | **YES** — unlockedRounds=2 |
 | SaleVesting feed price → 78125 | **YES** — currentPrice=78125 |
-| SaleVesting 99 TON buy/claim | **pending** (requires buyer wallet with testnet TON) |
+| SaleVesting 99 TON buy/claim | **RPC_BLOCKED** (script ready, RPC 504) |
+
+### SaleVesting 99 TON Buyer Flow — Prepared
+
+| 项目 | 状态 |
+|------|------|
+| Script | `contracts/scripts/test-sale-vesting-buyer-flow.ts` |
+| npm:plan | `npm run test:sale-vesting:buyer:flow:plan` |
+| npm:execute | `CONFIRM_SALE_VESTING_BUYER_FLOW=YES npm run test:sale-vesting:buyer:flow` |
+| Dry-run | PASSED |
+| Execute | RPC_BLOCKED |
+| Buyer address | pending (requires SALE_VESTING_BUYER_MNEMONIC with testnet TON) |
+| Allocation expected | 80,000 VC (tier 3, 99 TON) |
+| Round 1 (30%) | pending |
+| Feed price → 78125 | pending (already done in prior flow) |
+| Round 2 (35%) | pending |
+| Feed price → 3051758 | pending |
+| Round 3 (35%) | pending |
+| Duplicate claim rejection | pending |
+| Tx hashes | not captured by script |
+
+Execute command:
+```
+CONFIRM_SALE_VESTING_BUYER_FLOW=YES npm run test:sale-vesting:buyer:flow
+```
 
 ---
 
@@ -72,6 +96,12 @@
 
 ---
 
+## RPC Status
+
+TonCenter testnet returns 504 Gateway Timeout (2026-06-03). All chain verification blocked.
+
+---
+
 ## Next Steps
-- Complete the remaining SaleVesting 99 TON buyer buy/claim flow when a funded testnet buyer wallet is available.
-- Begin DeveloperRewardPool implementation
+- Execute SaleVesting 99 TON buyer flow when RPC recovers and buyer wallet is funded.
+- Proceed with D1 registry review, Worker integration, and frontend integration (code only, no RPC needed).
