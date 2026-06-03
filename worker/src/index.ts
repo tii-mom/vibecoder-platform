@@ -1163,48 +1163,15 @@ app.post('/api/v1/launches/:id/spark/confirm', authMiddleware, async (c) => {
       return c.json({ success: false, error: 'Campaign address mismatch' }, 400);
     }
 
-    // Confirm: update event + project raised_total + insert spark_records
-    const amountNano = BigInt(event.amount_nano);
-    const raisedTotalNano = Number(project.raised_total_nano ?? (project.raised_total || 0) * 1e9);
-    const targetTotalNano = Number(project.target_total_nano ?? (project.target_total || 0) * 1e9);
-    const newRaisedNano = raisedTotalNano + Number(amountNano);
-    const newRaised = newRaisedNano / 1e9;
-    const isFinished = newRaisedNano >= targetTotalNano;
-
-    // Calculate tokens
-    const tokensNano = calcTokens(Number(amountNano), raisedTotalNano, project);
-    const tokens = tokensNano / 1e9;
-
+    // v1: mark as NEEDS_REVIEW — on-chain verification and raised_total update
+    // deferred to the next PR (on-chain indexer).
     await c.env.DB.prepare(
-      "UPDATE spark_onchain_events SET status = 'CONFIRMED', confirmed_at = ?, tokens_nano = ? WHERE id = ?"
-    ).bind(now, tokensNano, eventId).run();
-
-    await c.env.DB.prepare(
-      'UPDATE launches SET raised_total = ?, raised_total_nano = ?, status = ? WHERE id = ?'
-    ).bind(newRaised, newRaisedNano, isFinished ? 'success' : project.status === 'DRAFT' ? 'active' : project.status, launchId).run();
-
-    const recordId = `spark-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-    await c.env.DB.prepare(
-      'INSERT INTO spark_records (id, launch_id, user_id, amount, amount_nano, stage, tokens, tokens_nano) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(recordId, launchId, event.user_id, newRaised - (raisedTotalNano / 1e9), amountNano.toString(), 1, tokens, tokensNano.toString()).run();
-
-    // Handle referral
-    if (event.user_id) {
-      const existingRef = await c.env.DB.prepare(
-        'SELECT id FROM referrals WHERE invitee_wallet = ?'
-      ).bind(event.user_id).first();
-      if (!existingRef) {
-        try {
-          await c.env.DB.prepare(
-            'INSERT INTO referrals (id, inviter_wallet, invitee_wallet, reward_status, reward_vc_nano) VALUES (?, ?, ?, ?, ?)'
-          ).bind(`ref-${Date.now()}`, 'system', event.user_id, 'pending', 50000000000).run();
-        } catch {}
-      }
-    }
+      "UPDATE spark_onchain_events SET status = 'NEEDS_REVIEW', confirmed_at = ? WHERE id = ?"
+    ).bind(now, eventId).run();
 
     return c.json({
       success: true,
-      data: { status: 'CONFIRMED', eventId, raisedTotal: newRaised, progress: Math.min(100, Number(((newRaisedNano / targetTotalNano) * 100).toFixed(1))) }
+      data: { status: 'NEEDS_REVIEW', eventId }
     });
   } catch (error: any) {
     return c.json({ success: false, error: error.message }, 500);

@@ -48,8 +48,8 @@ export async function submitOnchainSpark(
   launchId: string,
   payload: {
     amountNano: string;
-    txHash?: string;
     txBoc?: string;
+    clientRef?: string;
   },
 ): Promise<SubmitSparkResult> {
   const res = await fetch(
@@ -57,7 +57,10 @@ export async function submitOnchainSpark(
     {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        amountNano: payload.amountNano,
+        txBoc: payload.txBoc || null,
+      }),
       signal: AbortSignal.timeout(8000),
     },
   );

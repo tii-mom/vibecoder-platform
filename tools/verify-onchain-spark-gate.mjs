@@ -74,7 +74,7 @@ if (fs.existsSync(workerSrc)) {
   }
 }
 
-// 8. Migration exists with spark_onchain_events
+// 8. Migration 0014 exists with spark_onchain_events
 if (fs.existsSync(migration)) {
   const m = fs.readFileSync(migration, 'utf8');
   if (m.includes('spark_onchain_events')) {
@@ -122,6 +122,48 @@ if (fs.existsSync(onchainSpark)) {
     console.log('  OK   onchainSpark service exports prepare + submit');
   } else {
     fail('onchainSpark service missing exports');
+  }
+}
+
+// 13. Migration 0015 exists with campaign_address
+const migration15 = path.join(ROOT, 'worker', 'migrations', '0015_launches_campaign_address.sql');
+if (!fs.existsSync(migration15)) {
+  fail('Missing 0015_launches_campaign_address.sql migration');
+} else {
+  const m15 = fs.readFileSync(migration15, 'utf8');
+  if (m15.includes('campaign_address')) {
+    console.log('  OK   Migration 0015 adds campaign_address to launches');
+  } else {
+    fail('Migration 0015 does not add campaign_address');
+  }
+}
+
+// 14. /spark/confirm must NOT update raised_total in this PR
+if (fs.existsSync(workerSrc)) {
+  const wsrc = fs.readFileSync(workerSrc, 'utf8');
+  // The /spark/confirm block should not contain UPDATE launches SET raised_total
+  const confirmHasRaisedUpdate = /app\.post\(['"]\/api\/v1\/launches\/:id\/spark\/confirm['"]/.test(wsrc);
+  if (confirmHasRaisedUpdate) {
+    const confirmStart = wsrc.indexOf("spark/confirm");
+    const confirmEnd = confirmStart > -1 ? wsrc.indexOf("});", confirmStart + 1000) : -1;
+    const confirmBlock = confirmStart > -1 && confirmEnd > -1
+      ? wsrc.slice(confirmStart, confirmEnd)
+      : '';
+    if (confirmBlock.includes("UPDATE launches SET raised_total") || confirmBlock.includes("INSERT INTO spark_records")) {
+      fail('/spark/confirm must NOT update raised_total or insert spark_records (deferred to next PR)');
+    } else {
+      console.log('  OK   /spark/confirm does not update raised_total or insert spark_records');
+    }
+  }
+}
+
+// 15. Frontend must not generate fake txHash from BOC bytes
+if (fs.existsSync(sparkModal)) {
+  const sm = fs.readFileSync(sparkModal, 'utf8');
+  if (sm.includes("boc") && sm.includes("toString(16)") && sm.includes("txHash")) {
+    fail('SparkModal must not generate fake txHash from BOC bytes');
+  } else {
+    console.log('  OK   SparkModal does not generate fake txHash');
   }
 }
 

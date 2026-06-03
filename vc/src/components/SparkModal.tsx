@@ -110,16 +110,12 @@ export default function SparkModal({
         }],
       });
 
-      // Step 3: Submit to Worker
+      // Step 3: Submit to Worker with txBoc (no fake txHash)
       setSparkStatus('submitting');
-      const txHash = result?.boc
-        ? (() => { const bytes = Uint8Array.from(window.atob(result.boc), c => c.charCodeAt(0)); return Array.from(bytes.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(''); })()
-        : undefined;
-
       const submitResult = await submitOnchainSpark(project.id, {
         amountNano: prepared.amountNano,
-        txHash,
         txBoc: result?.boc,
+        clientRef: `spark-${Date.now()}`,
       });
 
       // Step 4: Pending — no local balance deduction
