@@ -5,6 +5,7 @@ import { resolve } from 'path';
 import 'dotenv/config';
 
 const NETWORK = process.env.TON_NETWORK || 'testnet';
+if (NETWORK === 'mainnet') throw new Error('Testnet only.');
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
 
 function endpoint(): string {

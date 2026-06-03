@@ -30,8 +30,12 @@ const manifest = existsSync(MANIFEST) ? JSON.parse(readFileSync(MANIFEST, 'utf8'
 if (!manifest) throw new Error('testnet.vc-v3.json not found. Run deployment first.');
 
 const VC_MASTER = Address.parse(manifest.basePlatformContracts.VC_JETTON);
-const SALE_WALLET = Address.parse(manifest.selfVcWallets.SALE_VESTING);
-const TEAM_WALLET = Address.parse(manifest.selfVcWallets.TEAM_VESTING);
+
+const SALE_OWNER = Address.parse(manifest.v3Contracts.SALE_VESTING);
+const TEAM_OWNER = Address.parse(manifest.v3Contracts.TEAM_VESTING);
+const EXPECTED_SALE_WALLET = Address.parse(manifest.selfVcWallets.SALE_VESTING);
+const EXPECTED_TEAM_WALLET = Address.parse(manifest.selfVcWallets.TEAM_VESTING);
+
 const SALE_AMOUNT = toNano(process.env.VC_V3_FUND_SALE || '300000000');
 const TEAM_AMOUNT = toNano(process.env.VC_V3_FUND_TEAM || '200000000');
 
@@ -50,26 +54,35 @@ async function getBalance(client: TonClient, owner: Address): Promise<bigint> {
 
 async function sendVc(
     client: TonClient, wallet: any, secretKey: Buffer,
-    to: Address, amount: bigint, name: string
+    owner: Address, expectedWallet: Address, amount: bigint, label: string
 ): Promise<boolean> {
-    const fromVcWallet = await client.runMethod(VC_MASTER, 'get_wallet_address', [
-        { type: 'slice', cell: beginCell().storeAddress(wallet.address).endCell() }
+    const targetWallet = await client.runMethod(VC_MASTER, 'get_wallet_address', [
+        { type: 'slice', cell: beginCell().storeAddress(owner).endCell() }
     ]);
-    const fromWallet = fromVcWallet.stack.readAddress();
+    const computedWallet = targetWallet.stack.readAddress();
 
-    const toVcWallet = await client.runMethod(VC_MASTER, 'get_wallet_address', [
-        { type: 'slice', cell: beginCell().storeAddress(to).endCell() }
-    ]);
-    const toWallet = toVcWallet.stack.readAddress();
+    const match = computedWallet.equals(expectedWallet);
+    console.log(label + ':');
+    console.log('  owner: ' + owner.toString({ bounceable: false }));
+    console.log('  expected wallet: ' + expectedWallet.toString({ bounceable: false }));
+    console.log('  computed wallet: ' + computedWallet.toString({ bounceable: false }));
+    console.log('  ' + (match ? 'MATCH OK' : 'MISMATCH FAIL'));
+    console.log('  amount: ' + Number(amount) / 1e9 + ' VC');
 
-    console.log(`${name}: ${fromWallet.toString({bounceable:false})} -> ${toWallet.toString({bounceable:false})} ${Number(amount)/1e9} VC`);
+    if (!match) throw new Error(label + ': computed wallet does not match expected. Aborting.');
+
     if (DRY_RUN) return true;
 
     try {
+        const fromVcWallet = await client.runMethod(VC_MASTER, 'get_wallet_address', [
+            { type: 'slice', cell: beginCell().storeAddress(wallet.address).endCell() }
+        ]);
+        const fromWallet = fromVcWallet.stack.readAddress();
+
         const seqno = await wallet.getSeqno();
         const body = beginCell()
             .storeUint(0x0f8a7ea5, 32).storeUint(0, 64).storeCoins(amount)
-            .storeAddress(to).storeAddress(wallet.address)
+            .storeAddress(computedWallet).storeAddress(wallet.address)
             .storeMaybeRef(null).storeCoins(0)
             .storeSlice(beginCell().endCell().beginParse()).endCell();
         await wallet.sendTransfer({
@@ -79,7 +92,7 @@ async function sendVc(
         await new Promise(r => setTimeout(r, 15000));
         return true;
     } catch (e: any) {
-        console.error(`FAIL ${name}: ${String(e.message || e)}`);
+        console.error('FAIL ' + label + ': ' + String(e.message || e));
         return false;
     }
 }
@@ -95,10 +108,12 @@ async function main() {
     const wallet = client.open(WalletContractV4.create({ workchain: 0, publicKey: keyPair.publicKey }));
 
     const deployerBalance = await getBalance(client, wallet.address);
-    console.log('Deployer VC balance: ' + Number(deployerBalance)/1e9 + ' VC');
-    console.log('SaleVesting target: ' + Number(SALE_AMOUNT)/1e9 + ' VC');
-    console.log('TeamVesting target: ' + Number(TEAM_AMOUNT)/1e9 + ' VC');
+    console.log('Deployer VC balance: ' + Number(deployerBalance) / 1e9 + ' VC');
     console.log();
+
+    let ok = true;
+    ok = await sendVc(client, wallet, keyPair.secretKey, SALE_OWNER, EXPECTED_SALE_WALLET, SALE_AMOUNT, 'SaleVesting') && ok;
+    ok = await sendVc(client, wallet, keyPair.secretKey, TEAM_OWNER, EXPECTED_TEAM_WALLET, TEAM_AMOUNT, 'TeamVesting') && ok;
 
     if (DRY_RUN) {
         console.log('=== Dry-run complete. No transactions sent. ===');
@@ -106,20 +121,16 @@ async function main() {
         return;
     }
 
-    const totalNeed = SALE_AMOUNT + TEAM_AMOUNT;
-    if (deployerBalance < totalNeed) {
-        console.error('Insufficient deployer VC balance. Need ' + Number(totalNeed)/1e9
-            + ' VC, have ' + Number(deployerBalance)/1e9 + ' VC');
+    if (!ok) {
+        console.error('Partial funding. Check errors above.');
         process.exit(1);
     }
 
-    let ok = true;
-    ok = await sendVc(client, wallet, keyPair.secretKey, SALE_WALLET, SALE_AMOUNT, 'SaleVesting') && ok;
-    await new Promise(r => setTimeout(r, 3000));
-    ok = await sendVc(client, wallet, keyPair.secretKey, TEAM_WALLET, TEAM_AMOUNT, 'TeamVesting') && ok;
-
-    if (ok) console.log('\nFunding complete. Run: npm run verify:vc-v3:balances');
-    else { console.error('\nPartial funding. Check errors above.'); process.exit(1); }
+    const saleAfter = await getBalance(client, SALE_OWNER);
+    const teamAfter = await getBalance(client, TEAM_OWNER);
+    console.log('\nSaleVesting wallet: ' + Number(saleAfter) / 1e9 + ' VC');
+    console.log('TeamVesting wallet: ' + Number(teamAfter) / 1e9 + ' VC');
+    console.log('Funding complete.');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
