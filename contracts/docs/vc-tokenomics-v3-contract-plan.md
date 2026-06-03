@@ -208,7 +208,7 @@
 | P1-3 | TeamVesting 200M | #24 (PR-F) |
 | P1-4 | DeveloperRewardPool 100M | PR-G 进行中 |
 | P1-5 | EcosystemRewardPool 100M | PR-H 进行中 |
-| P1-6 | DevelopmentFund 100M | 待实现 |
+| P1-6 | DevelopmentFund 100M | PR-I 进行中 |
 | P1-7 | ReserveVault 100M | 待实现 |
 
 ### P2（治理 + 基础设施）
@@ -241,7 +241,7 @@
 
 - DeveloperRewardPool **PR-G 进行中**
 - EcosystemRewardPool **PR-H 进行中**
-- DevelopmentFund **未实现**
+- DevelopmentFund **PR-I 进行中**
 - ReserveVault **未实现**
 - Governance **未实现**
 - Oracle **未实现**
