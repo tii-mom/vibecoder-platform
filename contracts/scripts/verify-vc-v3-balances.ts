@@ -21,19 +21,47 @@ const vcMaster = Address.parse(manifest.basePlatformContracts.VC_JETTON);
 
 let failed = false;
 
-async function check(client: TonClient, label: string, ownerAddr: string, minNano: bigint) {
+async function check(client: TonClient, label: string, ownerAddr: string, expectedWalletAddr: string, minNano: bigint) {
     const owner = Address.parse(ownerAddr);
-    let balance = 0n;
+    const expectedWallet = Address.parse(expectedWalletAddr);
+    let wallet: Address;
+
     try {
         const r = await client.runMethod(vcMaster, 'get_wallet_address', [
             { type: 'slice', cell: beginCell().storeAddress(owner).endCell() }
         ]);
-        const wallet = r.stack.readAddress();
+        wallet = r.stack.readAddress();
+    } catch (e: any) {
+        console.log('FAIL ' + label + ': unable to derive wallet address (' + String(e.message || e) + ')');
+        failed = true;
+        return;
+    }
+
+    if (!wallet.equals(expectedWallet)) {
+        console.log(
+            'FAIL ' + label + ': derived wallet ' +
+            wallet.toString({ bounceable: false }) +
+            ' does not match manifest wallet ' +
+            expectedWallet.toString({ bounceable: false })
+        );
+        failed = true;
+        return;
+    }
+
+    let balance: bigint;
+    try {
         const wr = await client.runMethod(wallet, 'get_wallet_data', []);
         balance = wr.stack.readBigNumber();
-    } catch {
-        balance = 0n;
+    } catch (e: any) {
+        console.log(
+            'FAIL ' + label + ': wallet not initialized at ' +
+            expectedWallet.toString({ bounceable: false }) +
+            ' (' + String(e.message || e) + ')'
+        );
+        failed = true;
+        return;
     }
+
     const ok = balance >= minNano;
     console.log((ok ? 'OK ' : 'FAIL ') + label + ': balance=' + Number(balance)/1e9 + ' VC (min ' + Number(minNano)/1e9 + ' VC)');
     if (!ok) failed = true;
@@ -41,8 +69,8 @@ async function check(client: TonClient, label: string, ownerAddr: string, minNan
 
 async function main() {
     const client = new TonClient({ endpoint: endpoint() });
-    await check(client, 'SALE_VESTING', manifest.selfVcWallets.SALE_VESTING, BigInt('300000000000000000'));
-    await check(client, 'TEAM_VESTING', manifest.selfVcWallets.TEAM_VESTING, BigInt('200000000000000000'));
+    await check(client, 'SALE_VESTING', manifest.v3Contracts.SALE_VESTING, manifest.selfVcWallets.SALE_VESTING, BigInt('300000000000000000'));
+    await check(client, 'TEAM_VESTING', manifest.v3Contracts.TEAM_VESTING, manifest.selfVcWallets.TEAM_VESTING, BigInt('200000000000000000'));
     if (failed) process.exit(1);
     console.log('All balances sufficient.');
 }

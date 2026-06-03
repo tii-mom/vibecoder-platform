@@ -27,6 +27,7 @@ if (!manifest) throw new Error('testnet.vc-v3.json not found');
 
 const SALE_ADDR = Address.parse(manifest.v3Contracts.SALE_VESTING);
 const TEAM_ADDR = Address.parse(manifest.v3Contracts.TEAM_VESTING);
+const TEAM_ALLOCATION = 200_000_000n * 1_000_000_000n;
 
 let failedCount = 0;
 function log(msg: string) { console.log(msg); }
@@ -49,19 +50,37 @@ async function main() {
     const tvData = await runGet(client, TEAM_ADDR, 'getTeamVestingData');
     tvData.readAddress(); tvData.readAddress(); tvData.readAddress(); tvData.readAddress();
     const totalAlloc = tvData.readBigNumber();
-    tvData.readBigNumber(); tvData.readBigNumber();
+    const claimedAmount = tvData.readBigNumber();
+    tvData.readBigNumber();
     const unlockedRounds = tvData.readNumber();
-    log('TeamVesting: totalAlloc=' + Number(totalAlloc)/1e9 + ' VC, unlockedRounds=' + unlockedRounds);
+    log(
+        'TeamVesting: totalAlloc=' + Number(totalAlloc)/1e9 +
+        ' VC, claimed=' + Number(claimedAmount)/1e9 +
+        ' VC, unlockedRounds=' + unlockedRounds
+    );
+
+    if (totalAlloc === TEAM_ALLOCATION) log('PASS: TeamVesting allocation is 200M VC');
+    else fail('TeamVesting allocation is ' + Number(totalAlloc)/1e9 + ' VC, expected 200M VC');
+
+    if (claimedAmount <= totalAlloc) log('PASS: TeamVesting claimedAmount <= allocation');
+    else fail('TeamVesting claimedAmount exceeds allocation');
 
     if (unlockedRounds >= 1) log('PASS: Round 1 unlocked');
     else fail('Round 1 not unlocked');
 
     const claimable = await runGet(client, TEAM_ADDR, 'getTeamClaimable');
     const claimableAmt = claimable.readBigNumber();
+    const vestedAmt = claimable.readBigNumber();
+    const claimableClaimedAmt = claimable.readBigNumber();
     log('TeamVesting claimable: ' + Number(claimableAmt)/1e9 + ' VC');
+    log('TeamVesting vested: ' + Number(vestedAmt)/1e9 + ' VC');
 
     if (claimableAmt > 0n) log('PASS: claimableAmount > 0');
-    else fail('claimableAmount is 0');
+    else if (claimableClaimedAmt === vestedAmt && claimedAmount === vestedAmt) {
+        log('PASS: claimableAmount is 0 because current vested amount was already claimed');
+    } else {
+        fail('claimableAmount is 0 but claimed/vested state is inconsistent');
+    }
 
     const r2 = await client.runMethod(TEAM_ADDR, 'getTeamVestingRound', [{ type: 'int', value: 2n }]);
     const r2Price = r2.stack.readBigNumber();
