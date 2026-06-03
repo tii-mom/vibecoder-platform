@@ -6,7 +6,9 @@ import 'dotenv/config';
 
 const NETWORK = process.env.TON_NETWORK || 'testnet';
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
-const MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.vc-v3.plan.json');
+const DEPLOYED_MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.vc-v3.json');
+const PLAN_MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.vc-v3.plan.json');
+const MANIFEST = existsSync(DEPLOYED_MANIFEST) ? DEPLOYED_MANIFEST : PLAN_MANIFEST;
 
 let failedCount = 0;
 
