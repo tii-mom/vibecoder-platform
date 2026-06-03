@@ -64,6 +64,11 @@ display-name = "Simple Launch Campaign"
 src = "contracts/launch/simple-launch/simple_launch_campaign.tolk"
 depends = []
 
+[contracts.launch_escrow]
+display-name = "Launch Escrow"
+src = "contracts/launch/simple-launch/launch_escrow.tolk"
+depends = []
+
 [contracts.team_vesting]
 display-name = "Team Vesting"
 src = "contracts/platform/token-system/team-vesting/team_vesting.tolk"
