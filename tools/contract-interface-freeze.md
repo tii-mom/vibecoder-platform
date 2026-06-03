@@ -51,6 +51,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `ProjectToken` | `get_jetton_data`, `getJettonData`, `get_wallet_address(owner)`, `getWalletAddress(owner)` |
 | `ProjectTokenWallet` | `get_wallet_data`, `getWalletData` |
 | `LaunchCampaign` | `getCampaignData`, `getInvestorRecord(investor)`, `getProposal(id)` |
+| `SimpleLaunchCampaign` | `getSimpleLaunchCampaignData`, `getSimpleLaunchDistribution`, `getSimpleLaunchTokenState`, `getSimpleLaunchUser(user)` |
 
 ## Inbound Ops
 
@@ -162,6 +163,18 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `0x666` | `proposalId:uint32` settle |
 | `10` | `platformFeeRate:uint16` |
 | `0x7362d09c` | Project-token wallet notification; forward payload op `0x555` exits |
+
+### SimpleLaunchCampaign
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `user:address contribution:coins` participation notification | escrow only |
+| `2` | Activate project token | project owner only |
+| `3` | Finalize distribution | project owner only |
+| `4` | Claim finalized token allocation | participant only |
+| `5` | Cancel campaign | project owner only |
+| `6` | `metadata:ref` update metadata before token deploy | project owner only |
+| `7` | Mark campaign failed | project owner only |
 
 ### ProjectToken
 
