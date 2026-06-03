@@ -14,6 +14,11 @@ display-name = "Developer Reward Pool"
 src = "contracts/platform/token-system/developer-reward-pool/developer_reward_pool.tolk"
 depends = []
 
+[contracts.ecosystem_reward_pool]
+display-name = "Ecosystem Reward Pool"
+src = "contracts/platform/token-system/ecosystem-reward-pool/ecosystem_reward_pool.tolk"
+depends = []
+
 [contracts.fund]
 display-name = "Fund"
 src = "contracts/platform/token-system/fund/fund.tolk"

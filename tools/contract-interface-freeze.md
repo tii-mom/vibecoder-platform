@@ -40,6 +40,7 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `Fund` | `getFundData`, `isProjectWhitelisted(project)`, `getProjectTokenBalance(tokenMaster)`, `getUserDeposit(user)`, `getFundStats`, `getProjectReward(project)`, `getFundUnlockState` |
 | `VCRewardPool` | `getRewardPoolData`, `getProjectRewardState(project)` |
 | `DeveloperRewardPool` | `getDeveloperPoolData`, `getProjectDeveloperReward(project)`, `hasDeveloperClaimed(project)` |
+| `EcosystemRewardPool` | `getEcosystemPoolData`, `getUserEcosystemAllocation(project, user)`, `getEcosystemUnlockState` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
 | `TeamVesting` | `getTeamVestingData`, `getTeamVestingRound(r)`, `getTeamClaimable` |
@@ -83,6 +84,15 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `1` | `project:address creator:address participants:uint32` register successful project | admin only |
 | `2` | `project:address` claim 5,000 VC developer reward | creator only |
 | `3` | `amount:coins destination:address` emergency VC withdrawal | admin only |
+
+### EcosystemRewardPool
+
+| Op | Body | Access |
+| --- | --- | --- |
+| `1` | `project:address user:address tonAmount:coins` record launch participation allocation | admin only |
+| `2` | `price:coins` feed current VC price | admin only |
+| `3` | `project:address` claim unlocked ecosystem reward | recorded user only |
+| `4` | `amount:coins destination:address` emergency VC withdrawal | admin only |
 
 ### EarlyFundraising
 
