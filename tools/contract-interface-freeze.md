@@ -41,7 +41,6 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `VCRewardPool` | `getRewardPoolData`, `getProjectRewardState(project)` |
 | `EarlyFundraising` | `getFundraisingData`, `getUserAllocation(user)` |
 | `SaleVesting` | `getSaleVestingData`, `getUserSaleAllocation(user)`, `getSaleTier(tier)`, `getSaleUnlockState` |
-| `TeamVesting` | `getTeamVestingData`, `getTeamVestingRound(r)`, `getTeamClaimable` |
 | `LaunchFee` | `getLaunchFeeData`, `getProjectStake(project)`, `getCreatorProjectCount(creator)` |
 | `TokenLauncher` | `getLauncherData` |
 | `ProjectToken` | `get_jetton_data`, `getJettonData`, `get_wallet_address(owner)`, `getWalletAddress(owner)` |
@@ -105,15 +104,6 @@ The historical `myVcWalletAddress` data field remains in wrappers for data-cell 
 | `4` | `amount destination` withdraw TON |
 | `5` | `amount destination` withdraw VC |
 | `6` | Close sale |
-
-### TeamVesting
-
-| Op | Body |
-| --- | --- |
-| `1` | `price:coins` feed price |
-| `2` | Claim unlocked VC |
-| `3` | `amount destination` withdraw TON |
-| `4` | `amount destination` withdraw VC |
 
 ### LaunchCampaign
 
