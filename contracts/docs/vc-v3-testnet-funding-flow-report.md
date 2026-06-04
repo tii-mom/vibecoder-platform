@@ -1,6 +1,6 @@
 # VC v3 Testnet Funding / Flow Evidence
 
-> **Status:** Funding verified on-chain. Flow dry-run passes against the current already-partially-executed testnet state.
+> **Status:** Funding verified on-chain. SaleVesting 99 TON buyer flow executed on testnet.
 
 ---
 
@@ -55,7 +55,35 @@
 | TeamVesting Round 1 claim | **YES** — 40M VC claimed (2 rounds) |
 | TeamVesting feed price → 5000 | **YES** — unlockedRounds=2 |
 | SaleVesting feed price → 78125 | **YES** — currentPrice=78125 |
-| SaleVesting 99 TON buy/claim | **pending** (requires buyer wallet with testnet TON) |
+| SaleVesting 99 TON buy/claim | **YES** — 80,000 VC allocation fully claimed |
+
+### SaleVesting 99 TON Buyer Flow — Executed
+
+| 项目 | 状态 |
+|------|------|
+| Script | `contracts/scripts/test-sale-vesting-buyer-flow.ts` |
+| npm:plan | `npm run test:sale-vesting:buyer:flow:plan` |
+| npm:execute | `CONFIRM_SALE_VESTING_BUYER_FLOW=YES npm run test:sale-vesting:buyer:flow` |
+| Dry-run | PASSED |
+| Execute | PASSED |
+| Buyer address | `UQCOZq76X80QvjN4zF82winqx3Ubas3lw0oimqyM33sqo9BB` |
+| Tier | 1 |
+| Buy amount | 99 TON |
+| Allocation verified | 80,000 VC |
+| Immediate release after buy | 24,000 VC (30%) |
+| Round 1 claim checkpoint | 52,000 VC claimed |
+| Feed price → 78125 | PASSED — currentPrice=78125 |
+| Round 2 claim checkpoint | 52,000 VC claimed; cumulative threshold satisfied |
+| Feed price → 3051758 | PASSED — currentPrice=3051758 |
+| Round 3 claim checkpoint | 80,000 VC claimed |
+| Duplicate claim rejection | PASSED — duplicate claim did not increase claimedAmount |
+| claimedAmount <= allocation | PASSED — 80,000 VC <= 80,000 VC |
+| Tx hashes | not captured by script |
+
+Execute command:
+```
+CONFIRM_SALE_VESTING_BUYER_FLOW=YES npm run test:sale-vesting:buyer:flow
+```
 
 ---
 
@@ -73,5 +101,5 @@
 ---
 
 ## Next Steps
-- Complete the remaining SaleVesting 99 TON buyer buy/claim flow when a funded testnet buyer wallet is available.
-- Begin DeveloperRewardPool implementation
+- Proceed with D1 registry review/execution only as a separate approved testnet task.
+- Proceed with Worker integration and frontend integration E2E against the populated testnet registry.
