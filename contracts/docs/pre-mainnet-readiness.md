@@ -1,10 +1,13 @@
 # Pre-Mainnet Readiness
 
-Last updated: 2026-06-03
+Last updated: 2026-06-04
 
 ## Testnet Deployment
 
-Manifest: `contracts/deployments/testnet.platform.json`
+Current registry source:
+
+- `contracts/deployments/testnet.vc-v3.full.json`
+- `contracts/deployments/testnet.simple-launch.json`
 
 | Contract | Testnet address |
 | --- | --- |
@@ -14,6 +17,14 @@ Manifest: `contracts/deployments/testnet.platform.json`
 | `EARLY_FUNDRAISING` | `UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD` |
 | `LAUNCH_FEE` | `UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-` |
 | `TOKEN_LAUNCHER` | `UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs` |
+| `SALE_VESTING` | `UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm` |
+| `TEAM_VESTING` | `UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF` |
+| `DEVELOPER_REWARD_POOL` | `UQCZFgdSfL4uGwExeG5wGMo96Aly8Lc5sx_Sf_HDpm27b9JD` |
+| `ECOSYSTEM_REWARD_POOL` | `UQA-icYnrMhyb7Qe-wvBDH2k9g5a0is_z-jRfKHmW-HeaqV5` |
+| `DEVELOPMENT_FUND` | `UQDJio3xtfCzu7TWhmxc8r1IeGyC2V7Hr0zLo3LTlbHkNm16` |
+| `RESERVE_VAULT` | `UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw` |
+| `LAUNCH_ESCROW` | `UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h` |
+| `SIMPLE_LAUNCH_CAMPAIGN` | `UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC` |
 
 Removed legacy contracts: `EarlySubscription`, `Strategic`.
 
@@ -60,6 +71,10 @@ Additional chain checks completed:
 - Early ops/support VC wallet balance: 30,010,002 VC.
 - TonAPI testnet recognizes the current VC master and includes it in the early ops/support account jetton balances.
 - Full pre-mainnet gate `npm run premainnet:check` passed.
+- VC v3 full deployment and balance verification passed.
+- SaleVesting 99 TON buyer flow completed.
+- SimpleLaunch success and failure/refund flows completed.
+- Testnet D1 registry has reviewed SQL but has not been executed.
 
 ## Mainnet Blockers
 

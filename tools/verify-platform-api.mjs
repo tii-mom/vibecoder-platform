@@ -16,6 +16,14 @@ const EXPECTED_ADDRESSES = {
   EARLY_FUNDRAISING: 'UQBXX3nt12ZKmeY9ITF6G_YC4eh3JCspxnOCX762sBDWdqDD',
   LAUNCH_FEE: 'UQBs3qGxQ5KMPLM1aQfolsc6uoLfHaFtZ3XT0ZtNN9hXuzW-',
   TOKEN_LAUNCHER: 'UQAYzEOHPZgHeS9gmJxGBUFJrvkn2JnBCv4uD2OmkK_FeSXs',
+  SALE_VESTING: 'UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm',
+  TEAM_VESTING: 'UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF',
+  DEVELOPER_REWARD_POOL: 'UQCZFgdSfL4uGwExeG5wGMo96Aly8Lc5sx_Sf_HDpm27b9JD',
+  ECOSYSTEM_REWARD_POOL: 'UQA-icYnrMhyb7Qe-wvBDH2k9g5a0is_z-jRfKHmW-HeaqV5',
+  DEVELOPMENT_FUND: 'UQDJio3xtfCzu7TWhmxc8r1IeGyC2V7Hr0zLo3LTlbHkNm16',
+  RESERVE_VAULT: 'UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw',
+  LAUNCH_ESCROW: 'UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h',
+  SIMPLE_LAUNCH_CAMPAIGN: 'UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC',
 };
 
 const REQUIRED = Object.keys(EXPECTED_ADDRESSES);
@@ -60,7 +68,7 @@ async function fetchJson(url, opts = {}) {
     check('network is present', !!body.network, 'missing network field');
 
     if (body.data && Array.isArray(body.data)) {
-      check(`contract count >= 6`, body.data.length >= 6, `got ${body.data.length}`);
+      check(`contract count >= ${REQUIRED.length}`, body.data.length >= REQUIRED.length, `got ${body.data.length}`);
       for (const name of REQUIRED) {
         const entry = body.data.find(r => r.contract_name === name);
         check(`  ${name} present`, !!entry, 'missing from response');
@@ -95,6 +103,19 @@ async function fetchJson(url, opts = {}) {
       else check('reward pool stats present', data.rewardPool !== undefined, 'missing');
       if (data.earlyFundraisingError) warn('early fundraising stats unavailable', data.earlyFundraisingError);
       else check('early fundraising stats present', data.earlyFundraising !== undefined, 'missing');
+      for (const name of [
+        'saleVesting',
+        'teamVesting',
+        'developerRewardPool',
+        'ecosystemRewardPool',
+        'developmentFund',
+        'reserveVault',
+        'launchEscrow',
+        'simpleLaunchCampaign',
+      ]) {
+        if (data[`${name}Error`]) warn(`${name} stats unavailable`, data[`${name}Error`]);
+        else check(`${name} stats present`, data[name] !== undefined, 'missing');
+      }
     }
   } catch (e) {
     warn('stats endpoint unreachable', e.message);
