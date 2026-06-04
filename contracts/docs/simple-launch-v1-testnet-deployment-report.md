@@ -1,6 +1,6 @@
 # SimpleLaunch v1 Testnet Deployment Report
 
-> Status: DEPLOYED. Success flow completed on testnet. Failure/refund scenario still requires a separate deployed campaign or explicit waiver.
+> Status: DEPLOYED. Success and failure/refund flows completed on testnet.
 
 ## Deployment
 
@@ -52,36 +52,49 @@
 | `npm run verify:simple-launch:testnet` | PASSED for campaign, escrow, and ProjectToken |
 | `npm run test:simple-launch:flow:plan` | PASSED (dry-run, both success and failure scenarios) |
 | `CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=success npm run test:simple-launch:flow` | PASSED |
+| `SIMPLE_LAUNCH_MANIFEST_PATH=deployments/testnet.simple-launch.failure-refund.json CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm run test:simple-launch:flow` | PASSED |
 
 ## RPC Status
 
-RPC recovered enough for platform get-method verification, SimpleLaunch deployment, SimpleLaunch campaign/escrow verification, success flow execution, and ProjectToken verification.
+RPC recovered enough for platform get-method verification, SimpleLaunch deployment, SimpleLaunch campaign/escrow verification, success flow execution, failure/refund flow execution, and ProjectToken verification.
 
-Current blocker is not RPC. The remaining SimpleLaunch flow gap is the failure/refund scenario, which requires a separate deployed campaign because the current campaign has completed the success path.
+Current blocker is not RPC. SimpleLaunch success and failure/refund paths have both been exercised on testnet.
 
 ## Flow Results
 
-Flow execution requires:
-1. Failure/refund scenario execution on a separate deployed campaign, or explicit waiver.
+Failure/refund scenario evidence uses a separate deployed campaign because the primary campaign completed the success path.
+
+| Failure/refund evidence | Value |
+| --- | --- |
+| Manifest | `contracts/deployments/testnet.simple-launch.failure-refund.json` |
+| Campaign | `UQBdv8E56bNidIbHhZQCzXwKVrX6oeGps1f-6cgyNNg_rM7k` |
+| Escrow | `UQD-PcDNkXuIUwNbtxNBzAYi13spYpkzkBx3xME9VlfOcbTC` |
+| Temporary contributor | `UQBHOtv4Y6N1ZDJ3pJwqPA2xOh2UasQ5_kAeijfBx84b5DQ_` |
+| Campaign failed state | COMPLETE — state=4 |
+| Escrow failed state | COMPLETE — state=3 |
+| Refund | COMPLETE |
+| Duplicate refund | REJECTED — refunded flag stayed 1 |
+| Claim after failure | REJECTED — campaign stayed failed |
 
 | Flow Item | Status |
 | --- | --- |
 | 5 users activation | COMPLETE |
-| Under-target distribution | PENDING — separate scenario |
+| Under-target distribution | COMPLETE — failure/refund scenario |
 | Full-target distribution | COMPLETE |
 | Token deployment | COMPLETE |
 | User claim | COMPLETE |
 | Project withdraw | COMPLETE |
-| Platform fee withdraw | PENDING |
-| Failed campaign refund | PENDING — requires separate campaign |
-| Duplicate claim/reject | PENDING |
-| hardCap rejection | PENDING |
+| Platform fee withdraw | N/A in SimpleLaunch v1 — no separate platform-fee withdraw op; escrow withdraw is project-owner withdrawal |
+| Failed campaign refund | COMPLETE |
+| Duplicate refund reject | COMPLETE |
+| Claim after failure reject | COMPLETE |
+| hardCap rejection | Covered by sandbox tests; not repeated on testnet |
 
 ## Remaining Execution Commands
 
 ```bash
-# Run flow (failure scenario)
-CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm run test:simple-launch:flow
+# Re-run flow plans
+npm run test:simple-launch:flow:plan
 ```
 
 ## Required Env Vars (not committed)
@@ -104,7 +117,7 @@ CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm r
 | Worker/frontend/vc touched | NO |
 | secrets committed | NO |
 | tx hashes fabricated | NO |
-| flow blocker hidden | NO (failure/refund scenario remains pending) |
+| flow blocker hidden | NO |
 | verification fabricated | NO |
 
 ## D1 SQL Plan

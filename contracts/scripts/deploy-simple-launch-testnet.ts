@@ -26,6 +26,9 @@ if (!DRY_RUN && !HAS_MNEMONIC) throw new Error('Set DEPLOYER_MNEMONIC before exe
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
 const PLAN_MANIFEST_PATH = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.plan.json');
 const DEPLOYED_MANIFEST_PATH = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.json');
+const OVERRIDE_MANIFEST_PATH = process.env.SIMPLE_LAUNCH_MANIFEST_PATH
+    ? resolve(process.cwd(), process.env.SIMPLE_LAUNCH_MANIFEST_PATH)
+    : '';
 const ZERO_ADDRESS = Address.parseRaw('0:' + '0'.repeat(64));
 
 function endpoint(): string {
@@ -64,7 +67,12 @@ async function sendOne(
     body: Cell,
     init?: { code: Cell; data: Cell },
 ) {
-    const seqno = await wallet.getSeqno();
+    let seqno = 0;
+    try {
+        seqno = await wallet.getSeqno();
+    } catch {
+        seqno = 0;
+    }
     await wallet.sendTransfer({
         seqno,
         secretKey,
@@ -202,7 +210,7 @@ async function main() {
     };
 
     mkdirSync(resolve(process.cwd(), 'deployments'), { recursive: true });
-    const outPath = DRY_RUN ? PLAN_MANIFEST_PATH : DEPLOYED_MANIFEST_PATH;
+    const outPath = OVERRIDE_MANIFEST_PATH || (DRY_RUN ? PLAN_MANIFEST_PATH : DEPLOYED_MANIFEST_PATH);
     writeFileSync(outPath, JSON.stringify(manifest, null, 2) + '\n');
     console.log('Manifest ' + (DRY_RUN ? 'plan' : 'saved') + ': ' + outPath);
     console.log(DRY_RUN ? 'No transactions sent.' : 'Deployment complete. Tx hashes not captured by script.');

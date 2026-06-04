@@ -11,7 +11,10 @@ if (NETWORK !== 'testnet') throw new Error('Set TON_NETWORK=testnet or leave it 
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
 const DEPLOYED_MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.json');
 const PLAN_MANIFEST = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.plan.json');
-const MANIFEST_PATH = existsSync(DEPLOYED_MANIFEST) ? DEPLOYED_MANIFEST : PLAN_MANIFEST;
+const OVERRIDE_MANIFEST = process.env.SIMPLE_LAUNCH_MANIFEST_PATH
+    ? resolve(process.cwd(), process.env.SIMPLE_LAUNCH_MANIFEST_PATH)
+    : '';
+const MANIFEST_PATH = OVERRIDE_MANIFEST || (existsSync(DEPLOYED_MANIFEST) ? DEPLOYED_MANIFEST : PLAN_MANIFEST);
 
 if (!existsSync(MANIFEST_PATH)) {
     throw new Error('SimpleLaunch manifest not found. Run deploy:simple-launch:testnet:plan first.');

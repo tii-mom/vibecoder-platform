@@ -1,0 +1,41 @@
+{
+  "network": "testnet",
+  "product": "SimpleLaunch",
+  "version": "v1",
+  "status": "deployed",
+  "generatedAt": "2026-06-04T03:34:55.938Z",
+  "deployer": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+  "contracts": {
+    "SIMPLE_LAUNCH_CAMPAIGN": "UQBdv8E56bNidIbHhZQCzXwKVrX6oeGps1f-6cgyNNg_rM7k",
+    "LAUNCH_ESCROW": "UQD-PcDNkXuIUwNbtxNBzAYi13spYpkzkBx3xME9VlfOcbTC",
+    "PROJECT_TOKEN": "UQDjqF7n0u3uIuV7ZHxGkPDPNcz7o9ag62kO4m9mgQvuUrCx"
+  },
+  "config": {
+    "projectOwner": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+    "teamWallet": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+    "platformFund": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
+    "targetRaiseTon": "50",
+    "hardCapTon": "50",
+    "minContributionTon": "1",
+    "minParticipants": 5,
+    "minTotalRaiseTon": "5",
+    "endTime": 1781148847,
+    "platformFeeBps": 350
+  },
+  "flow": {
+    "activation": "pending",
+    "finalize": "pending",
+    "claim": "pending",
+    "refund": "complete",
+    "withdraw": "pending",
+    "duplicateRefund": "rejected",
+    "claimAfterFailure": "rejected",
+    "failureScenarioAt": "2026-06-04T03:36:50.252Z"
+  },
+  "notes": [
+    "Testnet only. Do not use these addresses for mainnet.",
+    "Execute mode deploys campaign and escrow, then binds escrow on the campaign.",
+    "ProjectToken is deployed by campaign activation, not by this deployment script.",
+    "D1 SQL is not executed by this script."
+  ]
+}
