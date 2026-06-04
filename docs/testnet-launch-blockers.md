@@ -1,128 +1,47 @@
 # Testnet Launch Blockers Audit
 
-> Generated: 2026-06-02
-> Branch: `stabilize/testnet-platform-contracts-v1`
+> Historical audit updated 2026-06-04. This file no longer defines the active launch gate.
+> Current source of truth: `contracts/deployments/testnet.vc-v3.full.json` + `contracts/deployments/testnet.simple-launch.json`.
 
-## Blocker Summary
+## Current Status
 
-| # | Severity | Status | Description |
-|---|----------|--------|-------------|
-| 1 | P0 | ✅ RESOLVED | D1 platform_contracts has correct 6 testnet addresses |
-| 2 | P0 | ✅ RESOLVED | Worker /api/v1/platform/contracts returns 6 contracts |
-| 3 | P0 | ✅ RESOLVED | Frontend reads VC_JETTON from Worker, legacy addresses dev-only |
-| 4 | P0 | ✅ RESOLVED | Mock/simulator never auto-pass in non-development |
-| 5 | P1 | ✅ RESOLVED | Frozen docs have freeze banners |
-| 6 | P1 | ✅ RESOLVED | No references to removed contracts (EarlySubscription, Strategic) |
-| 7 | P1 | ✅ RESOLVED | VC_JETTON admin not revoked (intentional) |
-| 8 | P2 | ✅ RESOLVED | Verifiable production config check exists |
+The previous 6-contract testnet blocker audit has been superseded by the VC v3 full + SimpleLaunch registry gate.
 
----
+| Area | Current Status |
+| --- | --- |
+| VC v3 full testnet contracts | Deployed and verified |
+| SimpleLaunch testnet contracts | Deployed and flow-tested |
+| SaleVesting buyer flow | Completed |
+| Testnet D1 registry | Reviewed plan only; not executed |
+| Worker registry | Draft code path; E2E pending populated testnet D1 |
+| Frontend registry | Draft code path; E2E pending Worker registry |
+| Mainnet deployment | Not started |
 
-## P0 Blockers — Detailed
+## Active Registry Requirement
 
-### 1. D1 platform_contracts completeness
+Worker/frontend readiness now requires 14 testnet contracts:
 
-**Evidence**: `worker/migrations/0001_schema.sql` line 42-49 defines `platform_contracts` table.
-Migration `0013_platform_contract_network.sql` updates schema to `UNIQUE(network, contract_name)`.
-`tools/sync-platform-contracts.mjs` reads `testnet.platform.json` and generates upsert SQL.
+| Group | Contracts |
+| --- | --- |
+| Base platform | `VC_JETTON`, `FUND`, `VC_REWARD_POOL`, `EARLY_FUNDRAISING`, `LAUNCH_FEE`, `TOKEN_LAUNCHER` |
+| VC v3 full | `SALE_VESTING`, `TEAM_VESTING`, `DEVELOPER_REWARD_POOL`, `ECOSYSTEM_REWARD_POOL`, `DEVELOPMENT_FUND`, `RESERVE_VAULT` |
+| SimpleLaunch | `LAUNCH_ESCROW`, `SIMPLE_LAUNCH_CAMPAIGN` |
 
-**Fix plan**:
-- Run `node tools/sync-platform-contracts.mjs --network testnet` to preview SQL
-- Verify 6 contract names: VC_JETTON, FUND, VC_REWARD_POOL, EARLY_FUNDRAISING, LAUNCH_FEE, TOKEN_LAUNCHER
-- Apply with `--apply` flag when D1 is reachable
+`PROJECT_TOKEN` is deployed evidence for SimpleLaunch activation, but it is not part of the frontend/Worker required-contract fail-closed list unless a future product flow needs it directly.
 
-**Acceptance**: `/api/v1/platform/contracts` returns `success:true` with exactly 6 contracts.
+## Frozen Historical Notes
 
-### 2. Worker platform contracts endpoint
+- The old "6 contracts" acceptance criterion is frozen. It applied only before VC v3 full + SimpleLaunch deployment.
+- `EarlySubscription`, `Strategic`, and legacy `EARLY_SUB` naming remain removed/frozen and must not be restored.
+- `testnet.vc-v3.json` and dry-run plan manifests are intermediate evidence only. They are not registry truth.
+- D1 execution remains a separate approved testnet task. This document does not authorize D1 or production changes.
 
-**Evidence**: `worker/src/index.ts` line ~1064: `GET /api/v1/platform/contracts` queries D1.
+## Remaining Pre-Mainnet Blockers
 
-**Current behavior**: Returns contracts filtered by `TON_NETWORK`. Falls back gracefully if D1 has no data.
-
-**Fix plan**: Add validation that all 6 REQUIRED_PLATFORM_CONTRACTS are present. Return `missing` field if incomplete.
-
-**Acceptance**: Endpoint returns 6 contracts or explicit `missing` field.
-
-### 3. Frontend VC_JETTON detection
-
-**Evidence**: `vc/src/pages/BountyPage.tsx` line ~287: `KNOWN_VC_MASTERS` includes `vcMasterContract?.address` from Worker API plus 2 legacy testnet addresses. Symbol fallback `b.jetton.symbol === 'VC'` at line ~299.
-
-**Fix plan**:
-- `vcMasterContract?.address` is already fed from Worker API ✅
-- Legacy addresses gated behind `isLocalDev` check
-- Symbol fallback gated behind `isLocalDev`
-
-**Acceptance**: Non-localhost production never uses symbol-only or legacy-address-only VC detection.
-
-### 4. Mock/simulator guards
-
-**Evidence**: 
-- `worker/src/index.ts` line ~80-137: AI review fail-closed (`typeof parsed.pass !== 'boolean' → pass:false`)
-- `worker/src/index.ts` line ~2008: tx_hash mock detection for staking
-- `worker/src/index.ts` line ~2302: Signer mock rejection outside dev
-- `worker/src/services/bounty-verifier.ts` line 14: production returns `false`
-- `signer/src/index.ts` line 76: mainnet rejects weak API keys
-
-**Fix plan**: All guards already in place. `tools/production-config-check.mjs` verifies them statically.
-
-**Acceptance**: `npm run check:production` runs cleanly.
-
----
-
-## P1 Blockers — Detailed
-
-### 5. Frozen documents
-
-**Evidence**: `DOCS_FREEZE.md` lists current sources and frozen documents.
-Some frozen docs lack in-file freeze banners.
-
-**Fix plan**: Add `⚠️ FROZEN` banner to top of each frozen doc.
-
-**Acceptance**: Every frozen doc in DOCS_FREEZE.md has visible freeze banner.
-
-### 6. Removed contracts
-
-**Evidence**: EarlySubscription and Strategic were removed. New contracts: EARLY_FUNDRAISING, VC_REWARD_POOL.
-
-**Fix plan**:
-- D1 schema comment updated (already done in migration 0001)
-- `/api/v1/platform/contracts` only returns current 6 names
-
-**Acceptance**: No reference to EarlySubscription/Strategic in active code paths.
-
-### 7. VC_JETTON admin retention
-
-**Evidence**: `contracts/docs/pre-mainnet-readiness.md` explicitly states admin is retained.
-`VC_JETTON` `get_jetton_data()` shows `mintable=-1` (can still mint).
-
-**Fix plan**: No action needed. This is intentional policy.
-
-**Acceptance**: No thread attempts to revoke admin as part of this stabilization.
-
----
-
-## P2 — Non-blocking
-
-### 8. Production config check
-
-**Evidence**: `tools/production-config-check.mjs` runs `check:production`.
-Currently returns 7 pass, 1 warning (ENVIRONMENT not set).
-
-**Fix plan**: Document that ENVIRONMENT warning is expected in local dev.
-
-**Acceptance**: `npm run check:production` exits 0.
-
----
-
-## File Inventory
-
-| File | Exists | Status |
-|------|--------|--------|
-| `contracts/deployments/testnet.platform.json` | ✅ | 6 contracts, all verified |
-| `.env.example` | ✅ | Mainnet-ready placeholders |
-| `contracts/docs/pre-mainnet-readiness.md` | ✅ | Testnet status documented |
-| `DOCS_FREEZE.md` | ✅ | Lists current + frozen docs |
-| `DEVELOPMENT_RULES.md` | ✅ | Development guidelines |
-| `REMAINING_TASKS.md` | ✅ | Updated for testnet stage |
-| `worker/src/index.ts` | ✅ | 2 new chain-read endpoints |
-| `vc/src/pages/BountyPage.tsx` | ✅ | Worker API VC detection |
+| Blocker | Required Outcome |
+| --- | --- |
+| Testnet D1 registry execution | Approved testnet-only execution with backup and execution record |
+| Worker registry E2E | 14 required contracts returned or fail-closed behavior verified |
+| Frontend E2E | Missing-contract disabled state and wrong-network block verified |
+| Mainnet signer/admin plan | Multisig/timelock or explicitly approved admin policy |
+| Final audit | Human approval checklist complete |

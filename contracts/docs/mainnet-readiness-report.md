@@ -1,6 +1,7 @@
 # Mainnet Readiness Report
 
 > Status: not ready for mainnet. Mainnet deployment has not been executed.
+> Updated: 2026-06-04. Testnet flows complete; D1/Worker/frontend E2E and mainnet approvals remain.
 
 ## Current Readiness
 
@@ -16,23 +17,23 @@
 | ReserveVault testnet deployment | OK |
 | VC v3 full get-method verification | OK — `npm run verify:vc-v3:full:testnet` |
 | VC v3 full balance verification | OK — `npm run verify:vc-v3:full:balances` |
-| TeamVesting flow | Partial OK — already claimed 40,000,000 VC; duplicate/unclaimed live checks still need final gate coverage |
-| SaleVesting flow | Partial OK — get-methods/admin price feed OK; 99 TON buyer buy/claim flow is still a hard blocker |
-| VC v3 pool live flows | Pending dedicated testnet flow checks for developer/ecosystem/development/reserve operations |
-| SimpleLaunch v1 | Plan frozen only; implementation and testnet deployment pending |
-| Testnet D1 reviewed plan | Drafted; not executed |
+| TeamVesting flow | OK — claim/feed evidence recorded |
+| SaleVesting flow | OK — 99 TON buyer flow completed |
+| VC v3 pool live flows | Get-method and balance verification complete; extra admin-operation flows optional for final audit |
+| SimpleLaunch v1 | OK — deployed and success/failure-refund flows completed |
+| Testnet D1 reviewed plan | Reviewed; not executed |
+| Worker registry E2E | Pending populated testnet D1 |
+| Frontend registry E2E | Pending Worker registry E2E |
 | Production D1 SQL | Not executed |
 | Mainnet deployment | Not executed |
 
 ## Mainnet Blockers
 
-- Complete SaleVesting 99 TON buyer buy/claim flow with a funded testnet buyer wallet.
-- Complete dedicated testnet flow verification for DeveloperRewardPool, EcosystemRewardPool, DevelopmentFund, and ReserveVault.
-- Implement SimpleLaunchCampaign v1 and LaunchEscrow v1.
-- Deploy and flow-test SimpleLaunch v1 on testnet.
-- Review D1 SQL plans manually; production D1 SQL remains out of scope until separate approval.
+- Execute testnet D1 registry only in a separately approved testnet D1 task with backup.
+- Deploy/verify Worker registry and frontend against populated testnet D1.
+- Keep production D1 SQL out of scope until separate approval.
 - Finalize VC_JETTON mainnet admin policy as verified multisig/timelock or admin revoke.
-- Produce final pre-mainnet readiness package after all testnet blockers are closed.
+- Complete final audit and human approval checklist.
 
 ## Verification Baseline
 
@@ -47,7 +48,7 @@ npm run verify:vc-v3:full:balances
 npm run test:vc-v3:flows:plan
 ```
 
-Latest known result: build/typecheck passed; 14 test suites and 93 tests passed; full VC v3 testnet get-method and balance verification passed.
+Latest known result: contracts typecheck and SimpleLaunch verification passed; VC v3 and SimpleLaunch flows completed on testnet. Worker typecheck and frontend build pass on their draft integration branches.
 
 ## Boundaries
 

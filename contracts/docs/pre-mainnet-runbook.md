@@ -1,6 +1,6 @@
 # Pre-Mainnet Runbook
 
-Last updated: 2026-06-03
+Last updated: 2026-06-04
 
 This runbook prepares the project for mainnet review. It does not broadcast mainnet transactions and does not modify remote Cloudflare D1 unless `--apply` is explicitly passed to the sync helper.
 
@@ -50,10 +50,10 @@ The plan validates Fund, RewardPool, EarlyFundraising, Liquidity, EarlyOps, and 
 
 ## 3. Generate D1 Sync SQL
 
-Testnet:
+Testnet reviewed registry:
 
 ```bash
-node tools/sync-platform-contracts.mjs --network=testnet --manifest=contracts/deployments/testnet.platform.json
+sed -n '1,220p' worker/sql/testnet-contract-registry-reviewed.sql
 ```
 
 Mainnet dry-run:
@@ -62,7 +62,7 @@ Mainnet dry-run:
 node tools/sync-platform-contracts.mjs --network=mainnet --manifest=contracts/deployments/mainnet.platform.dry-run.json
 ```
 
-The helper prints SQL only by default. Do not pass `--apply` until the remote D1 update is explicitly approved.
+The sync helper prints SQL only by default. Do not pass `--apply` until the remote D1 update is explicitly approved. The reviewed testnet registry SQL must retain `ROLLBACK` until a separate testnet D1 execution task confirms the target database and backup.
 
 ## 4. Run Full Gate
 
@@ -79,5 +79,7 @@ If mainnet environment variables are missing, the gate skips mainnet dry-run che
 - Mainnet admin wallet is the intended personal admin wallet.
 - EarlyOps, Liquidity, TeamLockup, and EarlyTreasury addresses are final.
 - `VC_JETTON` admin remains retained by policy.
-- D1 sync SQL lists exactly six platform contracts for the target network.
+- Testnet registry source is `contracts/deployments/testnet.vc-v3.full.json` + `contracts/deployments/testnet.simple-launch.json`.
+- Testnet D1 registry covers 14 required Worker/frontend contracts: base 6 + VC v3 full 6 + SimpleLaunch 2.
+- Historical `testnet.platform.json`, `testnet.vc-v3.json`, and dry-run plan manifests are not registry truth.
 - No mainnet deployment, mint, D1 remote update, Worker deploy, or frontend deploy is performed in this preparation batch.

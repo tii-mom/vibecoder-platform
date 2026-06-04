@@ -8,7 +8,10 @@
 -- Review status:
 --   - testnet-reviewed-plan.sql: reviewed, consolidated here
 --   - platform-contracts-v3-testnet-plan.sql: reviewed, consolidated here
---   - simple-launch-v1-testnet-plan.sql: reviewed (on ops/simple-launch-v1-testnet-deploy)
+--   - simple-launch-v1-testnet-plan.sql: reviewed and updated with deployed addresses
+-- Execution status:
+--   - Testnet D1 executed: NO
+--   - Production D1 executed: NO
 -- ============================================================
 
 BEGIN TRANSACTION;
@@ -34,26 +37,17 @@ VALUES
   ('testnet-RESERVE_VAULT', 'RESERVE_VAULT', 'UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw', 'testnet', datetime('now'));
 
 -- ============================================================
--- Section 2: SimpleLaunch v1 Contracts (PENDING — NOT DEPLOYED)
--- Source: contracts/deployments/testnet.simple-launch.plan.json
--- Status: planned only. Deployment pending RPC recovery (PR #44).
--- WARNING: Addresses below are predicted from dry-run. They WILL
--- change after real deployment. DO NOT INSERT predicted addresses.
+-- Section 2: SimpleLaunch v1 Contracts (deployed, testnet)
+-- Source: contracts/deployments/testnet.simple-launch.json
+-- Status: deployed on testnet; success flow completed.
+-- Failure/refund evidence lives in:
+--   contracts/deployments/testnet.simple-launch.failure-refund.json
 -- ============================================================
--- PENDING: Execute only after SimpleLaunch real testnet deploy + verify.
--- Use the deployed manifest at contracts/deployments/testnet.simple-launch.json
--- to populate the real addresses after PR #44 passes.
---
--- INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
--- VALUES
---   ('testnet-LAUNCH_ESCROW', 'LAUNCH_ESCROW', '<REAL_ADDRESS_AFTER_DEPLOY>', 'testnet', datetime('now')),
---   ('testnet-SIMPLE_LAUNCH_CAMPAIGN', 'SIMPLE_LAUNCH_CAMPAIGN', '<REAL_ADDRESS_AFTER_DEPLOY>', 'testnet', datetime('now')),
---   ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', '<REAL_ADDRESS_AFTER_ACTIVATION>', 'testnet', datetime('now'));
-
--- For reference only (predicted, may change):
--- LAUNCH_ESCROW predicted:        UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo
--- SIMPLE_LAUNCH_CAMPAIGN predicted: UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y
--- PROJECT_TOKEN predicted:        UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV
+INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
+VALUES
+  ('testnet-LAUNCH_ESCROW', 'LAUNCH_ESCROW', 'UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h', 'testnet', datetime('now')),
+  ('testnet-SIMPLE_LAUNCH_CAMPAIGN', 'SIMPLE_LAUNCH_CAMPAIGN', 'UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC', 'testnet', datetime('now')),
+  ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', 'UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz', 'testnet', datetime('now'));
 
 -- ============================================================
 -- Section 3: Self VC Wallets (testnet)
@@ -90,7 +84,7 @@ ROLLBACK;
 --
 -- Note: deleting VC v3 contracts would break existing integrations.
 -- Only delete if superseded by a new registry.
--- SimpleLaunch rollback: not applicable (not yet inserted; see Section 2).
+-- SimpleLaunch rollback is included by the testnet-% delete above.
 -- ============================================================
 
 -- ============================================================
@@ -98,11 +92,9 @@ ROLLBACK;
 -- 1. VC_JETTON, FUND, VC_REWARD_POOL, EARLY_FUNDRAISING, LAUNCH_FEE,
 --    TOKEN_LAUNCHER are v2 platform contracts. They remain active on
 --    testnet alongside v3 contracts.
--- 2. SimpleLaunch addresses are NOT INSERTed. They are commented out
---    because addresses are predicted from dry-run and will change
---    after real deployment (PR #44 pending, RPC 504 blocked).
---    A separate follow-up must add real addresses from the deployed
---    manifest (contracts/deployments/testnet.simple-launch.json).
+-- 2. SimpleLaunch addresses are real deployed testnet addresses from
+--    contracts/deployments/testnet.simple-launch.json. Historical dry-run
+--    predicted addresses must not be used as registry truth.
 -- 3. Self VC wallets are derived from contract addresses and hold
 --    VC tokens for contract operations.
 -- 4. Production D1 execution remains out of scope here.
