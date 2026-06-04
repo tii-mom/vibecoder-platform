@@ -35,7 +35,7 @@ const SALE_ADDR = Address.parse(manifest.v3Contracts?.SALE_VESTING || manifest.c
 const ADMIN_MNEMONIC = normalizeMnemonic(process.env.DEPLOYER_MNEMONIC || '');
 const BUYER_MNEMONIC = normalizeMnemonic(process.env.SALE_VESTING_BUYER_MNEMONIC || '');
 
-const TIER = Number(process.env.SALE_VESTING_BUYER_TIER || '3');
+const TIER = Number(process.env.SALE_VESTING_BUYER_TIER || '1');
 const BUY_AMOUNT_TON = process.env.SALE_VESTING_BUY_AMOUNT_TON || '99';
 
 async function openWallet(client: TonClient, mnemonic: string) {
@@ -45,7 +45,12 @@ async function openWallet(client: TonClient, mnemonic: string) {
 }
 
 async function sendOne(wallet: any, secretKey: Buffer, to: Address, value: bigint, body: Cell) {
-    const seqno = await wallet.getSeqno();
+    let seqno = 0;
+    try {
+        seqno = await wallet.getSeqno();
+    } catch {
+        seqno = 0;
+    }
     await wallet.sendTransfer({ seqno, secretKey, messages: [internal({ to, value, body })] });
     await new Promise(r => setTimeout(r, 12000));
 }
