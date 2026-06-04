@@ -1,27 +1,27 @@
 # SimpleLaunch v1 Testnet Deployment Report
 
-> Status: RPC BLOCKED. All pre-deployment checks passed. Real testnet deployment pending TonCenter RPC recovery.
+> Status: DEPLOYED. Campaign and escrow get-method verification passed. Success/failure flow is blocked until contributor wallets are configured and funded.
 
 ## Deployment
 
 | Item | Value |
 | --- | --- |
 | **Network** | testnet |
-| **Executed** | NO (RPC 504 blocking) |
-| **Manifest** | `contracts/deployments/testnet.simple-launch.plan.json` |
-| **Status** | planned |
-| **Generated at** | `2026-06-03T17:46:38.785Z` |
-| **Deployer** | `UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq` (dry-run) |
+| **Executed** | YES |
+| **Manifest** | `contracts/deployments/testnet.simple-launch.json` |
+| **Status** | deployed |
+| **Generated at** | `2026-06-04T02:52:49.692Z` |
+| **Deployer** | `UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq` |
 
-### Contract Addresses (predicted, not deployed)
+### Contract Addresses
 
-| Contract | Predicted Address | Status |
+| Contract | Address | Status |
 | --- | --- | --- |
-| `SIMPLE_LAUNCH_CAMPAIGN` | `UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y` | planned |
-| `LAUNCH_ESCROW` | `UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo` | planned |
-| `PROJECT_TOKEN` | `UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV` | planned (deployed by campaign activation) |
+| `SIMPLE_LAUNCH_CAMPAIGN` | `UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC` | deployed |
+| `LAUNCH_ESCROW` | `UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h` | deployed |
+| `PROJECT_TOKEN` | `UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz` | pending activation |
 
-### Configuration (per dry-run)
+### Configuration
 
 | Parameter | Value |
 | --- | --- |
@@ -33,12 +33,12 @@
 | minContributionTon | 1 TON |
 | minParticipants | 5 |
 | minTotalRaiseTon | 5 TON |
-| endTime | ~7 days from deployment |
+| endTime | `1781146323` |
 | platformFeeBps | 350 (3.5%) |
 
 ### Tx Hashes
 
-- Not captured (deployment not executed).
+- Not captured by deployment script.
 
 ## Pre-Deployment Verification
 
@@ -48,49 +48,40 @@
 | `npm run typecheck` | PASSED |
 | `npm test -- --runInBand` | PASSED, 16 suites, 104 tests |
 | `npm run deploy:simple-launch:testnet:plan` | PASSED (dry-run, addresses predicted) |
-| `npm run verify:simple-launch:testnet` | PENDING (all 5 items pending — not deployed, RPC 504) |
+| `CONFIRM_SIMPLE_LAUNCH_TESTNET_DEPLOY=YES npm run deploy:simple-launch:testnet` | PASSED |
+| `npm run verify:simple-launch:testnet` | PASSED for campaign and escrow; ProjectToken pending activation |
 | `npm run test:simple-launch:flow:plan` | PASSED (dry-run, both success and failure scenarios) |
 
 ## RPC Status
 
-```
-testnet.toncenter.com → Cloudflare 504 Gateway Timeout
-retry_after: 120 seconds
-error: origin_gateway_timeout
-```
+RPC recovered enough for platform get-method verification, SimpleLaunch deployment, and SimpleLaunch campaign/escrow verification.
 
-All `verify:get-methods` and `verify:vc-v3:testnet` attempts fail with the same 504 error.
-This is a TonCenter origin-side issue, not a contract code problem.
+Current blocker is not RPC. Flow execution is blocked by missing contributor wallets.
 
-## Flow Results — ALL PENDING
+## Flow Results
 
 Flow execution requires:
-1. Real testnet deployment (blocked by RPC)
-2. Sufficient testnet TON in contributor wallets
-3. `SIMPLE_LAUNCH_CONTRIBUTOR_MNEMONICS` env var configured
+1. Sufficient testnet TON in 5 unique contributor wallets
+2. `SIMPLE_LAUNCH_CONTRIBUTOR_MNEMONICS` env var configured
+3. Success flow execution
+4. Failure/refund scenario execution on a separate deployed campaign
 
 | Flow Item | Status |
 | --- | --- |
-| 5 users activation | PENDING (RPC) |
-| Under-target distribution | PENDING (RPC) |
-| Full-target distribution | PENDING (RPC) |
-| Token deployment | PENDING (RPC) |
-| User claim | PENDING (RPC) |
-| Project withdraw | PENDING (RPC) |
-| Platform fee withdraw | PENDING (RPC) |
-| Failed campaign refund | PENDING (RPC) |
-| Duplicate claim/reject | PENDING (RPC) |
-| hardCap rejection | PENDING (RPC) |
+| 5 users activation | BLOCKED — contributor mnemonics not configured |
+| Under-target distribution | PENDING |
+| Full-target distribution | PENDING |
+| Token deployment | PENDING — activation not complete |
+| User claim | PENDING |
+| Project withdraw | PENDING |
+| Platform fee withdraw | PENDING |
+| Failed campaign refund | PENDING — requires separate campaign |
+| Duplicate claim/reject | PENDING |
+| hardCap rejection | PENDING |
 
-## Execution Commands (when RPC recovers)
+## Remaining Execution Commands
 
 ```bash
-# Deploy
-CONFIRM_SIMPLE_LAUNCH_TESTNET_DEPLOY=YES npm run deploy:simple-launch:testnet
-
-# Verify
-npm run verify:simple-launch:testnet
-
 # Run flow (success scenario)
 CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=success npm run test:simple-launch:flow
 
@@ -118,8 +109,8 @@ CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm r
 | Worker/frontend/vc touched | NO |
 | secrets committed | NO |
 | tx hashes fabricated | NO |
-| RPC failure hidden | NO (explicitly recorded) |
-| verification fabricated | NO (all marked PENDING) |
+| flow blocker hidden | NO (contributor wallets required) |
+| verification fabricated | NO |
 
 ## D1 SQL Plan
 
