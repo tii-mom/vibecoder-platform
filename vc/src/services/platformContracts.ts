@@ -8,7 +8,15 @@ export type PlatformContractName =
   | 'VC_REWARD_POOL'
   | 'EARLY_FUNDRAISING'
   | 'LAUNCH_FEE'
-  | 'TOKEN_LAUNCHER';
+  | 'TOKEN_LAUNCHER'
+  | 'SALE_VESTING'
+  | 'TEAM_VESTING'
+  | 'DEVELOPER_REWARD_POOL'
+  | 'ECOSYSTEM_REWARD_POOL'
+  | 'DEVELOPMENT_FUND'
+  | 'RESERVE_VAULT'
+  | 'LAUNCH_ESCROW'
+  | 'SIMPLE_LAUNCH_CAMPAIGN';
 
 export const REQUIRED_CONTRACTS: PlatformContractName[] = [
   'VC_JETTON',
@@ -17,6 +25,14 @@ export const REQUIRED_CONTRACTS: PlatformContractName[] = [
   'EARLY_FUNDRAISING',
   'LAUNCH_FEE',
   'TOKEN_LAUNCHER',
+  'SALE_VESTING',
+  'TEAM_VESTING',
+  'DEVELOPER_REWARD_POOL',
+  'ECOSYSTEM_REWARD_POOL',
+  'DEVELOPMENT_FUND',
+  'RESERVE_VAULT',
+  'LAUNCH_ESCROW',
+  'SIMPLE_LAUNCH_CAMPAIGN',
 ];
 
 interface PlatformContractEntry {
@@ -75,4 +91,35 @@ export function assertRequiredContracts(): string[] {
     }
   }
   return missing;
+}
+
+export function getSimpleLaunchCampaignAddress(): string | undefined {
+  return cachedContracts?.get('SIMPLE_LAUNCH_CAMPAIGN')?.address;
+}
+
+export function getLaunchEscrowAddress(): string | undefined {
+  return cachedContracts?.get('LAUNCH_ESCROW')?.address;
+}
+
+export function isSimpleLaunchReady(): boolean {
+  return !!(cachedContracts?.get('SIMPLE_LAUNCH_CAMPAIGN')?.address
+    && cachedContracts?.get('LAUNCH_ESCROW')?.address);
+}
+
+export function isVcV3Ready(): boolean {
+  const v3Names: PlatformContractName[] = [
+    'SALE_VESTING', 'TEAM_VESTING',
+    'DEVELOPER_REWARD_POOL', 'ECOSYSTEM_REWARD_POOL',
+    'DEVELOPMENT_FUND', 'RESERVE_VAULT',
+  ];
+  return v3Names.every(n => cachedContracts?.has(n) && cachedContracts.get(n)!.address);
+}
+
+export function assertNetwork(expected: 'testnet' | 'mainnet'): boolean {
+  return cachedNetwork === expected;
+}
+
+export function isNetworkBlockedForMainnetOnlyContracts(): boolean {
+  if (cachedNetwork === 'mainnet') return false;
+  return false;
 }
