@@ -1,18 +1,18 @@
 # Testnet Full Readiness Report
 
-> Generated: 2026-06-03
-> Status: RPC BLOCKED — TonCenter testnet returns 504. All chain-verified items marked accordingly.
+> Generated: 2026-06-04
+> Status: TESTNET FLOWS COMPLETE — D1/Worker/frontend E2E pending.
 
 ## Executive Summary
 
-The VibeCoder Platform has completed contract development, local testing, and dry-run verification for all VC v3 and SimpleLaunch v1 contracts. Real testnet deployment and flow execution are blocked by TonCenter testnet RPC (504 Gateway Timeout). All code is prepared; deployment resumes when RPC recovers.
+The VibeCoder Platform has completed contract development, local testing, VC v3 deployment/funding, SimpleLaunch testnet deployment, SaleVesting buyer flow, and SimpleLaunch success/failure flows. Mainnet is still blocked by testnet D1 registry execution, Worker/frontend E2E, admin/multisig approval, and final audit.
 
 | Area | Status |
 | --- | --- |
 | Contracts build/typecheck/tests | PASSED (16 suites, 104 tests) |
 | VC v3 testnet deployment + funding | COMPLETED |
-| SimpleLaunch testnet deployment | PENDING (RPC) |
-| SaleVesting buyer flow | PENDING (RPC) |
+| SimpleLaunch testnet deployment | COMPLETED |
+| SaleVesting buyer flow | COMPLETED |
 | D1 testnet registry | REVIEWED, NOT EXECUTED |
 | Worker integration | CODE COMPLETE |
 | Frontend integration | CODE COMPLETE |
@@ -38,12 +38,12 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 | DEVELOPMENT_FUND | `UQDJio3xtfCzu7TWhmxc8r1IeGyC2V7Hr0zLo3LTlbHkNm16` | deployed |
 | RESERVE_VAULT | `UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw` | deployed |
 
-### SimpleLaunch v1 Contracts (planned, not deployed)
-| Contract | Predicted Address | Status |
+### SimpleLaunch v1 Contracts (deployed)
+| Contract | Address | Status |
 | --- | --- | --- |
-| SIMPLE_LAUNCH_CAMPAIGN | `UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y` | planned |
-| LAUNCH_ESCROW | `UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo` | planned |
-| PROJECT_TOKEN | `UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV` | planned (activation) |
+| SIMPLE_LAUNCH_CAMPAIGN | `UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC` | deployed |
+| LAUNCH_ESCROW | `UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h` | deployed |
+| PROJECT_TOKEN | `UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz` | deployed by activation |
 
 ---
 
@@ -77,11 +77,12 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 
 | Verify Script | Result |
 | --- | --- |
-| verify:get-methods | FAILED (RPC 504, was 9/9 OK before) |
-| verify:vc-v3:testnet | FAILED (RPC 504, was 10/10 OK before) |
-| verify:vc-v3:full:testnet | FAILED (RPC 504, was OK before) |
-| verify:vc-v3:balances | FAILED (RPC 504, was OK before) |
-| verify:simple-launch:testnet | PENDING (5 items, not deployed) |
+| verify:get-methods | PASSED |
+| verify:vc-v3:testnet | PASSED |
+| verify:vc-v3:full:testnet | PASSED |
+| verify:vc-v3:balances | PASSED |
+| verify:simple-launch:testnet | PASSED for primary success manifest |
+| verify:simple-launch:testnet (failure-refund manifest) | PASSED for campaign/escrow; ProjectToken pending is expected because failure flow does not activate token |
 
 ---
 
@@ -92,9 +93,9 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 | TeamVesting Round 1 claim | COMPLETED | 40M VC claimed |
 | TeamVesting feed → 5000 | COMPLETED | unlockedRounds=2 |
 | SaleVesting feed → 78125 | COMPLETED | currentPrice=78125 |
-| SaleVesting 99 TON buy/claim | RPC_BLOCKED | script ready |
-| SimpleLaunch success flow | RPC_BLOCKED | script ready |
-| SimpleLaunch failure/refund flow | RPC_BLOCKED | script ready |
+| SaleVesting 99 TON buy/claim | COMPLETED | 80,000 VC allocated and fully claimed |
+| SimpleLaunch success flow | COMPLETED | 5 contributors, activation, finalize, claim, withdraw |
+| SimpleLaunch failure/refund flow | COMPLETED | separate campaign; refund, duplicate refund reject, claim-after-failure reject |
 
 ---
 
@@ -172,11 +173,11 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 
 | Blocker | Detail |
 | --- | --- |
-| TonCenter RPC 504 | All testnet chain ops blocked |
-| SimpleLaunch real deploy | Requires RPC recovery |
-| SaleVesting buyer flow | Requires RPC recovery + funded buyer wallet |
-| SimpleLaunch contributor mnemonics | Not configured in .env |
-| Testnet D1 execution | Optional; only after explicit approval |
+| Testnet D1 execution | Required for Worker/frontend E2E; only after explicit testnet D1 approval |
+| Worker E2E | Pending populated testnet registry and deployed Worker code |
+| Frontend E2E | Pending Worker registry E2E |
+| Admin/multisig plan | Mainnet signer addresses not yet confirmed |
+| Final audit | Not performed |
 
 ---
 
@@ -199,10 +200,8 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 
 | Blocker | Detail |
 | --- | --- |
-| SimpleLaunch testnet deploy | Not completed (RPC) |
-| SimpleLaunch testnet flow | Not completed (RPC) |
-| SaleVesting buyer flow | Not completed (RPC) |
-| Full verification pass | Not possible (RPC) |
+| Testnet D1 registry execution | Not completed |
+| Worker/frontend E2E | Not completed |
 | Admin/multisig plan for mainnet | Not yet defined |
 | Mainnet D1 plan | Not yet created |
 | Mainnet VC supply plan | Strategy ready, runbook pending execution |
@@ -213,10 +212,11 @@ The VibeCoder Platform has completed contract development, local testing, and dr
 ## 15. Human Approval Checklist
 
 Before mainnet deployment, verify:
-- [ ] All testnet flows pass (when RPC recovers)
-- [ ] SimpleLaunch deployed and verified
-- [ ] SaleVesting buyer flow completed or explicitly removed as blocker
-- [ ] D1 testnet registry reviewed
+- [x] All testnet flows pass
+- [x] SimpleLaunch deployed and verified
+- [x] SaleVesting buyer flow completed
+- [x] D1 testnet registry reviewed
+- [ ] D1 testnet registry executed with approved testnet target and backup
 - [ ] Worker/frontend tested against testnet D1
 - [ ] Admin multisig addresses confirmed
 - [ ] Mainnet deploy order documented

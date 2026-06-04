@@ -1,9 +1,9 @@
 {
   "network": "testnet",
-  "generatedAt": "2026-06-03T18:00:00.000Z",
-  "status": "RPC_BLOCKED",
+  "generatedAt": "2026-06-04T00:00:00.000Z",
+  "status": "TESTNET_FLOWS_COMPLETE_D1_E2E_PENDING",
   "notes": [
-    "TonCenter testnet RPC returns 504. All chain verification blocked.",
+    "VC v3 and SimpleLaunch testnet flows completed after RPC recovered.",
     "Mainnet deployment NOT executed.",
     "D1 SQL NOT executed.",
     "No secrets committed."
@@ -21,9 +21,9 @@
     "ECOSYSTEM_REWARD_POOL": "UQA-icYnrMhyb7Qe-wvBDH2k9g5a0is_z-jRfKHmW-HeaqV5",
     "DEVELOPMENT_FUND": "UQDJio3xtfCzu7TWhmxc8r1IeGyC2V7Hr0zLo3LTlbHkNm16",
     "RESERVE_VAULT": "UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw",
-    "SIMPLE_LAUNCH_CAMPAIGN": "UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y",
-    "LAUNCH_ESCROW": "UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo",
-    "PROJECT_TOKEN": "UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV"
+    "SIMPLE_LAUNCH_CAMPAIGN": "UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC",
+    "LAUNCH_ESCROW": "UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h",
+    "PROJECT_TOKEN": "UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz"
   },
   "selfWallets": {
     "SALE_VESTING": "UQANAqwlEmVLjKB4PfiIDo0HVLtuGmPOID-nbpW3SKd9IN2p",
@@ -37,15 +37,17 @@
     "teamVestingClaim": "complete",
     "teamVestingFeed": "complete",
     "saleVestingFeed": "complete",
-    "saleVestingBuyerFlow": "RPC_BLOCKED",
-    "simpleLaunchDeploy": "RPC_BLOCKED",
-    "simpleLaunchSuccessFlow": "RPC_BLOCKED",
-    "simpleLaunchFailureFlow": "RPC_BLOCKED"
+    "saleVestingBuyerFlow": "complete",
+    "simpleLaunchDeploy": "complete",
+    "simpleLaunchSuccessFlow": "complete",
+    "simpleLaunchFailureFlow": "complete",
+    "d1Registry": "reviewed_not_executed",
+    "workerE2E": "pending",
+    "frontendE2E": "pending"
   },
   "rpcStatus": {
     "provider": "testnet.toncenter.com",
-    "status": "504 Gateway Timeout",
-    "checkedAt": "2026-06-03T17:47:00Z",
-    "retryAfter": 120
+    "status": "recovered enough for deployment and flow verification",
+    "checkedAt": "2026-06-04T00:00:00Z"
   }
 }
