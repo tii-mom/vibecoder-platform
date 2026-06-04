@@ -1,17 +1,25 @@
 # Platform v3 Remaining Contracts Testnet Plan
 
-> Status: deployment preparation added; testnet deployment pending. Testnet only.
+> Status: deployed and funded on testnet. Historical preparation plan retained as evidence. Testnet only.
 
 ## Contracts
 
 | Contract | Pool | Status |
 | --- | ---: | --- |
-| DeveloperRewardPool | 100,000,000 VC | Implemented; deployment script added; testnet deploy pending |
-| EcosystemRewardPool | 100,000,000 VC | Implemented; deployment script added; testnet deploy pending |
-| DevelopmentFund | 100,000,000 VC | Implemented; deployment script added; testnet deploy pending |
-| ReserveVault | 100,000,000 VC | Implemented; deployment script added; testnet deploy pending |
+| DeveloperRewardPool | 100,000,000 VC | Deployed and funded |
+| EcosystemRewardPool | 100,000,000 VC | Deployed and funded |
+| DevelopmentFund | 100,000,000 VC | Deployed and funded |
+| ReserveVault | 100,000,000 VC | Deployed and funded |
 
-## Required Before Deployment
+## Current Source Of Truth
+
+- Deployment manifest: `contracts/deployments/testnet.vc-v3.full.json`
+- Deployment report: `contracts/docs/testnet-vc-v3-full-deployment-report.md`
+- Funding/flow report: `contracts/docs/vc-v3-testnet-funding-flow-report.md`
+- D1 SQL executed = NO.
+- Mainnet deployed = NO.
+
+## Historical Pre-Deployment Checklist
 
 - Review interface freeze entries.
 - Add a testnet deployment script and manifest entries.
@@ -29,9 +37,9 @@ npm run mint:vc-v3:full:testnet:plan
 npm run verify:vc-v3:full:balances
 ```
 
-The deploy plan writes `contracts/deployments/testnet.vc-v3.full.plan.json`.
+The deploy plan writes `contracts/deployments/testnet.vc-v3.full.plan.json`. That plan file is historical evidence only; registry truth is `contracts/deployments/testnet.vc-v3.full.json`.
 
-## Execute Command
+## Historical Execute Command
 
 Execution is testnet-only and must be explicitly confirmed:
 
