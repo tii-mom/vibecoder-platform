@@ -2,13 +2,13 @@
   "network": "testnet",
   "product": "SimpleLaunch",
   "version": "v1",
-  "status": "planned",
-  "generatedAt": "2026-06-03T17:46:38.785Z",
+  "status": "deployed",
+  "generatedAt": "2026-06-04T02:52:49.692Z",
   "deployer": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
   "contracts": {
-    "SIMPLE_LAUNCH_CAMPAIGN": "UQCsmFhjHmFmExMopMA8UnWK6hxn-uaoo161VrWog0Cnxk3Y",
-    "LAUNCH_ESCROW": "UQCjSgUHoTVwScc-ahTXMSi7HO8z0g8WUGmXTyCa1G4WWSGo",
-    "PROJECT_TOKEN": "UQDn1PLpvc6QVMkJdh9l5IEJDKL7_alFS89EPv7aPiaI0pTV"
+    "SIMPLE_LAUNCH_CAMPAIGN": "UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC",
+    "LAUNCH_ESCROW": "UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h",
+    "PROJECT_TOKEN": "UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz"
   },
   "config": {
     "projectOwner": "UQCxJ05yeawVWlsN5SfJ-obajgh2lFffR-O7ebH_s_wqQfRq",
@@ -19,15 +19,16 @@
     "minContributionTon": "1",
     "minParticipants": 5,
     "minTotalRaiseTon": "5",
-    "endTime": 1781113598,
+    "endTime": 1781146323,
     "platformFeeBps": 350
   },
   "flow": {
-    "activation": "pending",
-    "finalize": "pending",
-    "claim": "pending",
+    "activation": "complete",
+    "finalize": "complete",
+    "claim": "complete",
     "refund": "pending",
-    "withdraw": "pending"
+    "withdraw": "complete",
+    "successScenarioAt": "2026-06-04T03:18:47.814Z"
   },
   "notes": [
     "Testnet only. Do not use these addresses for mainnet.",

@@ -17,7 +17,10 @@ if (!DRY_RUN && process.env.CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW !== 'YES') {
 const TONCENTER_KEY = process.env.TONCENTER_API_KEY || '';
 const MANIFEST_PATH = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.json');
 const PLAN_MANIFEST_PATH = resolve(process.cwd(), 'deployments', 'testnet.simple-launch.plan.json');
-const ACTIVE_MANIFEST_PATH = existsSync(MANIFEST_PATH) ? MANIFEST_PATH : PLAN_MANIFEST_PATH;
+const OVERRIDE_MANIFEST_PATH = process.env.SIMPLE_LAUNCH_MANIFEST_PATH
+    ? resolve(process.cwd(), process.env.SIMPLE_LAUNCH_MANIFEST_PATH)
+    : '';
+const ACTIVE_MANIFEST_PATH = OVERRIDE_MANIFEST_PATH || (existsSync(MANIFEST_PATH) ? MANIFEST_PATH : PLAN_MANIFEST_PATH);
 
 if (!existsSync(ACTIVE_MANIFEST_PATH)) {
     throw new Error('SimpleLaunch manifest not found. Run deploy:simple-launch:testnet:plan first.');
@@ -43,6 +46,53 @@ async function openWallet(client: TonClient, mnemonic: string) {
     return { wallet, secretKey: keyPair.secretKey };
 }
 
+async function getCampaignData(client: TonClient, campaign: Address) {
+    const { stack } = await client.runMethod(campaign, 'getSimpleLaunchCampaignData');
+    return {
+        projectOwner: stack.readAddress(),
+        teamWallet: stack.readAddress(),
+        platformFund: stack.readAddress(),
+        escrowAddress: stack.readAddress(),
+        tokenAddress: stack.readAddress(),
+        targetRaiseTon: stack.readBigNumber(),
+        hardCapTon: stack.readBigNumber(),
+        minContributionTon: stack.readBigNumber(),
+        minParticipants: stack.readNumber(),
+        minTotalRaiseTon: stack.readBigNumber(),
+        endTime: stack.readNumber(),
+        platformFeeBps: stack.readNumber(),
+        state: stack.readNumber(),
+        participantCount: stack.readNumber(),
+        totalRaisedTon: stack.readBigNumber(),
+    };
+}
+
+async function getEscrowData(client: TonClient, escrow: Address) {
+    const { stack } = await client.runMethod(escrow, 'getLaunchEscrowData');
+    return {
+        campaignAddress: stack.readAddress(),
+        projectOwner: stack.readAddress(),
+        targetRaiseTon: stack.readBigNumber(),
+        hardCapTon: stack.readBigNumber(),
+        minContributionTon: stack.readBigNumber(),
+        minTotalRaiseTon: stack.readBigNumber(),
+        endTime: stack.readNumber(),
+        state: stack.readNumber(),
+        totalRaisedTon: stack.readBigNumber(),
+        withdrawnTon: stack.readBigNumber(),
+    };
+}
+
+async function getEscrowContribution(client: TonClient, escrow: Address, user: Address) {
+    const { stack } = await client.runMethod(escrow, 'getLaunchEscrowContribution', [
+        { type: 'slice', cell: beginCell().storeAddress(user).endCell() },
+    ]);
+    return {
+        contribution: stack.readBigNumber(),
+        refunded: stack.readNumber(),
+    };
+}
+
 async function sendOne(
     wallet: any,
     secretKey: Buffer,
@@ -50,7 +100,12 @@ async function sendOne(
     value: bigint,
     body: Cell,
 ) {
-    const seqno = await wallet.getSeqno();
+    let seqno = 0;
+    try {
+        seqno = await wallet.getSeqno();
+    } catch {
+        seqno = 0;
+    }
     await wallet.sendTransfer({ seqno, secretKey, messages: [internal({ to, value, body })] });
     await new Promise(resolve => setTimeout(resolve, 12000));
 }
@@ -114,6 +169,7 @@ async function main() {
 
     if (scenario === 'failure') {
         const contributor = await openWallet(client, contributors[0]);
+        const contributorAddress = contributor.wallet.address;
         console.log('Contribute for failure scenario...');
         await sendOne(
             contributor.wallet,
@@ -124,11 +180,34 @@ async function main() {
         );
         console.log('Mark campaign failed...');
         await sendOne(owner.wallet, owner.secretKey, campaign, toNano('0.1'), beginCell().storeUint(7, 32).storeUint(0, 64).endCell());
+        const campaignData = await getCampaignData(client, campaign);
+        const escrowData = await getEscrowData(client, escrow);
+        if (campaignData.state !== 4 || escrowData.state !== 3) {
+            throw new Error('Expected campaign failed state=4 and escrow failed state=3; got campaign=' + campaignData.state + ', escrow=' + escrowData.state);
+        }
         console.log('Refund contributor...');
         await sendOne(contributor.wallet, contributor.secretKey, escrow, toNano('0.05'), beginCell().storeUint(5, 32).storeUint(0, 64).endCell());
+        const refunded = await getEscrowContribution(client, escrow, contributorAddress);
+        if (refunded.refunded !== 1) {
+            throw new Error('Expected refunded=1 after refund; got ' + refunded.refunded);
+        }
+        console.log('Verify duplicate refund rejection...');
+        await sendOne(contributor.wallet, contributor.secretKey, escrow, toNano('0.05'), beginCell().storeUint(5, 32).storeUint(0, 64).endCell());
+        const duplicateRefund = await getEscrowContribution(client, escrow, contributorAddress);
+        if (duplicateRefund.refunded !== 1) {
+            throw new Error('Duplicate refund changed refunded flag to ' + duplicateRefund.refunded);
+        }
+        console.log('Verify claim after failure rejection...');
+        await sendOne(contributor.wallet, contributor.secretKey, campaign, toNano('0.05'), beginCell().storeUint(4, 32).storeUint(0, 64).endCell());
+        const afterClaimAttempt = await getCampaignData(client, campaign);
+        if (afterClaimAttempt.state !== 4) {
+            throw new Error('Claim after failure changed campaign state to ' + afterClaimAttempt.state);
+        }
         manifest.flow.refund = 'complete';
+        manifest.flow.duplicateRefund = 'rejected';
+        manifest.flow.claimAfterFailure = 'rejected';
         manifest.flow.failureScenarioAt = new Date().toISOString();
-        writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
+        writeFileSync(ACTIVE_MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
         console.log('Failure/refund flow complete.');
         return;
     }
@@ -169,7 +248,7 @@ async function main() {
     );
     manifest.flow.withdraw = 'complete';
     manifest.flow.successScenarioAt = new Date().toISOString();
-    writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
+    writeFileSync(ACTIVE_MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n');
     console.log('Success flow complete.');
 }
 
