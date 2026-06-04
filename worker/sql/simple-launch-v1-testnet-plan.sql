@@ -2,7 +2,7 @@
 -- PLAN ONLY. Do not execute against production database.
 -- Requires manual review before execution.
 -- Source manifest: contracts/deployments/testnet.simple-launch.json
--- Status: campaign and escrow deployed; ProjectToken pending activation.
+-- Status: campaign, escrow, and ProjectToken deployed and verified on testnet.
 -- ============================================================
 -- SimpleLaunch v1 Contracts — Testnet D1 Insert Plan
 -- ============================================================
@@ -19,10 +19,10 @@ INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, 
 VALUES
   ('testnet-SIMPLE_LAUNCH_CAMPAIGN', 'SIMPLE_LAUNCH_CAMPAIGN', 'UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC', 'testnet', datetime('now'));
 
--- ProjectToken (created by campaign activation; do not insert until get_jetton_data verifies)
--- INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
--- VALUES
---   ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', '<REAL_ADDRESS_AFTER_ACTIVATION>', 'testnet', datetime('now'));
+-- ProjectToken (created by campaign activation)
+INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at)
+VALUES
+  ('testnet-PROJECT_TOKEN', 'PROJECT_TOKEN', 'UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz', 'testnet', datetime('now'));
 
 -- Verify inserted rows
 SELECT contract_name, network, address

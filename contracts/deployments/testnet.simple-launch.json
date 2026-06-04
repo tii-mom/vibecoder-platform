@@ -23,11 +23,12 @@
     "platformFeeBps": 350
   },
   "flow": {
-    "activation": "pending",
-    "finalize": "pending",
-    "claim": "pending",
+    "activation": "complete",
+    "finalize": "complete",
+    "claim": "complete",
     "refund": "pending",
-    "withdraw": "pending"
+    "withdraw": "complete",
+    "successScenarioAt": "2026-06-04T03:18:47.814Z"
   },
   "notes": [
     "Testnet only. Do not use these addresses for mainnet.",

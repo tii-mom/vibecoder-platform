@@ -1,6 +1,6 @@
 # SimpleLaunch v1 Testnet Deployment Report
 
-> Status: DEPLOYED. Campaign and escrow get-method verification passed. Success/failure flow is blocked until contributor wallets are configured and funded.
+> Status: DEPLOYED. Success flow completed on testnet. Failure/refund scenario still requires a separate deployed campaign or explicit waiver.
 
 ## Deployment
 
@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | `SIMPLE_LAUNCH_CAMPAIGN` | `UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC` | deployed |
 | `LAUNCH_ESCROW` | `UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h` | deployed |
-| `PROJECT_TOKEN` | `UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz` | pending activation |
+| `PROJECT_TOKEN` | `UQBdnCJ4s-NtEocbEf7dfJ85j7kLB66XevQtsF1WyjkwLClz` | deployed by activation |
 
 ### Configuration
 
@@ -49,31 +49,29 @@
 | `npm test -- --runInBand` | PASSED, 16 suites, 104 tests |
 | `npm run deploy:simple-launch:testnet:plan` | PASSED (dry-run, addresses predicted) |
 | `CONFIRM_SIMPLE_LAUNCH_TESTNET_DEPLOY=YES npm run deploy:simple-launch:testnet` | PASSED |
-| `npm run verify:simple-launch:testnet` | PASSED for campaign and escrow; ProjectToken pending activation |
+| `npm run verify:simple-launch:testnet` | PASSED for campaign, escrow, and ProjectToken |
 | `npm run test:simple-launch:flow:plan` | PASSED (dry-run, both success and failure scenarios) |
+| `CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=success npm run test:simple-launch:flow` | PASSED |
 
 ## RPC Status
 
-RPC recovered enough for platform get-method verification, SimpleLaunch deployment, and SimpleLaunch campaign/escrow verification.
+RPC recovered enough for platform get-method verification, SimpleLaunch deployment, SimpleLaunch campaign/escrow verification, success flow execution, and ProjectToken verification.
 
-Current blocker is not RPC. Flow execution is blocked by missing contributor wallets.
+Current blocker is not RPC. The remaining SimpleLaunch flow gap is the failure/refund scenario, which requires a separate deployed campaign because the current campaign has completed the success path.
 
 ## Flow Results
 
 Flow execution requires:
-1. Sufficient testnet TON in 5 unique contributor wallets
-2. `SIMPLE_LAUNCH_CONTRIBUTOR_MNEMONICS` env var configured
-3. Success flow execution
-4. Failure/refund scenario execution on a separate deployed campaign
+1. Failure/refund scenario execution on a separate deployed campaign, or explicit waiver.
 
 | Flow Item | Status |
 | --- | --- |
-| 5 users activation | BLOCKED — contributor mnemonics not configured |
-| Under-target distribution | PENDING |
-| Full-target distribution | PENDING |
-| Token deployment | PENDING — activation not complete |
-| User claim | PENDING |
-| Project withdraw | PENDING |
+| 5 users activation | COMPLETE |
+| Under-target distribution | PENDING — separate scenario |
+| Full-target distribution | COMPLETE |
+| Token deployment | COMPLETE |
+| User claim | COMPLETE |
+| Project withdraw | COMPLETE |
 | Platform fee withdraw | PENDING |
 | Failed campaign refund | PENDING — requires separate campaign |
 | Duplicate claim/reject | PENDING |
@@ -82,9 +80,6 @@ Flow execution requires:
 ## Remaining Execution Commands
 
 ```bash
-# Run flow (success scenario)
-CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=success npm run test:simple-launch:flow
-
 # Run flow (failure scenario)
 CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm run test:simple-launch:flow
 ```
@@ -109,7 +104,7 @@ CONFIRM_SIMPLE_LAUNCH_TESTNET_FLOW=YES SIMPLE_LAUNCH_FLOW_SCENARIO=failure npm r
 | Worker/frontend/vc touched | NO |
 | secrets committed | NO |
 | tx hashes fabricated | NO |
-| flow blocker hidden | NO (contributor wallets required) |
+| flow blocker hidden | NO (failure/refund scenario remains pending) |
 | verification fabricated | NO |
 
 ## D1 SQL Plan

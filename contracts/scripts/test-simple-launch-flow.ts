@@ -50,7 +50,12 @@ async function sendOne(
     value: bigint,
     body: Cell,
 ) {
-    const seqno = await wallet.getSeqno();
+    let seqno = 0;
+    try {
+        seqno = await wallet.getSeqno();
+    } catch {
+        seqno = 0;
+    }
     await wallet.sendTransfer({ seqno, secretKey, messages: [internal({ to, value, body })] });
     await new Promise(resolve => setTimeout(resolve, 12000));
 }
