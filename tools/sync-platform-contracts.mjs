@@ -18,7 +18,7 @@ const manifestPath = manifestArg
   : path.join(root, 'contracts', 'deployments', `${network}.platform${network === 'mainnet' ? '.dry-run' : ''}.json`);
 const database = databaseArg ? databaseArg.slice('--database='.length) : 'vibecoder-db-new';
 
-const required = [
+const defaultRequired = [
   'VC_JETTON',
   'FUND',
   'VC_REWARD_POOL',
@@ -26,6 +26,18 @@ const required = [
   'LAUNCH_FEE',
   'TOKEN_LAUNCHER',
 ];
+
+function collectContracts(manifest) {
+  const out = {};
+  for (const group of ['basePlatformContracts', 'v3Contracts', 'contracts']) {
+    const contracts = manifest[group] || {};
+    for (const [name, value] of Object.entries(contracts)) {
+      if (typeof value === 'string') out[name] = value;
+      else if (value && typeof value === 'object' && typeof value.address === 'string') out[name] = value.address;
+    }
+  }
+  return out;
+}
 
 function q(value) {
   return String(value).replace(/'/g, "''");
@@ -42,7 +54,11 @@ if (manifest.network !== network) {
   process.exit(1);
 }
 
-const missing = required.filter((name) => !manifest.contracts?.[name]?.address);
+const contracts = collectContracts(manifest);
+const required = manifest.basePlatformContracts || manifest.v3Contracts || manifest.product === 'SimpleLaunch'
+  ? Object.keys(contracts)
+  : defaultRequired;
+const missing = required.filter((name) => !contracts[name]);
 if (missing.length > 0) {
   console.error(`Missing contracts in manifest: ${missing.join(', ')}`);
   process.exit(1);
@@ -50,7 +66,7 @@ if (missing.length > 0) {
 
 const statements = required.map((name) => {
   const id = `${network}-${name}`;
-  const address = manifest.contracts[name].address;
+  const address = contracts[name];
   return `INSERT OR REPLACE INTO platform_contracts (id, contract_name, address, network, deployed_at) VALUES ('${q(id)}', '${q(name)}', '${q(address)}', '${q(network)}', CURRENT_TIMESTAMP);`;
 });
 const sql = `${statements.join('\n')}\n`;
