@@ -1,7 +1,7 @@
 # Mainnet Preflight Report
 
 > **STATUS: PREFLIGHT ONLY. NO MAINNET DEPLOYMENT EXECUTED.**
-> Generated: 2026-06-03
+> Generated: 2026-06-04
 > This is a planning document. All deployment actions require separate approval.
 
 ---
@@ -11,16 +11,16 @@
 | Contract | Testnet Address (for reference) | Mainnet Address |
 | --- | --- | --- |
 | VC_JETTON | `UQAUgPNJOk0ORN9VAgCNuGnwXo_qkbBYOlXs888G96eyvIMf` | TBD (new deploy) |
-| FUND | `UQA...` | TBD |
-| VC_REWARD_POOL | `UQD...` | TBD |
-| SALE_VESTING | `UQAV...` | TBD |
-| TEAM_VESTING | `UQD2...` | TBD |
-| DEVELOPER_REWARD_POOL | `UQCZ...` | TBD |
-| ECOSYSTEM_REWARD_POOL | `UQA-...` | TBD |
-| DEVELOPMENT_FUND | `UQDJ...` | TBD |
-| RESERVE_VAULT | `UQCo...` | TBD |
-| LAUNCH_ESCROW | `UQCj...` | TBD |
-| SIMPLE_LAUNCH_CAMPAIGN | `UQCs...` | TBD |
+| FUND | `UQADQbeXROSyyCBwE2qPuhr2cbE0hXgWhVCJawR9UVK9CH0Q` | TBD |
+| VC_REWARD_POOL | `UQD6Zak3m1RdCA1OOIMFSh3fF6VrsgBIwxLcpn1o76YUiVZN` | TBD |
+| SALE_VESTING | `UQAV6noSRUR7C83RwCB3T4XV0ylVqCAs_Crf1N5aHp6KzScm` | TBD |
+| TEAM_VESTING | `UQD24kG-Pnl2OyJAs2hYtbRnBVOkgtsdhhD6z14u46NfSkRF` | TBD |
+| DEVELOPER_REWARD_POOL | `UQCZFgdSfL4uGwExeG5wGMo96Aly8Lc5sx_Sf_HDpm27b9JD` | TBD |
+| ECOSYSTEM_REWARD_POOL | `UQA-icYnrMhyb7Qe-wvBDH2k9g5a0is_z-jRfKHmW-HeaqV5` | TBD |
+| DEVELOPMENT_FUND | `UQDJio3xtfCzu7TWhmxc8r1IeGyC2V7Hr0zLo3LTlbHkNm16` | TBD |
+| RESERVE_VAULT | `UQCoVCCLCf7RxJ7BykJ4UlbhrtPI2I1894yLL2UkAXKiZ6vw` | TBD |
+| LAUNCH_ESCROW | `UQAbBqEAuArxhgvAja3dP3tF5CsJ6s3NyMtWRV6unkjEd24h` | TBD |
+| SIMPLE_LAUNCH_CAMPAIGN | `UQB2khuJechrKt9P2xADTWJVY7iQQF8GXOeHNbtLADdZjgxC` | TBD |
 
 **Rule**: Testnet addresses must never appear in mainnet configuration.
 
@@ -57,8 +57,8 @@ Source: `contracts/docs/vc-jetton-mainnet-fixed-supply-strategy.md`
 
 | Step | Action |
 | --- | --- |
-| 1 | Run D1 migration 0002 (fix schema) in testnet D1 first |
-| 2 | Verify testnet contract registry reads correctly |
+| 1 | Execute reviewed testnet registry SQL in a separate approved testnet D1 task |
+| 2 | Verify Worker/frontend E2E against populated testnet D1 |
 | 3 | Prepare mainnet INSERT statements (separate SQL file) |
 | 4 | Review and approve mainnet SQL |
 | 5 | Execute mainnet D1 after contracts deployed |
@@ -158,10 +158,10 @@ npm run verify:simple-launch:testnet  # → adapt for mainnet
 
 Before mainnet deployment, ALL of the following must be confirmed:
 
-- [ ] 1. All testnet flows pass (SimpleLaunch deploy, flow, SaleVesting buyer flow)
+- [x] 1. All testnet flows pass (SimpleLaunch deploy, flow, SaleVesting buyer flow)
 - [ ] 2. RPC is operational for mainnet
 - [ ] 3. All get-method verifications pass on testnet
-- [ ] 4. Testnet D1 registry reviewed
+- [x] 4. Testnet D1 registry reviewed
 - [ ] 5. Worker/frontend tested against testnet
 - [ ] 6. Mainnet admin multisig deployed and tested
 - [ ] 7. All mainnet addresses confirmed and peer-reviewed
